@@ -45,7 +45,7 @@ body {
     will-change: transform; 
 }
 
-/* --- 圓心浮動資訊層 (您剛修改的部分) --- */
+/* --- 圓心浮動資訊層 (RWD 響應式修正版) --- */
 #center-overlay {
     position: absolute;
     top: 50%;
@@ -56,34 +56,39 @@ body {
 }
 
 #center-bg {
-    width: 90px;
-    height: 90px;
-    /* 改為全透明背景 */
-    background-color: rgba(255, 255, 255, 0);
+    /* 原本是固定 90px，現在改用 16vmin (跟隨螢幕縮放) */
+    width: 16vmin;
+    height: 16vmin;
+    
+    background-color: rgba(255, 255, 255, 0); /* 全透明 */
     border-radius: 0%; 
-    /* 移除陰影 */
-    box-shadow: 0 2px 10px rgba(255, 255, 255, 0); 
+    box-shadow: none; 
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    /* 移除邊框 */
-    border: 0px solid #ddd; 
+    border: none; 
 }
 
 /* 主標題 (例如：離命) */
 #center-main-text {
-    font-size: 20px;
+    /* 原本是 28px，現在改用 6vmin */
+    /* 手機直式時大約會是 22px 左右，電腦上會更大 */
+    font-size: 6vmin; 
     font-weight: bold;
-    color: #da7800; /* 配合你的主色系 */
-    line-height: 1.0;
+    color: #da7800; 
+    line-height: 1.2;
+    white-space: nowrap; /* 確保文字不換行 */
 }
 
 /* 副標題 (例如：東四命) */
 #center-sub-text {
-    font-size: 14px;
+    /* 原本是 14px，現在改用 3vmin */
+    font-size: 3vmin; 
     color: #666;
+    white-space: nowrap;
+    margin-top: 0.5vmin; /* 間距也用相對單位 */
 }
 
 
