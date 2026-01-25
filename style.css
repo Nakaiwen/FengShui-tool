@@ -90,45 +90,42 @@ body {
     font-size: 0.9rem; 
 }
 
-/* --- 大按鈕 (變矮、變精緻) --- */
-.big-btn {
-    background-color: #e55f00;
-    color: white;
-    border: none;
+/* 按鈕容器：讓按鈕橫向排列 */
+.action-row {
+    display: flex;       /* 開啟彈性排版 */
+    gap: 10px;           /* 按鈕中間的縫隙 */
+    margin-top: 15px;    /* 與上方滑桿的距離 */
     width: 100%;
-    
-    /* ↓↓↓ 這裡是瘦身的關鍵 ↓↓↓ */
-    padding: 10px 0;  /* 高度從 15px 減為 10px */
-    font-size: 16px;  /* 字體從 18px 減為 16px */
-    /* ↑↑↑ 瘦身結束 ↑↑↑ */
-    
-    font-weight: bold;
+}
+
+/* 所有按鈕的共同設定 (重置樣式、圓角、陰影) */
+.action-row button {
+    border: none;
     border-radius: 10px;
+    padding: 12px 0;     /* 高度適中 */
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
     cursor: pointer;
     box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-    transition: transform 0.1s, background-color 0.3s;
-    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s, opacity 0.2s;
+    -webkit-tap-highlight-color: transparent; /* 移除手機點擊藍框 */
 }
 
-.big-btn:active {
+/* 點擊時的微縮效果 */
+.action-row button:active {
     transform: scale(0.96);
-    background-color: #1a252f;
+    opacity: 0.9;
 }
 
-/* 原本的小按鈕樣式 */
-.button-group {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
+/* --- 左邊的主按鈕 (啟動) --- */
+.btn-main {
+    background-color: #da7800; /* 你喜歡的橘色 */
+    flex: 2; /* 佔據 2/3 的寬度 */
 }
 
-.button-group button {
-    flex: 1; /* 平均分配寬度 */
-    background-color: #0098b6; /* 改個顏色區分 */
-    color: white;
-    border: none;
-    padding: 12px 0; /* 這裡也稍微加大 */
-    margin: 0 5px;
-    border-radius: 8px;
-    font-size: 16px;
+/* --- 右邊的次按鈕 (歸零) --- */
+.btn-sub {
+    background-color: #0098b6; /* 你喜歡的青藍色 */
+    flex: 1; /* 佔據 1/3 的寬度 */
 }
