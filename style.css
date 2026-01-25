@@ -74,7 +74,7 @@ body {
 
 /* 主標題 (例如：離命) */
 #center-main-text {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: bold;
     color: #da7800; /* 配合你的主色系 */
     line-height: 1.2;
@@ -82,7 +82,7 @@ body {
 
 /* 副標題 (例如：東四命) */
 #center-sub-text {
-    font-size: 16px;
+    font-size: 14px;
     color: #666;
 }
 
