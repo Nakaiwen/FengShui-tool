@@ -22,15 +22,20 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: center; 
 }
 
-/* --- 羅盤容器 --- */
+/* --- 羅盤容器 (預設行為：針對手機/窄螢幕最佳化) --- */
 #compass-container {
     width: 96vmin; 
     height: 96vmin;
     position: relative;
-    /* JS 會動態控制 transition */
+    
+    /* ★ 手機版設定 ★ */
+    /* 利用較大的下邊距，把圓盤視覺上往上推，避開下方控制板 */
+    margin-bottom: 18vh; 
+    
+    transition: transform 0.5s ease-out;
 }
 
 /* SVG 優化 */
@@ -38,14 +43,11 @@ body {
     width: 100%;
     height: 100%;
     filter: drop-shadow(0px 5px 10px rgba(175, 175, 175, 0.2));
-    
-    /* 修正圓心：280.36 / 560 = 50.064% */
     transform-origin: 50.064% 50.064%;
-    
     will-change: transform; 
 }
 
-/* --- 圓心浮動資訊層 (RWD 響應式修正版) --- */
+/* --- 圓心浮動資訊層 --- */
 #center-overlay {
     position: absolute;
     top: 50%;
@@ -56,11 +58,9 @@ body {
 }
 
 #center-bg {
-    /* 原本是固定 90px，現在改用 16vmin (跟隨螢幕縮放) */
-    width: 16vmin;
+    width: 16vmin; 
     height: 16vmin;
-    
-    background-color: rgba(255, 255, 255, 0); /* 全透明 */
+    background-color: rgba(255, 255, 255, 0); 
     border-radius: 0%; 
     box-shadow: none; 
     display: flex;
@@ -71,26 +71,21 @@ body {
     border: none; 
 }
 
-/* 主標題 (例如：離命) */
 #center-main-text {
-    /* 原本是 28px，現在改用 6vmin */
-    /* 手機直式時大約會是 22px 左右，電腦上會更大 */
     font-size: 6vmin; 
     font-weight: bold;
     color: #da7800; 
     line-height: 1.2;
-    white-space: nowrap; /* 確保文字不換行 */
+    white-space: nowrap; 
 }
 
-/* 副標題 (例如：東四命) */
 #center-sub-text {
-    /* 原本是 14px，現在改用 3vmin */
     font-size: 3vmin; 
-    color: #666;
+    color: #555; 
+    font-weight: bold; 
     white-space: nowrap;
-    margin-top: 0.5vmin; /* 間距也用相對單位 */
+    margin-top: 0.5vmin; 
 }
-
 
 /* --- 控制面板 --- */
 #controls {
@@ -114,17 +109,24 @@ body {
     backdrop-filter: blur(5px);
 }
 
-/* --- 命盤設定區 (年份/性別) --- */
 .profile-settings {
     display: flex;
+    flex-direction: row; 
+    flex-wrap: nowrap; 
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px; 
     margin-bottom: 15px;
     padding-bottom: 10px;
     border-bottom: 1px solid #eee;
     font-size: 16px;
     color: #333;
+    width: 100%;
+}
+
+.profile-settings label {
+    font-size: 15px;
+    white-space: nowrap; 
 }
 
 #birth-year {
@@ -142,6 +144,7 @@ body {
     background: #e0e0e0;
     border-radius: 8px;
     padding: 3px;
+    flex-shrink: 0; 
 }
 
 .gender-btn {
@@ -162,20 +165,12 @@ body {
     font-weight: bold;
 }
 
-/* 按下男/女時的顏色區分 */
 #btn-male.active { color: #1976d2; }
 #btn-female.active { color: #c2185b; }
 
-/* --- 輸入區塊 --- */
-.input-group {
-    margin-bottom: 10px; 
-}
+.input-group { margin-bottom: 10px; }
+.input-group label { font-size: 0.9rem; }
 
-.input-group label {
-    font-size: 0.9rem; 
-}
-
-/* --- 按鈕樣式 --- */
 .action-row {
     display: flex;
     gap: 10px;
@@ -201,12 +196,27 @@ body {
     opacity: 0.9;
 }
 
-.btn-main {
-    background-color: #da7800;
-    flex: 2;
-}
+.btn-main { background-color: #da7800; flex: 2; }
+.btn-sub { background-color: #0098b6; flex: 1; }
 
-.btn-sub {
-    background-color: #0098b6;
-    flex: 1;
+
+/* =========================================
+   ★★★ 媒體查詢：針對桌機/大螢幕的修正 ★★★
+   ========================================= */
+/* 當螢幕寬度大於 768px (通常是平板橫放或電腦螢幕) 且高度足夠時 */
+@media (min-width: 769px) and (min-height: 650px) {
+    
+    /* 1. 讓圓盤在桌機上恢復完美置中 */
+    #compass-container {
+        margin-bottom: 0; /* 取消手機版的上推效果 */
+        
+        /* 在大螢幕上稍微縮小一點比例，避免太有壓迫感 */
+        width: 85vmin;
+        height: 85vmin;
+    }
+
+    /* 2. 桌機版空間大，控制面板可以稍微離底部遠一點，比較好看 */
+    #controls {
+        bottom: 40px;
+    }
 }
