@@ -1,0 +1,103 @@
+/* style.css */
+
+/* 全局設定 */
+body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center; /* 水平置中 */
+    align-items: center;     /* 垂直置中 */
+    background-color: #f5f5f5; /* 淺灰背景，讓羅盤突顯 */
+    font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+    overflow: hidden; /* 防止捲動條出現 */
+}
+
+/* 應用程式容器 */
+#app {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 羅盤容器 */
+#compass-container {
+    width: 90vmin; /* 確保在手機或電腦上都保持正方形比例，取寬高中較小的一邊 */
+    height: 90vmin;
+    position: relative;
+    transition: transform 0.1s linear; /* 預留給之後轉動動畫用 */
+}
+
+/* SVG 本體設定 */
+#FengShui-plate {
+    width: 100%;
+    height: 100%;
+    /* 加一點陰影增加立體感 */
+    filter: drop-shadow(0px 10px 15px rgba(154, 154, 154, 0.3));
+    
+    /* 如果之後要旋轉整個盤，我們可以操作這個屬性 */
+    transform-origin: 50.015% 50.651%; 
+}
+
+/* 資訊圖層 (預留) */
+.overlay-info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* 讓點擊穿透到 SVG */
+}
+
+/* 讓控制面板浮在螢幕下方 */
+#controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%); /* 水平置中 */
+    width: 90%;
+    max-width: 400px;
+    z-index: 100; /* 確保浮在圓盤上面 */
+}
+
+.control-panel {
+    background: rgba(255, 255, 255, 0.9); /* 半透明白色背景 */
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.control-panel h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+/* 滑桿樣式 */
+input[type=range] {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.button-group button {
+    background-color: #792e13; /* 深紅褐色，配合風水主題 */
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    margin: 0 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.button-group button:hover {
+    background-color: #a0401a;
+}
