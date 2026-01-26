@@ -3,8 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================================================================
     //  SECTION 1: 核心資料與設定
     // =================================================================
+    
     const RADIAL_LAYOUT = {
         center: { x: 280.36, y: 280.36 }, 
+        
+        // ★★★ 設定吉凶文字出現的半徑 ★★★
+        // 數值越小越靠近圓心，越大越靠近外圈
+        // 建議設在 100 左右，剛好在內圈空白處
+        starRadius: 116, 
+        
         defaultRotation: 0 
     };
 
@@ -15,15 +22,16 @@ document.addEventListener('DOMContentLoaded', () => {
         '酉', '辛', '戌', '乾', '亥', '壬'
     ];
 
+    // 八宅吉凶星位完整資料
     const MING_GUA_DATA = {
-        1: { name: '坎', group: '東四命' },
-        2: { name: '坤', group: '西四命' },
-        3: { name: '震', group: '東四命' },
-        4: { name: '巽', group: '東四命' },
-        6: { name: '乾', group: '西四命' },
-        7: { name: '兌', group: '西四命' },
-        8: { name: '艮', group: '西四命' },
-        9: { name: '離', group: '東四命' }
+        1: { name: '坎', group: '東四命', stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
+        2: { name: '坤', group: '西四命', stars: { '坤':'伏位', '艮':'生氣', '兌':'天醫', '乾':'延年', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
+        3: { name: '震', group: '東四命', stars: { '震':'伏位', '離':'生氣', '坎':'天醫', '巽':'延年', '艮':'六煞', '坤':'禍害', '乾':'五鬼', '兌':'絕命' } },
+        4: { name: '巽', group: '東四命', stars: { '巽':'伏位', '坎':'生氣', '離':'天醫', '震':'延年', '兌':'六煞', '乾':'禍害', '坤':'五鬼', '艮':'絕命' } },
+        6: { name: '乾', group: '西四命', stars: { '乾':'伏位', '兌':'生氣', '艮':'天醫', '坤':'延年', '坎':'六煞', '巽':'禍害', '震':'五鬼', '離':'絕命' } },
+        7: { name: '兌', group: '西四命', stars: { '兌':'伏位', '乾':'生氣', '坤':'天醫', '艮':'延年', '巽':'六煞', '坎':'禍害', '離':'五鬼', '震':'絕命' } },
+        8: { name: '艮', group: '西四命', stars: { '艮':'伏位', '坤':'生氣', '乾':'天醫', '兌':'延年', '震':'六煞', '離':'禍害', '坎':'五鬼', '巽':'絕命' } },
+        9: { name: '離', group: '東四命', stars: { '離':'伏位', '震':'生氣', '巽':'天醫', '坎':'延年', '坤':'六煞', '艮':'禍害', '兌':'五鬼', '乾':'絕命' } }
     };
 
     let userSettings = {
@@ -32,29 +40,91 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =================================================================
-    //  SECTION 2: 繪圖邏輯
+    //  SECTION 2: 繪圖與 DOM
     // =================================================================
     const svgPlate = document.getElementById('FengShui-plate');
+    const SVG_NS = "http://www.w3.org/2000/svg";
     
-    // 取得 HTML 浮動層元素 (這次改用 HTML 顯示，所以不用 SVG createElement)
+    // 建立吉凶星專用圖層
+    let starLayer = document.getElementById('star-layer');
+    if (!starLayer && svgPlate) {
+        starLayer = document.createElementNS(SVG_NS, 'g');
+        starLayer.setAttribute('id', 'star-layer');
+        svgPlate.appendChild(starLayer);
+    }
+
+    // HTML 圓心文字
     const centerMainText = document.getElementById('center-main-text');
     const centerSubText = document.getElementById('center-sub-text');
 
-    /**
-     * 更新圓盤正中央的 HTML 文字
-     */
     function updateCenterText(text, subText) {
         if (centerMainText) centerMainText.textContent = text;
         if (centerSubText) centerSubText.textContent = subText;
     }
 
+    /**
+     * 繪製圓盤上的吉凶星 (同心圓排列)
+     */
+    function drawAusStars(mingGuaInfo) {
+        if (!starLayer) return;
+        starLayer.innerHTML = ''; 
+
+        const stars = mingGuaInfo.stars;
+        
+        for (const [gua, starName] of Object.entries(stars)) {
+            // 對應 SVG 角度 (順時針：右0, 下90, 左180, 上270)
+            let svgAngle;
+            switch(gua) {
+                case '坎': svgAngle = 90;  break; // 下 (北/子)
+                case '艮': svgAngle = 135; break; 
+                case '震': svgAngle = 180; break; 
+                case '巽': svgAngle = 225; break; 
+                case '離': svgAngle = 270; break; // 上 (南/午)
+                case '坤': svgAngle = 315; break; 
+                case '兌': svgAngle = 0;   break; 
+                case '乾': svgAngle = 45;  break; 
+            }
+
+            // 計算座標
+            const radians = svgAngle * (Math.PI / 180);
+            const x = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(radians);
+            const y = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.starRadius * Math.sin(radians);
+
+            // 建立文字
+            const textEl = document.createElementNS(SVG_NS, 'text');
+            textEl.setAttribute('x', x);
+            textEl.setAttribute('y', y);
+            textEl.setAttribute('text-anchor', 'middle');
+            textEl.setAttribute('dominant-baseline', 'central');
+            textEl.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif');
+            textEl.setAttribute('font-weight', 'bold');
+            textEl.setAttribute('font-size', '20'); 
+            
+            // 顏色判斷
+            if (['生氣', '天醫', '延年', '伏位'].includes(starName)) {
+                textEl.setAttribute('fill', '#dc5f00ff'); // 吉：深紅
+            } else {
+                textEl.setAttribute('fill', '#004fe3ff'); // 凶：深綠
+            }
+
+            textEl.textContent = starName;
+
+            // ★★★ 修改這裡：同心圓排列 ★★★
+            // svgAngle + 90：讓文字的底部朝向圓心 (傳統羅盤排法)
+            // 如果你想要文字頂部朝向圓心，就改成 svgAngle - 90
+            textEl.setAttribute('transform', `rotate(${svgAngle + 90}, ${x}, ${y})`);
+
+            starLayer.appendChild(textEl);
+        }
+    }
+
+    // 旋轉控制
     let targetHeading = 0;
     let isCompassMode = false;
     let animationFrameId = null;
 
     function renderRotation(degree) {
         if (svgPlate) {
-            // 修正：0度=北，SVG預設午在上，需+180轉正。手機右轉盤面左轉(-degree)
             const finalDegree = -degree + 180;
             svgPlate.style.transform = `rotate(${finalDegree}deg)`;
         }
@@ -79,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =================================================================
-    //  SECTION 3: 核心演算法
+    //  SECTION 3: 演算法
     // =================================================================
     function getMountain(degree) {
         let deg = (degree % 360 + 360) % 360;
@@ -107,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let kuaNumber;
         if (gender === 'male') {
             kuaNumber = 11 - sum;
-            while (kuaNumber > 9) kuaNumber -= 9;
+            while (kuaNumber > 9) kuaNumber -= 9; 
             if (kuaNumber === 5) kuaNumber = 2; 
         } else {
             kuaNumber = 4 + sum;
@@ -153,9 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNaN(year) || year < 1900 || year > 2099) return;
 
         const result = calculateMingGua(year, userSettings.gender);
+        
         if (result) {
-            // 更新圓心文字
             updateCenterText(`${result.name}命`, result.group);
+            drawAusStars(result);
         }
     }
 
@@ -193,11 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initApp() {
-        console.log("陽宅風水排盤 - 圓心固定版 v6.0");
+        console.log("陽宅風水排盤 - 同心圓文字版 v7.1");
         updateUI(0);
         renderRotation(0);
         
-        updateProfile(); // 初始化命卦顯示
+        updateProfile(); 
 
         if (degreeSlider) {
             degreeSlider.addEventListener('input', (e) => {
@@ -225,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (inputYear) {
             inputYear.addEventListener('input', updateProfile);
+            inputYear.addEventListener('change', updateProfile); 
         }
 
         if (btnMale) {

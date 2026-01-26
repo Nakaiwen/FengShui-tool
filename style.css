@@ -71,20 +71,30 @@ body {
     border: none; 
 }
 
+/* 主標題 (例如：離命) */
 #center-main-text {
+    /* 原本的設定... */
     font-size: 6vmin; 
     font-weight: bold;
     color: #da7800; 
     line-height: 1.2;
-    white-space: nowrap; 
+    white-space: nowrap;
+    
+    /* ↓↓↓ 新增這行：設定標楷體 ↓↓↓ */
+    font-family: "BiauKai", "DFKai-SB", "KaiTi", serif;
 }
 
+/* 副標題 (例如：東四命) */
 #center-sub-text {
+    /* 原本的設定... */
     font-size: 3vmin; 
     color: #555; 
     font-weight: bold; 
     white-space: nowrap;
-    margin-top: 0.5vmin; 
+    margin-top: 0.5vmin;
+    
+    /* ↓↓↓ 新增這行：設定標楷體 ↓↓↓ */
+    font-family: "BiauKai", "DFKai-SB", "KaiTi", serif;
 }
 
 /* --- 控制面板 --- */
