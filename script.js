@@ -7,13 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const RADIAL_LAYOUT = {
         center: { x: 280.36, y: 280.36 }, 
         
-        // 吉凶文字出現的半徑
-        starRadius: 116, 
+        // 吉凶文字出現的半徑 (內圈)
+        starRadius: 117, 
         
-        // ★★★ 吉字印章設定 ★★★
-        // 這是「角度」偏移量，代表印章要往旁邊移動多少度
-        sealAngleOffset: 15, 
-        sealSize: 10,   // 印章大小
+        // 吉字印章的設定
+        sealOffset: 0,  // 與文字同半徑 (因為我們是用角度錯開)
+        sealSize: 10,   // 印章圓圈半徑
         
         defaultRotation: 0 
     };
@@ -25,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '酉', '辛', '戌', '乾', '亥', '壬'
     ];
 
+    // 八宅吉凶星位完整資料
     const MING_GUA_DATA = {
         1: { name: '坎', group: '東四命', stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
         2: { name: '坤', group: '西四命', stars: { '坤':'伏位', '艮':'生氣', '兌':'天醫', '乾':'延年', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * 繪製圓盤上的吉凶星 + 旁邊的生氣印章
+     * 繪製圓盤上的吉凶星 + 生氣/延年 印章
      */
     function drawAusStars(mingGuaInfo) {
         if (!starLayer) return;
@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         for (const [gua, starName] of Object.entries(stars)) {
             let svgAngle;
+            // 對應 SVG 角度 (順時針：右0, 下90, 左180, 上270)
             switch(gua) {
                 case '坎': svgAngle = 90;  break;
                 case '艮': svgAngle = 135; break; 
@@ -85,18 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 case '乾': svgAngle = 45;  break; 
             }
 
-            // 判斷是否為生氣方，如果是，我們要微調文字位置，留空間給印章
+            // ★★★ 1. 如果是「生氣」或「延年」，文字往左挪 (-6度) ★★★
             let textAngle = svgAngle;
-            if (starName === '生氣') {
-                // 文字往逆時針偏一點點 (例如 -6度)，讓出右邊的位置給印章
+            if (['生氣', '延年'].includes(starName)) {
                 textAngle = svgAngle - 6; 
             }
 
             const radians = textAngle * (Math.PI / 180);
             
-            // ----------------------------------------
-            // 1. 繪製主要文字
-            // ----------------------------------------
+            // 繪製主要文字
             const x = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(radians);
             const y = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.starRadius * Math.sin(radians);
 
@@ -105,34 +103,33 @@ document.addEventListener('DOMContentLoaded', () => {
             textEl.setAttribute('y', y);
             textEl.setAttribute('text-anchor', 'middle');
             textEl.setAttribute('dominant-baseline', 'central');
-            textEl.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif');
+            textEl.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif'); // 標楷體
             textEl.setAttribute('font-weight', 'bold');
             textEl.setAttribute('font-size', '20'); 
             
+            // 顏色設定 (你指定的色碼)
             if (['生氣', '天醫', '延年', '伏位'].includes(starName)) {
-                textEl.setAttribute('fill', '#dc5f00ff'); // 吉紅
+                textEl.setAttribute('fill', '#dc5f00ff'); // 吉: 橘紅
             } else {
-                textEl.setAttribute('fill', '#004fe3ff'); // 凶藍
+                textEl.setAttribute('fill', '#004fe3ff'); // 凶: 藍色
             }
 
             textEl.textContent = starName;
             
-            // 同心圓排列
+            // 同心圓排列 (底部朝圓心)
             textEl.setAttribute('transform', `rotate(${textAngle + 90}, ${x}, ${y})`);
             starLayer.appendChild(textEl);
 
-            // ----------------------------------------
-            // 2. 如果是「生氣」方，在旁邊加蓋吉字印章
-            // ----------------------------------------
-            if (starName === '生氣') {
-                // 印章的角度：原本方位角度 + 偏移量 (往順時針偏，即文字的右邊)
-                // 這裡我們偏一點點，例如文字 -6度，印章 +8度，這樣視覺中心大約還是在正中間
+            // ★★★ 2. 如果是「生氣」或「延年」，在旁邊加蓋吉字印章 ★★★
+            if (['生氣', '延年'].includes(starName)) {
+                
+                // 印章角度：往右挪 (+12度)
                 const sealAngle = svgAngle + 12; 
                 const sealRadians = sealAngle * (Math.PI / 180);
 
-                // 使用相同的半徑 (starRadius)，這樣就在同一個圓周上
-                const sx = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(sealRadians);
-                const sy = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.starRadius * Math.sin(sealRadians);
+                const sealDist = RADIAL_LAYOUT.starRadius + RADIAL_LAYOUT.sealOffset;
+                const sx = RADIAL_LAYOUT.center.x + sealDist * Math.cos(sealRadians);
+                const sy = RADIAL_LAYOUT.center.y + sealDist * Math.sin(sealRadians);
 
                 // 建立印章群組
                 const sealGroup = document.createElementNS(SVG_NS, 'g');
@@ -142,26 +139,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 circle.setAttribute('cx', 0);
                 circle.setAttribute('cy', 0);
                 circle.setAttribute('r', RADIAL_LAYOUT.sealSize); 
-                circle.setAttribute('fill', 'rgba(255, 255, 255, 0.8)'); // 稍微白底，避免線條干擾
-                circle.setAttribute('stroke', '#c0392b'); 
-                circle.setAttribute('stroke-width', '1.5');
+                circle.setAttribute('fill', 'rgba(255, 255, 255, 0)'); // 透明底
+                circle.setAttribute('stroke', '#c0392b'); // 紅框
+                circle.setAttribute('stroke-width', '1');
 
-                // (B) 印章文字
+                // (B) 印章文字「吉」
                 const sealText = document.createElementNS(SVG_NS, 'text');
                 sealText.setAttribute('x', 0);
-                sealText.setAttribute('y', 1);
+                sealText.setAttribute('y', 1); // 微調垂直
                 sealText.setAttribute('text-anchor', 'middle');
                 sealText.setAttribute('dominant-baseline', 'central');
                 sealText.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif');
                 sealText.setAttribute('font-weight', 'bold');
-                sealText.setAttribute('font-size', '14'); 
-                sealText.setAttribute('fill', '#c0392b');
+                sealText.setAttribute('font-size', '13'); 
+                sealText.setAttribute('fill', '#c0392b'); // 紅字
                 sealText.textContent = '吉';
 
                 sealGroup.appendChild(circle);
                 sealGroup.appendChild(sealText);
                 
-                // 設定群組位置與旋轉
+                // 設定群組位置與旋轉 (跟著同心圓轉)
                 sealGroup.setAttribute('transform', `rotate(${sealAngle + 90}, ${sx}, ${sy}) translate(${sx}, ${sy})`);
                 
                 starLayer.appendChild(sealGroup);
@@ -315,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initApp() {
-        console.log("陽宅風水排盤 - 生氣印章版 v9.0");
+        console.log("陽宅風水排盤 - 生氣延年雙吉字版 v9.3");
         updateUI(0);
         renderRotation(0);
         
