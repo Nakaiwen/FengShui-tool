@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         starRadius: 115, 
         
         // 2. 紫白飛星 (外圈)
-        flyingStarRadius: 245, 
+        flyingStarRadius: 240, 
 
         // 吉字印章設定
         sealOffset: 0, 
