@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         starRadius: 115, 
         
         // 2. 紫白飛星 (外圈)
-        flyingStarRadius: 240, 
+        flyingStarRadius: 260, 
 
         // 吉字印章設定
         sealOffset: 0, 
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ★ 第一行：星名 (例如：一白貪狼)
             const tspan1 = document.createElementNS(SVG_NS, 'tspan');
             tspan1.setAttribute('x', x);
-            tspan1.setAttribute('dy', '-0.6em'); // 稍微往上提
+            tspan1.setAttribute('dy', '0.6em'); // 稍微往上提
             // 因為字數變多 (4字)，字體設小一點
             tspan1.setAttribute('font-size', '16'); 
             tspan1.textContent = starInfo.name;
