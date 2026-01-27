@@ -7,12 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const RADIAL_LAYOUT = {
         center: { x: 280.36, y: 280.36 }, 
         
-        // 吉凶文字出現的半徑 (內圈)
-        starRadius: 117, 
+        // 1. 八宅吉凶星 (內圈)
+        starRadius: 115, 
         
-        // 吉字印章的設定
-        sealOffset: 0,  // 與文字同半徑 (因為我們是用角度錯開)
-        sealSize: 10,   // 印章圓圈半徑
+        // 2. 紫白飛星 (外圈)
+        flyingStarRadius: 245, 
+
+        // 吉字印章設定
+        sealOffset: 0, 
+        sealSize: 10,   
         
         defaultRotation: 0 
     };
@@ -24,16 +27,31 @@ document.addEventListener('DOMContentLoaded', () => {
         '酉', '辛', '戌', '乾', '亥', '壬'
     ];
 
-    // 八宅吉凶星位完整資料
+    // ★★★ 更新：紫白飛星完整資訊 (雙行內容) ★★★
+    const FLYING_STARS_INFO = {
+        1: { name: '一白貪狼', meaning: '桃花星', color: '#555555' }, 
+        2: { name: '二黑巨門', meaning: '病符星', color: '#000000' }, 
+        3: { name: '三碧蚩尤', meaning: '強盜星', color: '#2e7d32' }, // 深綠
+        4: { name: '四綠文曲', meaning: '破財星', color: '#388e3c' }, // 綠
+        5: { name: '五黃廉貞', meaning: '毒癌星', color: '#d84315' }, // 橘褐
+        6: { name: '六白武曲', meaning: '偏財星', color: '#555555' }, 
+        7: { name: '七赤破軍', meaning: '賊盜星', color: '#c62828' }, // 紅
+        8: { name: '八白左輔', meaning: '財帛星', color: '#555555' }, 
+        9: { name: '九紫右弼', meaning: '喜慶星', color: '#8e24aa' }  // 紫
+    };
+
+    // 洛書飛行軌跡
+    const LUO_SHU_PATH = ['乾', '兌', '艮', '離', '坎', '坤', '震', '巽'];
+
     const MING_GUA_DATA = {
-        1: { name: '坎', group: '東四命', stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
-        2: { name: '坤', group: '西四命', stars: { '坤':'伏位', '艮':'生氣', '兌':'天醫', '乾':'延年', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
-        3: { name: '震', group: '東四命', stars: { '震':'伏位', '離':'生氣', '坎':'天醫', '巽':'延年', '艮':'六煞', '坤':'禍害', '乾':'五鬼', '兌':'絕命' } },
-        4: { name: '巽', group: '東四命', stars: { '巽':'伏位', '坎':'生氣', '離':'天醫', '震':'延年', '兌':'六煞', '乾':'禍害', '坤':'五鬼', '艮':'絕命' } },
-        6: { name: '乾', group: '西四命', stars: { '乾':'伏位', '兌':'生氣', '艮':'天醫', '坤':'延年', '坎':'六煞', '巽':'禍害', '震':'五鬼', '離':'絕命' } },
-        7: { name: '兌', group: '西四命', stars: { '兌':'伏位', '乾':'生氣', '坤':'天醫', '艮':'延年', '巽':'六煞', '坎':'禍害', '離':'五鬼', '震':'絕命' } },
-        8: { name: '艮', group: '西四命', stars: { '艮':'伏位', '坤':'生氣', '乾':'天醫', '兌':'延年', '震':'六煞', '離':'禍害', '坎':'五鬼', '巽':'絕命' } },
-        9: { name: '離', group: '東四命', stars: { '離':'伏位', '震':'生氣', '巽':'天醫', '坎':'延年', '坤':'六煞', '艮':'禍害', '兌':'五鬼', '乾':'絕命' } }
+        1: { number: 1, name: '坎', group: '東四命', stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
+        2: { number: 2, name: '坤', group: '西四命', stars: { '坤':'伏位', '艮':'生氣', '兌':'天醫', '乾':'延年', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
+        3: { number: 3, name: '震', group: '東四命', stars: { '震':'伏位', '離':'生氣', '坎':'天醫', '巽':'延年', '艮':'六煞', '坤':'禍害', '乾':'五鬼', '兌':'絕命' } },
+        4: { number: 4, name: '巽', group: '東四命', stars: { '巽':'伏位', '坎':'生氣', '離':'天醫', '震':'延年', '兌':'六煞', '乾':'禍害', '坤':'五鬼', '艮':'絕命' } },
+        6: { number: 6, name: '乾', group: '西四命', stars: { '乾':'伏位', '兌':'生氣', '艮':'天醫', '坤':'延年', '坎':'六煞', '巽':'禍害', '震':'五鬼', '離':'絕命' } },
+        7: { number: 7, name: '兌', group: '西四命', stars: { '兌':'伏位', '乾':'生氣', '坤':'天醫', '艮':'延年', '巽':'六煞', '坎':'禍害', '離':'五鬼', '震':'絕命' } },
+        8: { number: 8, name: '艮', group: '西四命', stars: { '艮':'伏位', '坤':'生氣', '乾':'天醫', '兌':'延年', '震':'六煞', '離':'禍害', '坎':'五鬼', '巽':'絕命' } },
+        9: { number: 9, name: '離', group: '東四命', stars: { '離':'伏位', '震':'生氣', '巽':'天醫', '坎':'延年', '坤':'六煞', '艮':'禍害', '兌':'五鬼', '乾':'絕命' } }
     };
 
     let userSettings = {
@@ -54,6 +72,14 @@ document.addEventListener('DOMContentLoaded', () => {
         starLayer.setAttribute('id', 'star-layer');
         svgPlate.appendChild(starLayer);
     }
+    
+    // 建立紫白飛星圖層
+    let flyingStarLayer = document.getElementById('flying-star-layer');
+    if (!flyingStarLayer && svgPlate) {
+        flyingStarLayer = document.createElementNS(SVG_NS, 'g');
+        flyingStarLayer.setAttribute('id', 'flying-star-layer');
+        svgPlate.appendChild(flyingStarLayer);
+    }
 
     const centerMainText = document.getElementById('center-main-text');
     const centerSubText = document.getElementById('center-sub-text');
@@ -63,8 +89,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (centerSubText) centerSubText.textContent = subText;
     }
 
+    function getSvgAngle(gua) {
+        switch(gua) {
+            case '坎': return 90; 
+            case '艮': return 135; 
+            case '震': return 180; 
+            case '巽': return 225; 
+            case '離': return 270; 
+            case '坤': return 315; 
+            case '兌': return 0;   
+            case '乾': return 45;  
+        }
+        return 0;
+    }
+
     /**
-     * 繪製圓盤上的吉凶星 + 生氣/延年 印章
+     * 1. 繪製八宅吉凶星 + 吉字印章 (內圈)
      */
     function drawAusStars(mingGuaInfo) {
         if (!starLayer) return;
@@ -73,28 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const stars = mingGuaInfo.stars;
         
         for (const [gua, starName] of Object.entries(stars)) {
-            let svgAngle;
-            // 對應 SVG 角度 (順時針：右0, 下90, 左180, 上270)
-            switch(gua) {
-                case '坎': svgAngle = 90;  break;
-                case '艮': svgAngle = 135; break; 
-                case '震': svgAngle = 180; break; 
-                case '巽': svgAngle = 225; break; 
-                case '離': svgAngle = 270; break;
-                case '坤': svgAngle = 315; break; 
-                case '兌': svgAngle = 0;   break; 
-                case '乾': svgAngle = 45;  break; 
-            }
+            const svgAngle = getSvgAngle(gua);
 
-            // ★★★ 1. 如果是「生氣」或「延年」，文字往左挪 (-6度) ★★★
+            // 讓位邏輯
             let textAngle = svgAngle;
             if (['生氣', '延年'].includes(starName)) {
                 textAngle = svgAngle - 6; 
             }
 
             const radians = textAngle * (Math.PI / 180);
-            
-            // 繪製主要文字
             const x = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(radians);
             const y = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.starRadius * Math.sin(radians);
 
@@ -103,67 +130,108 @@ document.addEventListener('DOMContentLoaded', () => {
             textEl.setAttribute('y', y);
             textEl.setAttribute('text-anchor', 'middle');
             textEl.setAttribute('dominant-baseline', 'central');
-            textEl.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif'); // 標楷體
+            textEl.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif');
             textEl.setAttribute('font-weight', 'bold');
             textEl.setAttribute('font-size', '20'); 
             
-            // 顏色設定 (你指定的色碼)
             if (['生氣', '天醫', '延年', '伏位'].includes(starName)) {
-                textEl.setAttribute('fill', '#dc5f00ff'); // 吉: 橘紅
+                textEl.setAttribute('fill', '#dc5f00ff'); 
             } else {
-                textEl.setAttribute('fill', '#004fe3ff'); // 凶: 藍色
+                textEl.setAttribute('fill', '#004fe3ff'); 
             }
 
             textEl.textContent = starName;
-            
-            // 同心圓排列 (底部朝圓心)
             textEl.setAttribute('transform', `rotate(${textAngle + 90}, ${x}, ${y})`);
             starLayer.appendChild(textEl);
 
-            // ★★★ 2. 如果是「生氣」或「延年」，在旁邊加蓋吉字印章 ★★★
+            // 繪製印章
             if (['生氣', '延年'].includes(starName)) {
-                
-                // 印章角度：往右挪 (+12度)
                 const sealAngle = svgAngle + 12; 
                 const sealRadians = sealAngle * (Math.PI / 180);
-
                 const sealDist = RADIAL_LAYOUT.starRadius + RADIAL_LAYOUT.sealOffset;
                 const sx = RADIAL_LAYOUT.center.x + sealDist * Math.cos(sealRadians);
                 const sy = RADIAL_LAYOUT.center.y + sealDist * Math.sin(sealRadians);
 
-                // 建立印章群組
                 const sealGroup = document.createElementNS(SVG_NS, 'g');
                 
-                // (A) 印章圓圈
                 const circle = document.createElementNS(SVG_NS, 'circle');
                 circle.setAttribute('cx', 0);
                 circle.setAttribute('cy', 0);
                 circle.setAttribute('r', RADIAL_LAYOUT.sealSize); 
-                circle.setAttribute('fill', 'rgba(255, 255, 255, 0)'); // 透明底
-                circle.setAttribute('stroke', '#c0392b'); // 紅框
-                circle.setAttribute('stroke-width', '1');
+                circle.setAttribute('fill', 'rgba(255, 255, 255, 0)');
+                circle.setAttribute('stroke', '#c0392b'); 
+                circle.setAttribute('stroke-width', '1.5');
 
-                // (B) 印章文字「吉」
                 const sealText = document.createElementNS(SVG_NS, 'text');
                 sealText.setAttribute('x', 0);
-                sealText.setAttribute('y', 1); // 微調垂直
+                sealText.setAttribute('y', 1);
                 sealText.setAttribute('text-anchor', 'middle');
                 sealText.setAttribute('dominant-baseline', 'central');
                 sealText.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif');
                 sealText.setAttribute('font-weight', 'bold');
                 sealText.setAttribute('font-size', '13'); 
-                sealText.setAttribute('fill', '#c0392b'); // 紅字
+                sealText.setAttribute('fill', '#c0392b');
                 sealText.textContent = '吉';
 
                 sealGroup.appendChild(circle);
                 sealGroup.appendChild(sealText);
-                
-                // 設定群組位置與旋轉 (跟著同心圓轉)
                 sealGroup.setAttribute('transform', `rotate(${sealAngle + 90}, ${sx}, ${sy}) translate(${sx}, ${sy})`);
                 
                 starLayer.appendChild(sealGroup);
             }
         }
+    }
+
+    /**
+     * 2. ★★★ 繪製紫白飛星 (雙行：星名 + 意涵) ★★★
+     */
+    function drawFlyingStars(centerNumber) {
+        if (!flyingStarLayer) return;
+        flyingStarLayer.innerHTML = ''; 
+
+        LUO_SHU_PATH.forEach((gua, index) => {
+            let starNum = (centerNumber + index + 1) % 9;
+            if (starNum === 0) starNum = 9;
+
+            const starInfo = FLYING_STARS_INFO[starNum];
+            const svgAngle = getSvgAngle(gua);
+            
+            const radians = svgAngle * (Math.PI / 180);
+            const x = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.flyingStarRadius * Math.cos(radians);
+            const y = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.flyingStarRadius * Math.sin(radians);
+
+            const textEl = document.createElementNS(SVG_NS, 'text');
+            textEl.setAttribute('x', x);
+            textEl.setAttribute('y', y);
+            textEl.setAttribute('text-anchor', 'middle');
+            textEl.setAttribute('dominant-baseline', 'central');
+            textEl.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif');
+            textEl.setAttribute('font-weight', 'bold');
+            textEl.setAttribute('fill', starInfo.color); 
+            
+            // 同心圓旋轉
+            textEl.setAttribute('transform', `rotate(${svgAngle + 90}, ${x}, ${y})`);
+
+            // ★ 第一行：星名 (例如：一白貪狼)
+            const tspan1 = document.createElementNS(SVG_NS, 'tspan');
+            tspan1.setAttribute('x', x);
+            tspan1.setAttribute('dy', '-0.6em'); // 稍微往上提
+            // 因為字數變多 (4字)，字體設小一點
+            tspan1.setAttribute('font-size', '16'); 
+            tspan1.textContent = starInfo.name;
+
+            // ★ 第二行：意涵 (例如：桃花星)
+            const tspan2 = document.createElementNS(SVG_NS, 'tspan');
+            tspan2.setAttribute('x', x);
+            tspan2.setAttribute('dy', '1.5em'); // 換行間距
+            tspan2.setAttribute('font-size', '14'); // 意涵字體再小一點
+            tspan2.textContent = starInfo.meaning;
+
+            textEl.appendChild(tspan1);
+            textEl.appendChild(tspan2);
+            
+            flyingStarLayer.appendChild(textEl);
+        });
     }
 
     // 旋轉控制
@@ -275,6 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result) {
             updateCenterText(`${result.name}命`, result.group);
             drawAusStars(result);
+            drawFlyingStars(result.number);
         }
     }
 
@@ -312,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initApp() {
-        console.log("陽宅風水排盤 - 生氣延年雙吉字版 v9.3");
+        console.log("陽宅風水排盤 - 紫白飛星完整版 v11.0");
         updateUI(0);
         renderRotation(0);
         
