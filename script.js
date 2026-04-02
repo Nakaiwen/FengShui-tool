@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const RADIAL_LAYOUT = {
         center: { x: 280.36, y: 280.36 }, 
         
-        starRadius: 117,        // 1. 八宅吉凶星 (宅卦)
-        personMingRadius: 205,  // 2. 人命紫白 (命卦)
+        starRadius: 117,        // 1. 八宅吉凶星 
+        personMingRadius: 205,  // 2. 人命紫白 
         monthlyRadius: 232,     // 3. 流月飛星 
         annualRadius: 255,      // 4. 流年飛星 
 
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textEl.setAttribute('transform', `rotate(${angle + 90}, ${x}, ${y})`);
 
         if (isDouble) {
-            // ★ 保留您設定的字體大小 (11與10)
+            // ★ 自訂的小字體 11 與 10
             const t1 = document.createElementNS(SVG_NS, 'tspan');
             t1.setAttribute('x', x); t1.setAttribute('dy', '-0.5em');
             t1.setAttribute('font-size', '11');
@@ -187,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const birthYear = parseInt(inputYear.value);
         if (isNaN(birthYear)) return;
 
-        // 計算命卦
         let sum = birthYear.toString().split('').map(Number).reduce((a,b)=>a+b, 0);
         while(sum > 9) sum = sum.toString().split('').map(Number).reduce((a,b)=>a+b,0);
         let kua;
@@ -195,11 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
         else { kua = 4 + sum; while(kua > 9) kua -= 9; if(kua === 5) kua = 8; }
         const mingGua = GUA_DATA[kua];
 
-        // 獲取宅卦
         const houseGuaName = selectHouse ? selectHouse.value : '坎';
         const zhaiGua = Object.values(GUA_DATA).find(g => g.name === houseGuaName) || GUA_DATA[1];
 
-        // 獲取時空飛星
         const termData = getSolarTermMonth();
         const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
         const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
@@ -207,7 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('center-main-text').textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
         document.getElementById('center-sub-text').textContent = `${termData.termName}後-${termData.fsMonth}月`;
 
-        // 繪製八宅 (宅卦)
         const bzLayer = getLayer('bz-layer'); bzLayer.innerHTML = '';
         for(const [g, s] of Object.entries(zhaiGua.stars)) {
             const c = ['生氣','延年','天醫','伏位'].includes(s) ? '#dc5f00' : '#004fe3';
@@ -230,22 +226,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // 繪製飛星
         renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
         renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`);
         renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', `${termData.fsYear.toString().slice(-2)}年`);
     }
 
     // =================================================================
-    //  SECTION 5: 手機羅盤感測與UI旋轉 (★修復區域★)
+    //  SECTION 5: 手機羅盤感測與UI旋轉 (★完全修復版★)
     // =================================================================
     let targetHeading = 0;
     let isCompassMode = false;
     let animationFrameId = null;
 
+    // 計算 24 山 (輔助 UI 更新)
+    function getMountain(degree) {
+        let deg = (degree % 360 + 360) % 360;
+        const index = Math.floor((deg + 7.5) / 15) % 24;
+        return TWENTY_FOUR_MOUNTAINS[index];
+    }
+
     function renderRotation(degree) {
         if (svgPlate) {
-            // 修正 SVG 的旋轉
             const finalDegree = -degree + 180;
             svgPlate.style.transform = `rotate(${finalDegree}deg)`;
         }
@@ -273,7 +274,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const roundDeg = Math.round(deg);
         if(document.getElementById('degree-display')) document.getElementById('degree-display').textContent = roundDeg;
         if(document.getElementById('facing-degree')) document.getElementById('facing-degree').textContent = roundDeg;
-        if(document.getElementById('sitting-degree')) document.getElementById('sitting-degree').textContent = (roundDeg + 180) % 360;
+        
+        const sittingDeg = (roundDeg + 180) % 360;
+        if(document.getElementById('sitting-degree')) document.getElementById('sitting-degree').textContent = sittingDeg;
+
+        // ★ 修復：更新坐向中文字 (子、午等)
+        const elFacingName = document.getElementById('current-facing');
+        if (elFacingName) elFacingName.textContent = getMountain(roundDeg);
+        
+        const elSittingName = document.getElementById('current-mountain');
+        if (elSittingName) elSittingName.textContent = getMountain(sittingDeg);
         
         const slider = document.getElementById('degree-slider');
         if (slider && document.activeElement !== slider) {
@@ -283,15 +293,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleOrientation(event) {
         let compassHeading;
-        // iOS
+        
+        // ★ 修復 NaN 問題：恢復最穩定且相容性最高的取值邏輯
         if (event.webkitCompassHeading) {
             compassHeading = event.webkitCompassHeading;
-        } 
-        // Android
-        else if (event.alpha) {
+        } else if (event.alpha) {
             compassHeading = 360 - event.alpha;
         }
-        if (compassHeading !== undefined && compassHeading !== null) {
+
+        // 確保抓到的值是有效的數字，才進行更新
+        if (compassHeading !== undefined && compassHeading !== null && !isNaN(compassHeading)) {
             targetHeading = compassHeading;
             updateDegreeUI(compassHeading);
         }
@@ -299,20 +310,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startCompass() {
         setCompassMode(true);
-        if (typeof DeviceOrientationEvent !== 'undefined' && 
-            typeof DeviceOrientationEvent.requestPermission === 'function') {
+        
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
                 .then(response => {
                     if (response === 'granted') {
                         window.addEventListener('deviceorientation', handleOrientation, true);
                     } else {
-                        alert("羅盤感測權限被拒絕，請檢查瀏覽器設定。");
+                        alert("羅盤感測權限被拒絕，請檢查 Safari 的設定 (隱私權 -> 動作與方向感測)。");
                         setCompassMode(false);
                     }
                 })
                 .catch(console.error);
         } else {
-            // Android 等免權限裝置
             window.addEventListener('deviceorientationabsolute', handleOrientation, true);
             window.addEventListener('deviceorientation', handleOrientation, true);
         }
@@ -326,8 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (slider) {
             slider.addEventListener('input', (e) => {
                 if (isCompassMode) {
-                    window.removeEventListener('deviceorientation', handleOrientation);
-                    window.removeEventListener('deviceorientationabsolute', handleOrientation);
+                    window.removeEventListener('deviceorientation', handleOrientation, true);
+                    window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
                     setCompassMode(false); 
                 }
                 const deg = Number(e.target.value);
@@ -344,8 +354,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const resetBtn = document.getElementById('reset-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
-                window.removeEventListener('deviceorientation', handleOrientation);
-                window.removeEventListener('deviceorientationabsolute', handleOrientation);
+                window.removeEventListener('deviceorientation', handleOrientation, true);
+                window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
                 setCompassMode(false);
                 updateDegreeUI(0);
                 renderRotation(0);
@@ -363,11 +373,11 @@ document.addEventListener('DOMContentLoaded', () => {
             btnFemale.addEventListener('click', () => { userSettings.gender='female'; btnFemale.classList.add('active'); btnMale.classList.remove('active'); updateAll(); });
         }
         
+        const selectHouse = document.getElementById('house-gua');
         if (selectHouse) {
             selectHouse.addEventListener('change', updateAll);
         }
         
-        // 初始繪圖
         updateAll();
         updateDegreeUI(0);
         renderRotation(0);
