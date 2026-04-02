@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =================================================================
-    //  SECTION 4: 更新文字與圖層
+    //  SECTION 4: 飛星與圖層更新
     // =================================================================
     const inputYear = document.getElementById('birth-year');
     const selectHouse = document.getElementById('house-gua');
@@ -201,9 +201,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
         const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
 
-        // 防呆更新中央文字
-        document.querySelectorAll('#center-main-text').forEach(el => el.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`);
-        document.querySelectorAll('#center-sub-text').forEach(el => el.textContent = `${termData.termName}後-${termData.fsMonth}月`);
+        const centerMainText = document.getElementById('center-main-text');
+        if (centerMainText) centerMainText.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
+        
+        const centerSubText = document.getElementById('center-sub-text');
+        if (centerSubText) centerSubText.textContent = `${termData.termName}後-${termData.fsMonth}月`;
 
         const bzLayer = getLayer('bz-layer'); bzLayer.innerHTML = '';
         for(const [g, s] of Object.entries(zhaiGua.stars)) {
@@ -233,18 +235,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =================================================================
-    //  SECTION 5: 手機羅盤感測與UI旋轉 (★坐向文字防呆修復版★)
+    //  SECTION 5: 羅盤感測與UI更新 (★完全退回 v12 原汁原味寫法★)
     // =================================================================
+    
+    // ★ 在這裡把原本的 DOM 元件全部先抓出來 (跟 v12 寫法一模一樣)
+    const elSittingName = document.getElementById('current-mountain');
+    const elFacingName = document.getElementById('current-facing');
+    const elSittingDeg = document.getElementById('sitting-degree');
+    const elFacingDeg = document.getElementById('facing-degree');
+    const degreeDisplay = document.getElementById('degree-display');
+    const degreeSlider = document.getElementById('degree-slider');
+
     let targetHeading = 0;
     let isCompassMode = false;
     let animationFrameId = null;
 
-    // 取得 24 山名稱 (加入安全機制)
     function getMountain(degree) {
-        if (isNaN(degree) || degree === null) return "?";
         let deg = (degree % 360 + 360) % 360;
         const index = Math.floor((deg + 7.5) / 15) % 24;
-        return TWENTY_FOUR_MOUNTAINS[index] || "?";
+        return TWENTY_FOUR_MOUNTAINS[index];
     }
 
     function renderRotation(degree) {
@@ -252,6 +261,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const finalDegree = -degree + 180;
             svgPlate.style.transform = `rotate(${finalDegree}deg)`;
         }
+    }
+
+    // ★ 完全使用 v12 成功運作的更新函式
+    function updateUI(degree) {
+        const deg = Math.round(degree);
+        
+        if (degreeSlider && document.activeElement !== degreeSlider) {
+            degreeSlider.value = deg;
+        }
+        if (degreeDisplay) degreeDisplay.textContent = deg;
+
+        const facingName = getMountain(deg);
+        const sittingDegree = (deg + 180) % 360;
+        const sittingName = getMountain(sittingDegree);
+
+        if (elSittingName) elSittingName.textContent = sittingName;
+        if (elFacingName) elFacingName.textContent = facingName;
+        if (elSittingDeg) elSittingDeg.textContent = Math.round(sittingDegree);
+        if (elFacingDeg) elFacingDeg.textContent = deg;
     }
 
     function animationLoop() {
@@ -272,41 +300,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateDegreeUI(deg) {
-        if (isNaN(deg) || deg === null) return;
-        
-        const roundDeg = Math.round(deg);
-        const sittingDeg = (roundDeg + 180) % 360;
-
-        // ★ 使用 querySelectorAll 強制更新畫面上所有同 ID 的標籤，防止 HTML 重複 ID 問題
-        document.querySelectorAll('#degree-display').forEach(el => el.textContent = roundDeg);
-        document.querySelectorAll('#facing-degree').forEach(el => el.textContent = roundDeg);
-        document.querySelectorAll('#sitting-degree').forEach(el => el.textContent = sittingDeg);
-
-        // ★ 計算山向並強制更新
-        const facingName = getMountain(roundDeg);
-        const sittingName = getMountain(sittingDeg);
-        
-        document.querySelectorAll('#current-facing').forEach(el => el.textContent = facingName);
-        document.querySelectorAll('#current-mountain').forEach(el => el.textContent = sittingName);
-        
-        const slider = document.getElementById('degree-slider');
-        if (slider && document.activeElement !== slider) {
-            slider.value = roundDeg;
-        }
-    }
-
     function handleOrientation(event) {
         let compassHeading;
         if (event.webkitCompassHeading) {
             compassHeading = event.webkitCompassHeading;
-        } else if (event.alpha !== null) {
+        } else if (event.alpha) {
             compassHeading = 360 - event.alpha;
         }
 
-        if (compassHeading !== undefined && compassHeading !== null && !isNaN(compassHeading)) {
+        if (compassHeading !== undefined && compassHeading !== null) {
             targetHeading = compassHeading;
-            updateDegreeUI(compassHeading);
+            updateUI(compassHeading); // 呼叫退回的 v12 寫法
         }
     }
 
@@ -318,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (response === 'granted') {
                         window.addEventListener('deviceorientation', handleOrientation, true);
                     } else {
-                        alert("羅盤感測權限被拒絕，請檢查 Safari 的設定 (隱私權 -> 動作與方向感測)。");
+                        alert("羅盤感測權限被拒絕，請檢查 Safari 的設定。");
                         setCompassMode(false);
                     }
                 })
@@ -333,16 +337,15 @@ document.addEventListener('DOMContentLoaded', () => {
     //  SECTION 6: 初始化與綁定事件
     // =================================================================
     function init() {
-        const slider = document.getElementById('degree-slider');
-        if (slider) {
-            slider.addEventListener('input', (e) => {
+        if (degreeSlider) {
+            degreeSlider.addEventListener('input', (e) => {
                 if (isCompassMode) {
                     window.removeEventListener('deviceorientation', handleOrientation, true);
                     window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
                     setCompassMode(false); 
                 }
                 const deg = Number(e.target.value);
-                updateDegreeUI(deg);
+                updateUI(deg);
                 renderRotation(deg);
             });
         }
@@ -358,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.removeEventListener('deviceorientation', handleOrientation, true);
                 window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
                 setCompassMode(false);
-                updateDegreeUI(0);
+                updateUI(0);
                 renderRotation(0);
             });
         }
@@ -374,14 +377,20 @@ document.addEventListener('DOMContentLoaded', () => {
             btnFemale.addEventListener('click', () => { userSettings.gender='female'; btnFemale.classList.add('active'); btnMale.classList.remove('active'); updateAll(); });
         }
         
-        const selectHouse = document.getElementById('house-gua');
         if (selectHouse) {
             selectHouse.addEventListener('change', updateAll);
         }
         
-        // 確保網頁一載入，文字區塊就會被灌入正確的初始值 (午山子向)
+        // ★ 確保全域可用
+        window.setDegree = function(deg) {
+            window.removeEventListener('deviceorientation', handleOrientation);
+            setCompassMode(false);
+            updateUI(deg); 
+            renderRotation(deg);
+        }
+
         updateAll();
-        updateDegreeUI(0);
+        updateUI(0);
         renderRotation(0);
     }
     
