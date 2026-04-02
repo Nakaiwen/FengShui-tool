@@ -7,10 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const RADIAL_LAYOUT = {
         center: { x: 280.36, y: 280.36 }, 
         
-        starRadius: 117,        // 1. 八宅吉凶星 (最內 - ★改為宅卦)
-        personMingRadius: 207,  // 2. 人命紫白 (命卦飛星)
-        monthlyRadius: 232,     // 3. 流月飛星 (中外)
-        annualRadius: 255,      // 4. 流年飛星 (最外)
+        starRadius: 117,        // 1. 八宅吉凶星 (宅卦)
+        personMingRadius: 205,  // 2. 人命紫白 (命卦)
+        monthlyRadius: 232,     // 3. 流月飛星 
+        annualRadius: 255,      // 4. 流年飛星 
 
         sealOffset: 0,
         sealSize: 10,   
@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const STAR_NAMES_SHORT = { 1: '一白', 2: '二黑', 3: '三碧', 4: '四綠', 5: '五黃', 6: '六白', 7: '七赤', 8: '八白', 9: '九紫' };
     const LUO_SHU_PATH = ['乾', '兌', '艮', '離', '坎', '坤', '震', '巽'];
 
-    // 宅卦與命卦的八宅推算規則是共通的，共用此表
     const GUA_DATA = {
         1: { name: '坎', number: 1, stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
         2: { name: '坤', number: 2, stars: { '坤':'伏位', '艮':'生氣', '兌':'天醫', '乾':'延年', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
@@ -50,15 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let userSettings = {
-        year: 1990,
         gender: 'male',
-        houseGua: '坎' // 預設坎宅
+        houseGua: '坎' 
     };
 
     // =================================================================
-    //  SECTION 2: 核心演算邏輯
+    //  SECTION 2: 節氣與飛星邏輯
     // =================================================================
-
     function getSolarTermMonth() {
         const now = new Date();
         const y = now.getFullYear();
@@ -138,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textEl.setAttribute('transform', `rotate(${angle + 90}, ${x}, ${y})`);
 
         if (isDouble) {
+            // ★ 保留您設定的字體大小 (11與10)
             const t1 = document.createElementNS(SVG_NS, 'tspan');
             t1.setAttribute('x', x); t1.setAttribute('dy', '-0.5em');
             t1.setAttribute('font-size', '11');
@@ -180,18 +178,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =================================================================
-    //  SECTION 4: 更新與事件
+    //  SECTION 4: 更新文字與圖層
     // =================================================================
     const inputYear = document.getElementById('birth-year');
-    const btnMale = document.getElementById('btn-male');
-    const btnFemale = document.getElementById('btn-female');
-    const selectHouse = document.getElementById('house-gua'); // 新增選宅DOM
+    const selectHouse = document.getElementById('house-gua');
 
     function updateAll() {
         const birthYear = parseInt(inputYear.value);
         if (isNaN(birthYear)) return;
 
-        // --- 1. 計算【命卦】(人) ---
+        // 計算命卦
         let sum = birthYear.toString().split('').map(Number).reduce((a,b)=>a+b, 0);
         while(sum > 9) sum = sum.toString().split('').map(Number).reduce((a,b)=>a+b,0);
         let kua;
@@ -199,22 +195,19 @@ document.addEventListener('DOMContentLoaded', () => {
         else { kua = 4 + sum; while(kua > 9) kua -= 9; if(kua === 5) kua = 8; }
         const mingGua = GUA_DATA[kua];
 
-        // --- 2. 獲取【宅卦】(屋) ---
+        // 獲取宅卦
         const houseGuaName = selectHouse ? selectHouse.value : '坎';
         const zhaiGua = Object.values(GUA_DATA).find(g => g.name === houseGuaName) || GUA_DATA[1];
 
-        // --- 3. 獲取當前時空飛星 ---
+        // 獲取時空飛星
         const termData = getSolarTermMonth();
         const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
         const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
 
-        // --- 4. 更新中央文字 (顯示 宅 + 命) ---
         document.getElementById('center-main-text').textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
         document.getElementById('center-sub-text').textContent = `${termData.termName}後-${termData.fsMonth}月`;
 
-        // --- 5. 繪製所有圖層 ---
-        
-        // 【最內圈 R:117】：八宅吉凶 (現在以 zhaiGua 宅卦為主！)
+        // 繪製八宅 (宅卦)
         const bzLayer = getLayer('bz-layer'); bzLayer.innerHTML = '';
         for(const [g, s] of Object.entries(zhaiGua.stars)) {
             const c = ['生氣','延年','天醫','伏位'].includes(s) ? '#dc5f00' : '#004fe3';
@@ -222,7 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (['生氣', '延年'].includes(s)) textAngle -= 6; 
             drawLabel(bzLayer, s, textAngle, RADIAL_LAYOUT.starRadius, c, 18);
 
-            // 宅卦的吉方蓋上吉字印章
             if (['生氣', '延年'].includes(s)) {
                 const sealAngle = getSvgAngle(g) + 12; 
                 const sx = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(sealAngle * Math.PI / 180);
@@ -238,31 +230,132 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // 【中內圈 R:200】: 人命紫白 (以 mingGua 命卦為主！)
+        // 繪製飛星
         renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
-        
-        // 【中外圈 R:232】: 流月飛星 
         renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`);
-        
-        // 【最外圈 R:255】: 流年飛星 
         renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', `${termData.fsYear.toString().slice(-2)}年`);
     }
 
+    // =================================================================
+    //  SECTION 5: 手機羅盤感測與UI旋轉 (★修復區域★)
+    // =================================================================
+    let targetHeading = 0;
+    let isCompassMode = false;
+    let animationFrameId = null;
+
+    function renderRotation(degree) {
+        if (svgPlate) {
+            // 修正 SVG 的旋轉
+            const finalDegree = -degree + 180;
+            svgPlate.style.transform = `rotate(${finalDegree}deg)`;
+        }
+    }
+
+    function animationLoop() {
+        if (!isCompassMode) return;
+        renderRotation(targetHeading);
+        animationFrameId = requestAnimationFrame(animationLoop);
+    }
+
+    function setCompassMode(active) {
+        isCompassMode = active;
+        if (active) {
+            svgPlate.style.transition = 'none';
+            if (!animationFrameId) animationLoop();
+        } else {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+            svgPlate.style.transition = 'transform 0.5s ease-out';
+        }
+    }
+
+    function updateDegreeUI(deg) {
+        const roundDeg = Math.round(deg);
+        if(document.getElementById('degree-display')) document.getElementById('degree-display').textContent = roundDeg;
+        if(document.getElementById('facing-degree')) document.getElementById('facing-degree').textContent = roundDeg;
+        if(document.getElementById('sitting-degree')) document.getElementById('sitting-degree').textContent = (roundDeg + 180) % 360;
+        
+        const slider = document.getElementById('degree-slider');
+        if (slider && document.activeElement !== slider) {
+            slider.value = roundDeg;
+        }
+    }
+
+    function handleOrientation(event) {
+        let compassHeading;
+        // iOS
+        if (event.webkitCompassHeading) {
+            compassHeading = event.webkitCompassHeading;
+        } 
+        // Android
+        else if (event.alpha) {
+            compassHeading = 360 - event.alpha;
+        }
+        if (compassHeading !== undefined && compassHeading !== null) {
+            targetHeading = compassHeading;
+            updateDegreeUI(compassHeading);
+        }
+    }
+
+    function startCompass() {
+        setCompassMode(true);
+        if (typeof DeviceOrientationEvent !== 'undefined' && 
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then(response => {
+                    if (response === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation, true);
+                    } else {
+                        alert("羅盤感測權限被拒絕，請檢查瀏覽器設定。");
+                        setCompassMode(false);
+                    }
+                })
+                .catch(console.error);
+        } else {
+            // Android 等免權限裝置
+            window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+            window.addEventListener('deviceorientation', handleOrientation, true);
+        }
+    }
+
+    // =================================================================
+    //  SECTION 6: 初始化與綁定事件
+    // =================================================================
     function init() {
         const slider = document.getElementById('degree-slider');
-        const plate = document.getElementById('FengShui-plate');
-        if (slider && plate) {
+        if (slider) {
             slider.addEventListener('input', (e) => {
-                const deg = e.target.value;
-                plate.style.transform = `rotate(${-deg + 180}deg)`;
-                if(document.getElementById('degree-display')) document.getElementById('degree-display').textContent = deg;
-                if(document.getElementById('facing-degree')) document.getElementById('facing-degree').textContent = Math.round(deg);
-                if(document.getElementById('sitting-degree')) document.getElementById('sitting-degree').textContent = (Math.round(deg) + 180) % 360;
+                if (isCompassMode) {
+                    window.removeEventListener('deviceorientation', handleOrientation);
+                    window.removeEventListener('deviceorientationabsolute', handleOrientation);
+                    setCompassMode(false); 
+                }
+                const deg = Number(e.target.value);
+                updateDegreeUI(deg);
+                renderRotation(deg);
             });
         }
         
+        const startCompassBtn = document.getElementById('start-compass-btn');
+        if (startCompassBtn) {
+            startCompassBtn.addEventListener('click', startCompass);
+        }
+
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                window.removeEventListener('deviceorientation', handleOrientation);
+                window.removeEventListener('deviceorientationabsolute', handleOrientation);
+                setCompassMode(false);
+                updateDegreeUI(0);
+                renderRotation(0);
+            });
+        }
+
         if (inputYear) inputYear.addEventListener('input', updateAll);
         
+        const btnMale = document.getElementById('btn-male');
+        const btnFemale = document.getElementById('btn-female');
         if (btnMale) {
             btnMale.addEventListener('click', () => { userSettings.gender='male'; btnMale.classList.add('active'); btnFemale.classList.remove('active'); updateAll(); });
         }
@@ -270,12 +363,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btnFemale.addEventListener('click', () => { userSettings.gender='female'; btnFemale.classList.add('active'); btnMale.classList.remove('active'); updateAll(); });
         }
         
-        // ★ 新增：監聽屋宅選單變化 ★
         if (selectHouse) {
             selectHouse.addEventListener('change', updateAll);
         }
         
+        // 初始繪圖
         updateAll();
+        updateDegreeUI(0);
+        renderRotation(0);
     }
+    
     init();
 });
