@@ -135,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
         textEl.setAttribute('transform', `rotate(${angle + 90}, ${x}, ${y})`);
 
         if (isDouble) {
-            // ★ 自訂的小字體 11 與 10
             const t1 = document.createElementNS(SVG_NS, 'tspan');
             t1.setAttribute('x', x); t1.setAttribute('dy', '-0.5em');
             t1.setAttribute('font-size', '11');
@@ -184,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectHouse = document.getElementById('house-gua');
 
     function updateAll() {
+        if (!inputYear) return;
         const birthYear = parseInt(inputYear.value);
         if (isNaN(birthYear)) return;
 
@@ -201,8 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
         const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
 
-        document.getElementById('center-main-text').textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
-        document.getElementById('center-sub-text').textContent = `${termData.termName}後-${termData.fsMonth}月`;
+        // 防呆更新中央文字
+        document.querySelectorAll('#center-main-text').forEach(el => el.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`);
+        document.querySelectorAll('#center-sub-text').forEach(el => el.textContent = `${termData.termName}後-${termData.fsMonth}月`);
 
         const bzLayer = getLayer('bz-layer'); bzLayer.innerHTML = '';
         for(const [g, s] of Object.entries(zhaiGua.stars)) {
@@ -232,17 +233,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =================================================================
-    //  SECTION 5: 手機羅盤感測與UI旋轉 (★完全修復版★)
+    //  SECTION 5: 手機羅盤感測與UI旋轉 (★坐向文字防呆修復版★)
     // =================================================================
     let targetHeading = 0;
     let isCompassMode = false;
     let animationFrameId = null;
 
-    // 計算 24 山 (輔助 UI 更新)
+    // 取得 24 山名稱 (加入安全機制)
     function getMountain(degree) {
+        if (isNaN(degree) || degree === null) return "?";
         let deg = (degree % 360 + 360) % 360;
         const index = Math.floor((deg + 7.5) / 15) % 24;
-        return TWENTY_FOUR_MOUNTAINS[index];
+        return TWENTY_FOUR_MOUNTAINS[index] || "?";
     }
 
     function renderRotation(degree) {
@@ -271,19 +273,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateDegreeUI(deg) {
+        if (isNaN(deg) || deg === null) return;
+        
         const roundDeg = Math.round(deg);
-        if(document.getElementById('degree-display')) document.getElementById('degree-display').textContent = roundDeg;
-        if(document.getElementById('facing-degree')) document.getElementById('facing-degree').textContent = roundDeg;
-        
         const sittingDeg = (roundDeg + 180) % 360;
-        if(document.getElementById('sitting-degree')) document.getElementById('sitting-degree').textContent = sittingDeg;
 
-        // ★ 修復：更新坐向中文字 (子、午等)
-        const elFacingName = document.getElementById('current-facing');
-        if (elFacingName) elFacingName.textContent = getMountain(roundDeg);
+        // ★ 使用 querySelectorAll 強制更新畫面上所有同 ID 的標籤，防止 HTML 重複 ID 問題
+        document.querySelectorAll('#degree-display').forEach(el => el.textContent = roundDeg);
+        document.querySelectorAll('#facing-degree').forEach(el => el.textContent = roundDeg);
+        document.querySelectorAll('#sitting-degree').forEach(el => el.textContent = sittingDeg);
+
+        // ★ 計算山向並強制更新
+        const facingName = getMountain(roundDeg);
+        const sittingName = getMountain(sittingDeg);
         
-        const elSittingName = document.getElementById('current-mountain');
-        if (elSittingName) elSittingName.textContent = getMountain(sittingDeg);
+        document.querySelectorAll('#current-facing').forEach(el => el.textContent = facingName);
+        document.querySelectorAll('#current-mountain').forEach(el => el.textContent = sittingName);
         
         const slider = document.getElementById('degree-slider');
         if (slider && document.activeElement !== slider) {
@@ -293,15 +298,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleOrientation(event) {
         let compassHeading;
-        
-        // ★ 修復 NaN 問題：恢復最穩定且相容性最高的取值邏輯
         if (event.webkitCompassHeading) {
             compassHeading = event.webkitCompassHeading;
-        } else if (event.alpha) {
+        } else if (event.alpha !== null) {
             compassHeading = 360 - event.alpha;
         }
 
-        // 確保抓到的值是有效的數字，才進行更新
         if (compassHeading !== undefined && compassHeading !== null && !isNaN(compassHeading)) {
             targetHeading = compassHeading;
             updateDegreeUI(compassHeading);
@@ -310,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startCompass() {
         setCompassMode(true);
-        
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
                 .then(response => {
@@ -378,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectHouse.addEventListener('change', updateAll);
         }
         
+        // 確保網頁一載入，文字區塊就會被灌入正確的初始值 (午山子向)
         updateAll();
         updateDegreeUI(0);
         renderRotation(0);
