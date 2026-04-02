@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         center: { x: 280.36, y: 280.36 }, 
         
         starRadius: 117,        // 1. 八宅吉凶星 
-        personMingRadius: 205,  // 2. 人命紫白 
+        personMingRadius: 203,  // 2. 人命紫白 
         monthlyRadius: 232,     // 3. 流月飛星 
         annualRadius: 255,      // 4. 流年飛星 
 
