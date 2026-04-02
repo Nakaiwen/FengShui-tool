@@ -74,7 +74,7 @@ body {
 /* 主標題 (例如：離命) */
 #center-main-text {
     /* 原本的設定... */
-    font-size: 6vmin; 
+    font-size: 3vmin; 
     font-weight: bold;
     color: #da7800; 
     line-height: 1.2;
@@ -87,7 +87,7 @@ body {
 /* 副標題 (例如：東四命) */
 #center-sub-text {
     /* 原本的設定... */
-    font-size: 3vmin; 
+    font-size: 2vmin; 
     color: #555; 
     font-weight: bold; 
     white-space: nowrap;
