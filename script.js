@@ -7,12 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const RADIAL_LAYOUT = {
         center: { x: 280.36, y: 280.36 }, 
         
-        combinationsRadius: 100, // ★ 吉凶格局星號 (半徑 90)
-        starRadius: 122,        // 1. 八宅吉凶星 
-        personMingRadius: 202,  // 2. 人命紫白 & 宅紫白 (共用圈)
-        monthlyRadius: 201,     // 3. 流月飛星 
-        annualRadius: 230,      // 4. 流年飛星 & 元運飛星 (共用圈)
-        twelveShasRadius: 255,  // 5. 太歲十二神煞
+        combinationsRadius: 100,// ★ 吉凶格局星號 (半徑 100)
+        starRadius: 122,        // 1. 八宅吉凶星 (半徑 122)
+        personMingRadius: 200,  // 2. 人命紫白 & 宅紫白 (共用圈)
+        monthlyRadius: 200,     // 3. 流月飛星 
+        annualRadius: 228,      // 4. 流年飛星 & 元運飛星 (共用圈)
+        twelveShasRadius: 255,  // 5. 太歲十二神煞 & 戊己都天煞 & 三煞 (共用圈)
 
         sealOffset: 0,
         sealSize: 10,   
@@ -42,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const TWELVE_SHAS_SEQUENCE = ['太歲', '太陽', '喪門', '太陰', '官符', '死符', '歲破', '龍德', '白虎', '福德', '吊客', '病符'];
 
-    // ★ 吉凶格局診斷規則
     const COMBINATION_RULES = [
         { type: 'good', stars: [4, 1], name: '四一同宮' },
         { type: 'good', stars: [6, 8], name: '六八同宮' },
@@ -95,28 +94,20 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let currentTerm = terms[0];
         for (let i = terms.length - 1; i >= 0; i--) {
-            if (md >= terms[i].md) { 
-                currentTerm = terms[i]; 
-                break; 
-            }
+            if (md >= terms[i].md) { currentTerm = terms[i]; break; }
         }
         
         let fsYear = y + currentTerm.yearOffset;
         if (md < 204) fsYear = y - 1; 
-        
         return { fsYear, fsMonth: currentTerm.month, termName: currentTerm.name };
     }
 
     function calculateMonthStar(fsYear, fsMonth) {
         const yearBranchIndex = (fsYear - 4) % 12; 
         let startStar;
-        if ([0, 3, 6, 9].includes(yearBranchIndex)) { 
-            startStar = 8; 
-        } else if ([1, 4, 7, 10].includes(yearBranchIndex)) { 
-            startStar = 5; 
-        } else { 
-            startStar = 2; 
-        }
+        if ([0, 3, 6, 9].includes(yearBranchIndex)) { startStar = 8; } 
+        else if ([1, 4, 7, 10].includes(yearBranchIndex)) { startStar = 5; } 
+        else { startStar = 2; }
         
         let star = startStar - (fsMonth - 1);
         while (star <= 0) star += 9;
@@ -158,19 +149,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getSvgAngle(gua) {
         switch(gua) {
-            case '坎': return 90; 
-            case '艮': return 135; 
-            case '震': return 180; 
-            case '巽': return 225; 
-            case '離': return 270; 
-            case '坤': return 315; 
-            case '兌': return 0; 
-            case '乾': return 45;  
+            case '坎': return 90; case '艮': return 135; case '震': return 180; case '巽': return 225; 
+            case '離': return 270; case '坤': return 315; case '兌': return 0; case '乾': return 45;  
         }
         return 0;
     }
 
-    function drawLabel(layer, text, angle, radius, color, fontSize, isDouble = false, subText = "") {
+    function drawLabel(layer, text, angle, radius, color, fontSize, isDouble = false, subText = "", subColor = "") {
         if (!layer) return;
         const rad = angle * (Math.PI / 180);
         const x = RADIAL_LAYOUT.center.x + radius * Math.cos(rad);
@@ -190,17 +175,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isDouble) {
             const t1 = document.createElementNS(SVG_NS, 'tspan');
             t1.setAttribute('x', x); 
-            t1.setAttribute('dy', '-0.5em');
-            t1.setAttribute('font-size', '11');
+            t1.setAttribute('dy', '-0.5em'); 
+            t1.setAttribute('font-size', '11'); 
             t1.textContent = text;
             
             const t2 = document.createElementNS(SVG_NS, 'tspan');
             t2.setAttribute('x', x); 
-            t2.setAttribute('dy', '1.5em');
-            t2.setAttribute('font-size', '10');
+            t2.setAttribute('dy', '1.3em'); // ★ 您的專屬設定 1.3em
+            t2.setAttribute('font-size', '10'); 
+            if (subColor) t2.setAttribute('fill', subColor); 
             t2.textContent = subText;
             
-            textEl.appendChild(t1);
+            textEl.appendChild(t1); 
             textEl.appendChild(t2);
         } else {
             textEl.setAttribute('font-size', fontSize);
@@ -209,7 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
         layer.appendChild(textEl);
     }
 
-    // ★ 星號指示器
     function drawStarIndicator(layer, angle, radius, type) {
         const rad = angle * (Math.PI / 180);
         const x = RADIAL_LAYOUT.center.x + radius * Math.cos(rad);
@@ -252,18 +237,103 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderTwelveShas(fsYear, radius, layerId) {
+    // ★ 核心大升級：外層神煞渲染引擎 (完美合併十二神煞、戊己都天煞與三煞)
+    function renderOuterShas(fsYear, radius, layerId) {
         const layer = getLayer(layerId);
         if(!layer) return;
         layer.innerHTML = '';
         
+        // 準備 24 山的資料暫存槽
+        const labels24 = Array(24).fill(null).map(() => ({ main: '', sub: '', color: '', subColor: '' }));
+
+        // 1. 先計算十二神煞 (落在地支，也就是 24 山陣列的偶數索引)
         const yearBranchIndex = (fsYear - 4) % 12; 
         for (let i = 0; i < 12; i++) {
-            const branchAngle = 90 + (i * 30);
+            const mntIndex = i * 2; // 子=0, 丑=2, 寅=4...
             const shaIndex = (i - yearBranchIndex + 12) % 12;
             const shaName = TWELVE_SHAS_SEQUENCE[shaIndex];
-            const color = (shaName === '太歲') ? '#e91700ff' : '#6421c3ff';
-            drawLabel(layer, shaName, branchAngle, radius, color, 12);
+            labels24[mntIndex].main = shaName;
+            labels24[mntIndex].color = (shaName === '太歲') ? '#e91700ff' : '#6421c3ff';
+        }
+
+        // 2. 再計算戊己都天煞與夾都天 (根據年份天干)
+        const stemIndex = fsYear % 10;
+        const DU_TIAN_MAP = {
+            0: [4, 5, 6],    // 庚年：寅, 甲, 卯
+            1: [20, 21, 22], // 辛年：戌, 乾, 亥
+            2: [16, 17, 18], // 壬年：申, 庚, 酉
+            3: [12, 13, 14], // 癸年：午, 丁, 未
+            4: [8, 9, 10],   // 甲年：辰, 巽, 巳
+            5: [4, 5, 6],    // 乙年：寅, 甲, 卯
+            6: [20, 21, 22], // 丙年：戌, 乾, 亥
+            7: [16, 17, 18], // 丁年：申, 庚, 酉
+            8: [12, 13, 14], // 戊年：午, 丁, 未
+            9: [8, 9, 10]    // 己年：辰, 巽, 巳
+        };
+        
+        const dtIndices = DU_TIAN_MAP[stemIndex];
+        const dtNames = ['戊己都天', '夾煞都天', '戊己都天'];
+
+        for (let i = 0; i < 3; i++) {
+            const idx = dtIndices[i];
+            const duTianName = dtNames[i];
+            const duTianColor = '#e91700ff'; // 戊己都天為大凶，標示紅色
+
+            if (labels24[idx].main) {
+                labels24[idx].sub = duTianName;
+                labels24[idx].subColor = duTianColor;
+            } else {
+                labels24[idx].main = duTianName;
+                labels24[idx].color = duTianColor;
+            }
+        }
+
+        // 3. ★ 新增：計算三煞 (根據年份地支)
+        // 寅(6)午(10)戌(2)煞北：壬(23)子(0)癸(1)
+        // 申(0)子(4)辰(8)煞南：丙(11)午(12)丁(13) -> 註: yearBranchIndex 中，申是 4, 子是 8, 辰是 0
+        // 亥(3)卯(7)未(11)煞西：庚(17)酉(18)辛(19)
+        // 巳(9)酉(1)丑(5)煞東：甲(5)卯(6)乙(7)
+        let sanShaIndices = [];
+        
+        if ([6, 10, 2].includes(yearBranchIndex)) {
+            sanShaIndices = [23, 0, 1]; // 煞北
+        } else if ([4, 8, 0].includes(yearBranchIndex)) {
+            sanShaIndices = [11, 12, 13]; // 煞南
+        } else if ([3, 7, 11].includes(yearBranchIndex)) {
+            sanShaIndices = [17, 18, 19]; // 煞西
+        } else if ([9, 1, 5].includes(yearBranchIndex)) {
+            sanShaIndices = [5, 6, 7]; // 煞東
+        }
+
+        sanShaIndices.forEach(idx => {
+            const ssName = "三煞";
+            const ssColor = "#e91700ff"; // 三煞亦為大凶，標示紅色
+            
+            if (!labels24[idx].main) {
+                // 如果這個宮位目前是空的，直接填入
+                labels24[idx].main = ssName;
+                labels24[idx].color = ssColor;
+            } else if (!labels24[idx].sub) {
+                // 如果這個宮位只有一行字，把它加在第二行
+                labels24[idx].sub = ssName;
+                labels24[idx].subColor = ssColor;
+            } else {
+                // 如果這個宮位已經有兩行字了 (極少數情況)，把它合併到第二行
+                labels24[idx].sub += "·三煞";
+            }
+        });
+
+        // 4. 統一畫出 24 個方位的文字
+        for (let i = 0; i < 24; i++) {
+            const data = labels24[i];
+            if (data.main) {
+                const angle = 90 + (i * 15); // 子(0)為 90 度，順時針每格 15 度
+                if (data.sub) {
+                    drawLabel(layer, data.main, angle, radius, data.color, 12, true, data.sub, data.subColor);
+                } else {
+                    drawLabel(layer, data.main, angle, radius, data.color, 12);
+                }
+            }
         }
     }
 
@@ -311,7 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!yearTextEl) {
                     yearTextEl = document.createElement('div');
                     yearTextEl.id = 'center-year-text';
-                    // ★ 圓心微調：深灰 1.8vmin
                     yearTextEl.style.fontSize = '1.8vmin';
                     yearTextEl.style.fontWeight = 'bold';
                     yearTextEl.style.color = '#555555ff'; 
@@ -337,53 +406,40 @@ document.addEventListener('DOMContentLoaded', () => {
         for(const [g, s] of Object.entries(zhaiGua.stars)) {
             const c = ['生氣','延年','天醫','伏位'].includes(s) ? '#dc5f00' : '#004fe3';
             let textAngle = getSvgAngle(g);
-            if (['生氣', '延年'].includes(s)) {
-                textAngle -= 6; 
-            }
-            drawLabel(bzLayer, s, textAngle, RADIAL_LAYOUT.starRadius, c, 16);
+            if (['生氣', '延年'].includes(s)) textAngle -= 6; 
+            drawLabel(bzLayer, s, textAngle, RADIAL_LAYOUT.starRadius, c, 16); // ★ 八宅字體 16
 
             if (['生氣', '延年'].includes(s)) {
                 const sealAngle = getSvgAngle(g) + 12; 
                 const sx = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(sealAngle * Math.PI / 180);
                 const sy = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.starRadius * Math.sin(sealAngle * Math.PI / 180);
-                
                 const sealGroup = document.createElementNS(SVG_NS, 'g');
                 const circle = document.createElementNS(SVG_NS, 'circle');
-                circle.setAttribute('r', RADIAL_LAYOUT.sealSize); 
-                circle.setAttribute('fill', 'none'); 
-                circle.setAttribute('stroke', '#c0392b'); 
-                circle.setAttribute('stroke-width', '1.5');
-                
+                circle.setAttribute('r', RADIAL_LAYOUT.sealSize); circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', '#c0392b'); circle.setAttribute('stroke-width', '1.5');
                 const sealText = document.createElementNS(SVG_NS, 'text');
-                sealText.setAttribute('text-anchor', 'middle'); 
-                sealText.setAttribute('dominant-baseline', 'central'); 
-                sealText.setAttribute('font-size', '13'); 
-                sealText.setAttribute('fill', '#c0392b'); 
-                sealText.setAttribute('font-family', 'serif'); 
-                sealText.textContent = '吉';
-                
-                sealGroup.appendChild(circle); 
-                sealGroup.appendChild(sealText);
+                sealText.setAttribute('text-anchor', 'middle'); sealText.setAttribute('dominant-baseline', 'central'); sealText.setAttribute('font-size', '13'); sealText.setAttribute('fill', '#c0392b'); sealText.setAttribute('font-family', 'serif'); sealText.textContent = '吉';
+                sealGroup.appendChild(circle); sealGroup.appendChild(sealText);
                 sealGroup.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${sealAngle + 90})`);
                 bzLayer.appendChild(sealGroup);
             }
         }
         
-        // 渲染飛星資訊
+        // 渲染內外圈飛星
         renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15);
         renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
         renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15);
         renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '元運', 12, -10);
         renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '流年', 12, 10);
-        renderTwelveShas(termData.fsYear, RADIAL_LAYOUT.twelveShasRadius, 'twelve-shas-layer');
+        
+        // ★ 呼叫新的外層神煞引擎 (包含三煞)
+        renderOuterShas(termData.fsYear, RADIAL_LAYOUT.twelveShasRadius, 'twelve-shas-layer');
 
-        // ★ 核心升級：陣列乘法交會判定 (支援多重連擊，呈扇形展開)
+        // 計算並繪製吉凶格局星號
         const comboLayer = getLayer('combinations-layer');
         if (comboLayer) {
             comboLayer.innerHTML = ''; 
 
             LUO_SHU_PATH.forEach(gua => {
-                // 1. 將這個方位五個維度的飛星放入陣列中 (不剃除重複，完整保留！)
                 const starsArray = [
                     getStarInGua(zhaiGua.number, gua),
                     getStarInGua(mingGua.number, gua),
@@ -395,21 +451,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 let goodHits = 0;
                 let badHits = 0;
 
-                // 2. 判斷碰撞次數
                 COMBINATION_RULES.forEach(rule => {
                     if (rule.stars.length === 2) {
                         const [s1, s2] = rule.stars;
-                        
-                        // 計算這個宮位裡面，s1 和 s2 各有幾顆
                         const count1 = starsArray.filter(s => s === s1).length;
                         const count2 = starsArray.filter(s => s === s2).length;
 
                         let hits = 0;
                         if (s1 !== s2) {
-                            // 數字不同，交互作用即為相乘 (例：1個二遇到3個五 = 3)
                             hits = count1 * count2;
                         } else {
-                            // 數字相同 (比如要找雙七赤)，公式為 C(n,2)
                             hits = (count1 * (count1 - 1)) / 2;
                         }
 
@@ -420,21 +471,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // 3. 畫星星 (呈扇形展開，避免重疊)
                 const totalStars = goodHits + badHits;
                 if (totalStars > 0) {
                     const centerAngle = getSvgAngle(gua);
-                    // 為了避免星星重疊，設定每顆星星之間相距 8 度
                     const spacing = 8; 
-                    // 計算最左邊第一顆星星的起始角度，這樣整排星星就會完美置中
                     let currentAngle = centerAngle - ((totalStars - 1) * spacing) / 2;
 
-                    // 依序畫出紅星
                     for (let i = 0; i < goodHits; i++) {
                         drawStarIndicator(comboLayer, currentAngle, RADIAL_LAYOUT.combinationsRadius, 'good');
                         currentAngle += spacing;
                     }
-                    // 依序畫出黑星
                     for (let i = 0; i < badHits; i++) {
                         drawStarIndicator(comboLayer, currentAngle, RADIAL_LAYOUT.combinationsRadius, 'bad');
                         currentAngle += spacing;
