@@ -237,47 +237,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ★ 核心大升級：外層神煞渲染引擎 (完美合併十二神煞、戊己都天煞與三煞)
     function renderOuterShas(fsYear, radius, layerId) {
         const layer = getLayer(layerId);
         if(!layer) return;
         layer.innerHTML = '';
         
-        // 準備 24 山的資料暫存槽
         const labels24 = Array(24).fill(null).map(() => ({ main: '', sub: '', color: '', subColor: '' }));
 
-        // 1. 先計算十二神煞 (落在地支，也就是 24 山陣列的偶數索引)
         const yearBranchIndex = (fsYear - 4) % 12; 
         for (let i = 0; i < 12; i++) {
-            const mntIndex = i * 2; // 子=0, 丑=2, 寅=4...
+            const mntIndex = i * 2; 
             const shaIndex = (i - yearBranchIndex + 12) % 12;
             const shaName = TWELVE_SHAS_SEQUENCE[shaIndex];
             labels24[mntIndex].main = shaName;
             labels24[mntIndex].color = (shaName === '太歲') ? '#e91700ff' : '#6421c3ff';
         }
 
-        // 2. 再計算戊己都天煞與夾都天 (根據年份天干)
         const stemIndex = fsYear % 10;
         const DU_TIAN_MAP = {
-            0: [4, 5, 6],    // 庚年：寅, 甲, 卯
-            1: [20, 21, 22], // 辛年：戌, 乾, 亥
-            2: [16, 17, 18], // 壬年：申, 庚, 酉
-            3: [12, 13, 14], // 癸年：午, 丁, 未
-            4: [8, 9, 10],   // 甲年：辰, 巽, 巳
-            5: [4, 5, 6],    // 乙年：寅, 甲, 卯
-            6: [20, 21, 22], // 丙年：戌, 乾, 亥
-            7: [16, 17, 18], // 丁年：申, 庚, 酉
-            8: [12, 13, 14], // 戊年：午, 丁, 未
-            9: [8, 9, 10]    // 己年：辰, 巽, 巳
+            0: [4, 5, 6], 1: [20, 21, 22], 2: [16, 17, 18], 3: [12, 13, 14], 4: [8, 9, 10], 
+            5: [4, 5, 6], 6: [20, 21, 22], 7: [16, 17, 18], 8: [12, 13, 14], 9: [8, 9, 10]
         };
-        
         const dtIndices = DU_TIAN_MAP[stemIndex];
         const dtNames = ['戊己都天', '夾煞都天', '戊己都天'];
 
         for (let i = 0; i < 3; i++) {
             const idx = dtIndices[i];
             const duTianName = dtNames[i];
-            const duTianColor = '#e91700ff'; // 戊己都天為大凶，標示紅色
+            const duTianColor = '#e91700ff'; 
 
             if (labels24[idx].main) {
                 labels24[idx].sub = duTianName;
@@ -288,51 +275,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 3. ★ 新增：計算三煞 (根據年份地支)
-        // 寅(6)午(10)戌(2)煞北：壬(23)子(0)癸(1)
-        // 申(0)子(4)辰(8)煞南：丙(11)午(12)丁(13) -> 註: yearBranchIndex 中，申是 4, 子是 8, 辰是 0
-        // 亥(3)卯(7)未(11)煞西：庚(17)酉(18)辛(19)
-        // 巳(9)酉(1)丑(5)煞東：甲(5)卯(6)乙(7)
         let sanShaIndices = [];
-        
-        if ([6, 10, 2].includes(yearBranchIndex)) {
-            sanShaIndices = [23, 0, 1]; // 煞北
-        } else if ([4, 8, 0].includes(yearBranchIndex)) {
-            sanShaIndices = [11, 12, 13]; // 煞南
-        } else if ([3, 7, 11].includes(yearBranchIndex)) {
-            sanShaIndices = [17, 18, 19]; // 煞西
-        } else if ([9, 1, 5].includes(yearBranchIndex)) {
-            sanShaIndices = [5, 6, 7]; // 煞東
-        }
+        if ([6, 10, 2].includes(yearBranchIndex)) { sanShaIndices = [23, 0, 1]; } 
+        else if ([4, 8, 0].includes(yearBranchIndex)) { sanShaIndices = [11, 12, 13]; } 
+        else if ([3, 7, 11].includes(yearBranchIndex)) { sanShaIndices = [17, 18, 19]; } 
+        else if ([9, 1, 5].includes(yearBranchIndex)) { sanShaIndices = [5, 6, 7]; }
 
         sanShaIndices.forEach(idx => {
             const ssName = "三煞";
-            const ssColor = "#e91700ff"; // 三煞亦為大凶，標示紅色
-            
-            if (!labels24[idx].main) {
-                // 如果這個宮位目前是空的，直接填入
-                labels24[idx].main = ssName;
-                labels24[idx].color = ssColor;
-            } else if (!labels24[idx].sub) {
-                // 如果這個宮位只有一行字，把它加在第二行
-                labels24[idx].sub = ssName;
-                labels24[idx].subColor = ssColor;
-            } else {
-                // 如果這個宮位已經有兩行字了 (極少數情況)，把它合併到第二行
-                labels24[idx].sub += "·三煞";
-            }
+            const ssColor = "#e91700ff"; 
+            if (!labels24[idx].main) { labels24[idx].main = ssName; labels24[idx].color = ssColor; } 
+            else if (!labels24[idx].sub) { labels24[idx].sub = ssName; labels24[idx].subColor = ssColor; } 
+            else { labels24[idx].sub += "·三煞"; }
         });
 
-        // 4. 統一畫出 24 個方位的文字
         for (let i = 0; i < 24; i++) {
             const data = labels24[i];
             if (data.main) {
-                const angle = 90 + (i * 15); // 子(0)為 90 度，順時針每格 15 度
-                if (data.sub) {
-                    drawLabel(layer, data.main, angle, radius, data.color, 12, true, data.sub, data.subColor);
-                } else {
-                    drawLabel(layer, data.main, angle, radius, data.color, 12);
-                }
+                const angle = 90 + (i * 15); 
+                if (data.sub) { drawLabel(layer, data.main, angle, radius, data.color, 12, true, data.sub, data.subColor); } 
+                else { drawLabel(layer, data.main, angle, radius, data.color, 12); }
             }
         }
     }
@@ -424,17 +386,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // 渲染內外圈飛星
         renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15);
         renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
         renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15);
         renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '元運', 12, -10);
         renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '流年', 12, 10);
-        
-        // ★ 呼叫新的外層神煞引擎 (包含三煞)
         renderOuterShas(termData.fsYear, RADIAL_LAYOUT.twelveShasRadius, 'twelve-shas-layer');
 
-        // 計算並繪製吉凶格局星號
         const comboLayer = getLayer('combinations-layer');
         if (comboLayer) {
             comboLayer.innerHTML = ''; 
@@ -589,9 +547,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =================================================================
-    //  SECTION 6: 初始化與綁定事件
+    //  SECTION 6: 初始化與綁定事件 (★ 包含鎖定記憶引擎)
     // =================================================================
     function init() {
+        // ★ 1. 讀取 LocalStorage 的記憶
+        const savedYear = localStorage.getItem('fsSavedYear');
+        const savedGender = localStorage.getItem('fsSavedGender');
+        const savedGua = localStorage.getItem('fsSavedGua');
+        const isLocked = localStorage.getItem('fsIsLocked') === 'true';
+
+        const btnMale = document.getElementById('btn-male');
+        const btnFemale = document.getElementById('btn-female');
+        const lockBtn = document.getElementById('lock-btn');
+
+        // 如果有記憶體，把資料填回去
+        if (savedYear && inputYear) inputYear.value = savedYear;
+        if (savedGender) {
+            userSettings.gender = savedGender;
+            if (savedGender === 'male' && btnMale && btnFemale) {
+                btnMale.classList.add('active'); btnFemale.classList.remove('active');
+            } else if (savedGender === 'female' && btnMale && btnFemale) {
+                btnFemale.classList.add('active'); btnMale.classList.remove('active');
+            }
+        }
+        if (savedGua && selectHouse) selectHouse.value = savedGua;
+
+        // ★ 2. 建立鎖定切換機制
+        function toggleLock(forceState = null) {
+            const willLock = forceState !== null ? forceState : !(lockBtn.classList.contains('locked'));
+            
+            if (willLock) {
+                // 執行鎖定：禁用輸入，改變按鈕外觀，儲存資料
+                if(inputYear) inputYear.disabled = true;
+                if(selectHouse) selectHouse.disabled = true;
+                if(btnMale) btnMale.disabled = true;
+                if(btnFemale) btnFemale.disabled = true;
+                
+                if(lockBtn) {
+                    lockBtn.classList.add('locked');
+                    lockBtn.textContent = '🔒 已鎖定 (點擊解鎖)';
+                }
+
+                // 寫入瀏覽器記憶體
+                if(inputYear) localStorage.setItem('fsSavedYear', inputYear.value);
+                localStorage.setItem('fsSavedGender', userSettings.gender);
+                if(selectHouse) localStorage.setItem('fsSavedGua', selectHouse.value);
+                localStorage.setItem('fsIsLocked', 'true');
+
+            } else {
+                // 執行解鎖：恢復輸入
+                if(inputYear) inputYear.disabled = false;
+                if(selectHouse) selectHouse.disabled = false;
+                if(btnMale) btnMale.disabled = false;
+                if(btnFemale) btnFemale.disabled = false;
+
+                if(lockBtn) {
+                    lockBtn.classList.remove('locked');
+                    lockBtn.textContent = '🔓 解鎖狀態 (點擊儲存並鎖定)';
+                }
+                localStorage.setItem('fsIsLocked', 'false');
+            }
+        }
+
+        // 綁定鎖定按鈕點擊事件
+        if (lockBtn) {
+            lockBtn.addEventListener('click', () => toggleLock());
+            // 初始化時如果之前是鎖定的，就觸發鎖定
+            if (isLocked) toggleLock(true);
+        }
+
+        // --- 羅盤原本的事件綁定 ---
         if (degreeSlider) {
             degreeSlider.addEventListener('input', (e) => {
                 if (isCompassMode) {
@@ -606,9 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const startCompassBtn = document.getElementById('start-compass-btn');
-        if (startCompassBtn) {
-            startCompassBtn.addEventListener('click', startCompass);
-        }
+        if (startCompassBtn) startCompassBtn.addEventListener('click', startCompass);
 
         const resetBtn = document.getElementById('reset-btn');
         if (resetBtn) {
@@ -621,12 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (inputYear) {
-            inputYear.addEventListener('input', updateAll);
-        }
-
-        const btnMale = document.getElementById('btn-male');
-        const btnFemale = document.getElementById('btn-female');
+        if (inputYear) inputYear.addEventListener('input', updateAll);
         
         if (btnMale) {
             btnMale.addEventListener('click', () => { 
@@ -646,9 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        if (selectHouse) {
-            selectHouse.addEventListener('change', updateAll);
-        }
+        if (selectHouse) selectHouse.addEventListener('change', updateAll);
         
         window.setDegree = function(deg) {
             window.removeEventListener('deviceorientation', handleOrientation);

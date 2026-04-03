@@ -163,3 +163,28 @@ body {
     }
     #controls { max-width: 400px; }
 }
+
+/* 鎖定按鈕樣式 */
+.lock-btn {
+    margin-top: 4px;
+    padding: 8px 12px;
+    font-size: 12px;
+    background-color: #7d2e68; /* 預設解鎖為綠色 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+/* 當加上 locked class 時，變成深灰色 */
+.lock-btn.locked {
+    background-color: #555555;
+}
+
+/* 鎖定時，讓性別按鈕看起來不能按 */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
