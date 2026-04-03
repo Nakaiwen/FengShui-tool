@@ -89,11 +89,11 @@ body {
 
 /* 副標題 (例如：東四命) */
 #center-sub-text {
-    font-size: 1.8vmin; 
-    color: #555; 
+    font-size: 1.6vmin; 
+    color: #555555; 
     font-weight: bold; 
     white-space: nowrap;
-    margin-top: 0.3vmin;
+    margin-top: 0.2vmin;
     font-family: "BiauKai", "DFKai-SB", "KaiTi", serif;
 }
 

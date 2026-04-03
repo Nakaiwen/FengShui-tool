@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         personMingRadius: 202,  // 2. 人命紫白 & 宅紫白 (共用圈)
         monthlyRadius: 201,     // 3. 流月飛星 
         annualRadius: 230,      // 4. 流年飛星 & 元運飛星 (共用圈)
+        twelveShasRadius: 255,  // 5. 太歲十二神煞
 
         sealOffset: 0,
         sealSize: 10,   
@@ -23,19 +24,21 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     const FLYING_STARS_INFO = {
-        1: { name: '一白貪狼', meaning: '桃花星', color: '#555555' }, 
+        1: { name: '一白貪狼', meaning: '桃花星', color: '#004ad2ff' }, 
         2: { name: '二黑巨門', meaning: '病符星', color: '#000000' }, 
         3: { name: '三碧蚩尤', meaning: '強盜星', color: '#2e7d32' }, 
         4: { name: '四綠文曲', meaning: '破財星', color: '#388e3c' }, 
-        5: { name: '五黃廉貞', meaning: '毒癌星', color: '#d84315' }, 
+        5: { name: '五黃廉貞', meaning: '毒癌星', color: '#a76400ff' }, 
         6: { name: '六白武曲', meaning: '偏財星', color: '#555555' }, 
-        7: { name: '七赤破軍', meaning: '賊盜星', color: '#c62828' }, 
-        8: { name: '八白左輔', meaning: '財帛星', color: '#555555' }, 
-        9: { name: '九紫右弼', meaning: '喜慶星', color: '#8e24aa' }  
+        7: { name: '七赤破軍', meaning: '賊盜星', color: '#555555' }, 
+        8: { name: '八白左輔', meaning: '財帛星', color: '#a76400ff' }, 
+        9: { name: '九紫右弼', meaning: '喜慶星', color: '#af1010ff' }  
     };
 
     const STAR_NAMES_SHORT = { 1: '一白', 2: '二黑', 3: '三碧', 4: '四綠', 5: '五黃', 6: '六白', 7: '七赤', 8: '八白', 9: '九紫' };
     const LUO_SHU_PATH = ['乾', '兌', '艮', '離', '坎', '坤', '震', '巽'];
+
+    const TWELVE_SHAS_SEQUENCE = ['太歲', '太陽', '喪門', '太陰', '官符', '死符', '歲破', '龍德', '白虎', '福德', '吊客', '病符'];
 
     const GUA_DATA = {
         1: { name: '坎', number: 1, stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
@@ -54,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =================================================================
-    //  SECTION 2: 節氣、流年流月與元運邏輯
+    //  SECTION 2: 節氣、流年流月、元運與干支推算
     // =================================================================
     function getSolarTermMonth() {
         const now = new Date();
@@ -92,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return { fsYear, fsMonth: currentTerm.month, termName: currentTerm.name };
     }
 
-    // 計算流月飛星
     function calculateMonthStar(fsYear, fsMonth) {
         const yearBranchIndex = (fsYear - 4) % 12; 
         let startStar;
@@ -109,11 +111,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return star;
     }
 
-    // ★ 新增：計算三元九運 (每20年一運，1864年為一白運起始)
     function calculatePeriodStar(fsYear) {
         let period = ((Math.floor((fsYear - 1864) / 20) + 1) % 9);
         return period === 0 ? 9 : period; 
-        // 2024~2043 算出會是 9 (九紫離運)
+    }
+
+    // ★ 新增：天干地支推算引擎
+    function getGanzhiYear(fsYear) {
+        const stems = ['庚', '辛', '壬', '癸', '甲', '乙', '丙', '丁', '戊', '己'];
+        const branches = ['申', '酉', '戌', '亥', '子', '丑', '寅', '卯', '辰', '巳', '午', '未'];
+        return stems[fsYear % 10] + branches[fsYear % 12];
     }
 
     // =================================================================
@@ -147,6 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawLabel(layer, text, angle, radius, color, fontSize, isDouble = false, subText = "") {
+        if (!layer) return;
         const rad = angle * (Math.PI / 180);
         const x = RADIAL_LAYOUT.center.x + radius * Math.cos(rad);
         const y = RADIAL_LAYOUT.center.y + radius * Math.sin(rad);
@@ -206,6 +214,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function renderTwelveShas(fsYear, radius, layerId) {
+        const layer = getLayer(layerId);
+        if(!layer) return;
+        layer.innerHTML = '';
+        
+        const yearBranchIndex = (fsYear - 4) % 12; 
+        
+        for (let i = 0; i < 12; i++) {
+            const branchAngle = 90 + (i * 30);
+            const shaIndex = (i - yearBranchIndex + 12) % 12;
+            const shaName = TWELVE_SHAS_SEQUENCE[shaIndex];
+            
+            const color = (shaName === '太歲') ? '#e91700ff' : '#6421c3ff';
+            
+            drawLabel(layer, shaName, branchAngle, radius, color, 12);
+        }
+    }
+
     // =================================================================
     //  SECTION 4: 更新文字與圖層
     // =================================================================
@@ -239,11 +265,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const termData = getSolarTermMonth();
         const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
         const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
-        const periodStar = calculatePeriodStar(termData.fsYear); // ★ 取得目前元運星
+        const periodStar = calculatePeriodStar(termData.fsYear); 
 
+        // 更新圓心資訊 (加入天干地支)
         const centerMainText = document.getElementById('center-main-text');
         if (centerMainText) {
             centerMainText.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
+            
+            // ★ 動態建立「年份與干支」文字標籤 (如果還沒有的話)
+            const centerBg = document.getElementById('center-bg');
+            if (centerBg) {
+                let yearTextEl = document.getElementById('center-year-text');
+                if (!yearTextEl) {
+                    yearTextEl = document.createElement('div');
+                    yearTextEl.id = 'center-year-text';
+                    // 為了美觀，稍微調整字體大小與邊距，並設為顯眼的紅色
+                    yearTextEl.style.fontSize = '1.8vmin';
+                    yearTextEl.style.fontWeight = 'bold';
+                    yearTextEl.style.color = '#555555ff'; 
+                    yearTextEl.style.marginBottom = '0.2vmin';
+                    yearTextEl.style.fontFamily = '"BiauKai", "DFKai-SB", "KaiTi", serif';
+                    yearTextEl.style.whiteSpace = 'nowrap';
+                    
+                    // 將它插入到「坎宅 坎命」的正上方
+                    centerBg.insertBefore(yearTextEl, centerMainText);
+                    
+                    // 稍微撐開中間白色圓心的大小，避免文字變多後顯得擁擠
+                    centerBg.style.width = '14.5vmin';
+                    centerBg.style.height = '14.5vmin';
+                }
+                // 灌入例如：2026 丙午年
+                yearTextEl.textContent = `${termData.fsYear} ${getGanzhiYear(termData.fsYear)}年`;
+            }
         }
         
         const centerSubText = document.getElementById('center-sub-text');
@@ -289,19 +342,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // --- 內圈資訊 (半徑 202 帶) ---
-        // ★ 【左側】宅紫白 (往左旋轉 -15 度)
+        // --- 內圈資訊 (202 帶) ---
         renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15);
-        // ★ 【正中】人命紫白 (置中不偏移)
         renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
-        // ★ 【右側】流月飛星 (半徑 201，往右旋轉 15 度)
         renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15);
         
-        // --- 外圈資訊 (半徑 230 帶) ---
-        // ★ 【外圈左側】元運紫白 (半徑 230，字體 12，往左旋轉 -10 度，文字「元運」)
+        // --- 中圈資訊 (230 帶) ---
         renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '元運', 12, -10);
-        // ★ 【外圈右側】流年飛星 (半徑 230，字體 12，往右旋轉 10 度，文字「流年」)
         renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '流年', 12, 10);
+
+        // --- 外圈資訊：太歲十二神煞 (250 帶) ---
+        renderTwelveShas(termData.fsYear, RADIAL_LAYOUT.twelveShasRadius, 'twelve-shas-layer');
     }
 
     // =================================================================
