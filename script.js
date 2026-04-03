@@ -1,13 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // =================================================================
-    //  SECTION 1: 核心資料與設定
+    //  SECTION 1: 核心資料與設定 (★ 包含您的專屬記憶庫)
     // =================================================================
     
     const RADIAL_LAYOUT = {
         center: { x: 280.36, y: 280.36 }, 
         
-        starRadius: 117,        // 1. 八宅吉凶星 
+        combinationsRadius: 100, // ★ 吉凶格局星號 (半徑 90)
+        starRadius: 122,        // 1. 八宅吉凶星 
         personMingRadius: 202,  // 2. 人命紫白 & 宅紫白 (共用圈)
         monthlyRadius: 201,     // 3. 流月飛星 
         annualRadius: 230,      // 4. 流年飛星 & 元運飛星 (共用圈)
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '午', '丁', '未', '坤', '申', '庚', '酉', '辛', '戌', '乾', '亥', '壬'
     ];
 
+    // ★ 專屬五行直覺配色
     const FLYING_STARS_INFO = {
         1: { name: '一白貪狼', meaning: '桃花星', color: '#004ad2ff' }, 
         2: { name: '二黑巨門', meaning: '病符星', color: '#000000' }, 
@@ -39,6 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const LUO_SHU_PATH = ['乾', '兌', '艮', '離', '坎', '坤', '震', '巽'];
 
     const TWELVE_SHAS_SEQUENCE = ['太歲', '太陽', '喪門', '太陰', '官符', '死符', '歲破', '龍德', '白虎', '福德', '吊客', '病符'];
+
+    // ★ 吉凶格局診斷規則
+    const COMBINATION_RULES = [
+        { type: 'good', stars: [4, 1], name: '四一同宮' },
+        { type: 'good', stars: [6, 8], name: '六八同宮' },
+        { type: 'good', stars: [8, 9], name: '八九同宮' },
+        { type: 'bad',  stars: [7, 9], name: '九七穿途' },
+        { type: 'bad',  stars: [2, 5], name: '二五交加' },
+        { type: 'bad',  stars: [3, 7], name: '三七疊臨' }
+    ];
 
     const GUA_DATA = {
         1: { name: '坎', number: 1, stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
@@ -57,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =================================================================
-    //  SECTION 2: 節氣、流年流月、元運與干支推算
+    //  SECTION 2: 節氣、流年、飛星邏輯與推算引擎
     // =================================================================
     function getSolarTermMonth() {
         const now = new Date();
@@ -98,11 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function calculateMonthStar(fsYear, fsMonth) {
         const yearBranchIndex = (fsYear - 4) % 12; 
         let startStar;
-        if ([0, 3, 6, 9].includes(yearBranchIndex)) {
+        if ([0, 3, 6, 9].includes(yearBranchIndex)) { 
             startStar = 8; 
-        } else if ([1, 4, 7, 10].includes(yearBranchIndex)) {
+        } else if ([1, 4, 7, 10].includes(yearBranchIndex)) { 
             startStar = 5; 
-        } else {
+        } else { 
             startStar = 2; 
         }
         
@@ -116,11 +128,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return period === 0 ? 9 : period; 
     }
 
-    // ★ 新增：天干地支推算引擎
     function getGanzhiYear(fsYear) {
         const stems = ['庚', '辛', '壬', '癸', '甲', '乙', '丙', '丁', '戊', '己'];
         const branches = ['申', '酉', '戌', '亥', '子', '丑', '寅', '卯', '辰', '巳', '午', '未'];
         return stems[fsYear % 10] + branches[fsYear % 12];
+    }
+
+    function getStarInGua(centerNum, targetGua) {
+        const index = LUO_SHU_PATH.indexOf(targetGua);
+        let num = (centerNum + index + 1) % 9;
+        return num === 0 ? 9 : num;
     }
 
     // =================================================================
@@ -192,6 +209,27 @@ document.addEventListener('DOMContentLoaded', () => {
         layer.appendChild(textEl);
     }
 
+    // ★ 星號指示器
+    function drawStarIndicator(layer, angle, radius, type) {
+        const rad = angle * (Math.PI / 180);
+        const x = RADIAL_LAYOUT.center.x + radius * Math.cos(rad);
+        const y = RADIAL_LAYOUT.center.y + radius * Math.sin(rad);
+
+        const textEl = document.createElementNS(SVG_NS, 'text');
+        textEl.setAttribute('x', x); 
+        textEl.setAttribute('y', y);
+        textEl.setAttribute('text-anchor', 'middle');
+        textEl.setAttribute('dominant-baseline', 'central');
+        
+        textEl.setAttribute('font-size', '12'); // ★ 星星大小 12
+        textEl.setAttribute('font-family', 'sans-serif');
+        textEl.setAttribute('fill', type === 'good' ? '#e91700ff' : '#000000'); 
+        
+        textEl.setAttribute('transform', `rotate(${angle + 90}, ${x}, ${y})`);
+        textEl.textContent = '★';
+        layer.appendChild(textEl);
+    }
+
     function renderPersonMingStars(centerNum, radius, layerId) {
         const layer = getLayer(layerId);
         layer.innerHTML = '';
@@ -220,14 +258,11 @@ document.addEventListener('DOMContentLoaded', () => {
         layer.innerHTML = '';
         
         const yearBranchIndex = (fsYear - 4) % 12; 
-        
         for (let i = 0; i < 12; i++) {
             const branchAngle = 90 + (i * 30);
             const shaIndex = (i - yearBranchIndex + 12) % 12;
             const shaName = TWELVE_SHAS_SEQUENCE[shaIndex];
-            
             const color = (shaName === '太歲') ? '#e91700ff' : '#6421c3ff';
-            
             drawLabel(layer, shaName, branchAngle, radius, color, 12);
         }
     }
@@ -261,40 +296,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const houseGuaName = selectHouse ? selectHouse.value : '坎';
         const zhaiGua = Object.values(GUA_DATA).find(g => g.name === houseGuaName) || GUA_DATA[1];
 
-        // 取得時空變數
         const termData = getSolarTermMonth();
         const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
         const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
         const periodStar = calculatePeriodStar(termData.fsYear); 
 
-        // 更新圓心資訊 (加入天干地支)
         const centerMainText = document.getElementById('center-main-text');
         if (centerMainText) {
             centerMainText.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
             
-            // ★ 動態建立「年份與干支」文字標籤 (如果還沒有的話)
             const centerBg = document.getElementById('center-bg');
             if (centerBg) {
                 let yearTextEl = document.getElementById('center-year-text');
                 if (!yearTextEl) {
                     yearTextEl = document.createElement('div');
                     yearTextEl.id = 'center-year-text';
-                    // 為了美觀，稍微調整字體大小與邊距，並設為顯眼的紅色
+                    // ★ 圓心微調：深灰 1.8vmin
                     yearTextEl.style.fontSize = '1.8vmin';
                     yearTextEl.style.fontWeight = 'bold';
                     yearTextEl.style.color = '#555555ff'; 
                     yearTextEl.style.marginBottom = '0.2vmin';
                     yearTextEl.style.fontFamily = '"BiauKai", "DFKai-SB", "KaiTi", serif';
                     yearTextEl.style.whiteSpace = 'nowrap';
-                    
-                    // 將它插入到「坎宅 坎命」的正上方
                     centerBg.insertBefore(yearTextEl, centerMainText);
-                    
-                    // 稍微撐開中間白色圓心的大小，避免文字變多後顯得擁擠
                     centerBg.style.width = '14.5vmin';
                     centerBg.style.height = '14.5vmin';
                 }
-                // 灌入例如：2026 丙午年
                 yearTextEl.textContent = `${termData.fsYear} ${getGanzhiYear(termData.fsYear)}年`;
             }
         }
@@ -313,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (['生氣', '延年'].includes(s)) {
                 textAngle -= 6; 
             }
-            drawLabel(bzLayer, s, textAngle, RADIAL_LAYOUT.starRadius, c, 18);
+            drawLabel(bzLayer, s, textAngle, RADIAL_LAYOUT.starRadius, c, 16);
 
             if (['生氣', '延年'].includes(s)) {
                 const sealAngle = getSvgAngle(g) + 12; 
@@ -342,17 +369,79 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // --- 內圈資訊 (202 帶) ---
+        // 渲染飛星資訊
         renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15);
         renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
         renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15);
-        
-        // --- 中圈資訊 (230 帶) ---
         renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '元運', 12, -10);
         renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '流年', 12, 10);
-
-        // --- 外圈資訊：太歲十二神煞 (250 帶) ---
         renderTwelveShas(termData.fsYear, RADIAL_LAYOUT.twelveShasRadius, 'twelve-shas-layer');
+
+        // ★ 核心升級：陣列乘法交會判定 (支援多重連擊，呈扇形展開)
+        const comboLayer = getLayer('combinations-layer');
+        if (comboLayer) {
+            comboLayer.innerHTML = ''; 
+
+            LUO_SHU_PATH.forEach(gua => {
+                // 1. 將這個方位五個維度的飛星放入陣列中 (不剃除重複，完整保留！)
+                const starsArray = [
+                    getStarInGua(zhaiGua.number, gua),
+                    getStarInGua(mingGua.number, gua),
+                    getStarInGua(monthStar, gua),
+                    getStarInGua(annualStar, gua),
+                    getStarInGua(periodStar, gua)
+                ];
+
+                let goodHits = 0;
+                let badHits = 0;
+
+                // 2. 判斷碰撞次數
+                COMBINATION_RULES.forEach(rule => {
+                    if (rule.stars.length === 2) {
+                        const [s1, s2] = rule.stars;
+                        
+                        // 計算這個宮位裡面，s1 和 s2 各有幾顆
+                        const count1 = starsArray.filter(s => s === s1).length;
+                        const count2 = starsArray.filter(s => s === s2).length;
+
+                        let hits = 0;
+                        if (s1 !== s2) {
+                            // 數字不同，交互作用即為相乘 (例：1個二遇到3個五 = 3)
+                            hits = count1 * count2;
+                        } else {
+                            // 數字相同 (比如要找雙七赤)，公式為 C(n,2)
+                            hits = (count1 * (count1 - 1)) / 2;
+                        }
+
+                        if (hits > 0) {
+                            if (rule.type === 'good') goodHits += hits;
+                            if (rule.type === 'bad') badHits += hits;
+                        }
+                    }
+                });
+
+                // 3. 畫星星 (呈扇形展開，避免重疊)
+                const totalStars = goodHits + badHits;
+                if (totalStars > 0) {
+                    const centerAngle = getSvgAngle(gua);
+                    // 為了避免星星重疊，設定每顆星星之間相距 8 度
+                    const spacing = 8; 
+                    // 計算最左邊第一顆星星的起始角度，這樣整排星星就會完美置中
+                    let currentAngle = centerAngle - ((totalStars - 1) * spacing) / 2;
+
+                    // 依序畫出紅星
+                    for (let i = 0; i < goodHits; i++) {
+                        drawStarIndicator(comboLayer, currentAngle, RADIAL_LAYOUT.combinationsRadius, 'good');
+                        currentAngle += spacing;
+                    }
+                    // 依序畫出黑星
+                    for (let i = 0; i < badHits; i++) {
+                        drawStarIndicator(comboLayer, currentAngle, RADIAL_LAYOUT.combinationsRadius, 'bad');
+                        currentAngle += spacing;
+                    }
+                }
+            });
+        }
     }
 
     // =================================================================
