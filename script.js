@@ -8,9 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
         center: { x: 280.36, y: 280.36 }, 
         
         starRadius: 117,        // 1. 八宅吉凶星 
-        personMingRadius: 203,  // 2. 人命紫白 
-        monthlyRadius: 232,     // 3. 流月飛星 
-        annualRadius: 255,      // 4. 流年飛星 
+        personMingRadius: 202,  // 2. 人命紫白 & 宅紫白 (共用圈)
+        monthlyRadius: 201,     // 3. 流月飛星 
+        annualRadius: 230,      // 4. 流年飛星 & 元運飛星 (共用圈)
 
         sealOffset: 0,
         sealSize: 10,   
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // =================================================================
-    //  SECTION 2: 節氣與飛星邏輯
+    //  SECTION 2: 節氣、流年流月與元運邏輯
     // =================================================================
     function getSolarTermMonth() {
         const now = new Date();
@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const m = now.getMonth() + 1;
         const d = now.getDate();
         const md = m * 100 + d;
+        
         const terms = [
             { name: '小寒', md: 105, month: 12, yearOffset: -1 },
             { name: '立春', md: 204, month: 1,  yearOffset: 0 },
@@ -76,24 +77,43 @@ document.addEventListener('DOMContentLoaded', () => {
             { name: '立冬', md: 1107, month: 10, yearOffset: 0 },
             { name: '大雪', md: 1207, month: 11, yearOffset: 0 }
         ];
+        
         let currentTerm = terms[0];
         for (let i = terms.length - 1; i >= 0; i--) {
-            if (md >= terms[i].md) { currentTerm = terms[i]; break; }
+            if (md >= terms[i].md) { 
+                currentTerm = terms[i]; 
+                break; 
+            }
         }
+        
         let fsYear = y + currentTerm.yearOffset;
         if (md < 204) fsYear = y - 1; 
+        
         return { fsYear, fsMonth: currentTerm.month, termName: currentTerm.name };
     }
 
+    // 計算流月飛星
     function calculateMonthStar(fsYear, fsMonth) {
         const yearBranchIndex = (fsYear - 4) % 12; 
         let startStar;
-        if ([0, 3, 6, 9].includes(yearBranchIndex)) startStar = 8; 
-        else if ([1, 4, 7, 10].includes(yearBranchIndex)) startStar = 5; 
-        else startStar = 2; 
+        if ([0, 3, 6, 9].includes(yearBranchIndex)) {
+            startStar = 8; 
+        } else if ([1, 4, 7, 10].includes(yearBranchIndex)) {
+            startStar = 5; 
+        } else {
+            startStar = 2; 
+        }
+        
         let star = startStar - (fsMonth - 1);
         while (star <= 0) star += 9;
         return star;
+    }
+
+    // ★ 新增：計算三元九運 (每20年一運，1864年為一白運起始)
+    function calculatePeriodStar(fsYear) {
+        let period = ((Math.floor((fsYear - 1864) / 20) + 1) % 9);
+        return period === 0 ? 9 : period; 
+        // 2024~2043 算出會是 9 (九紫離運)
     }
 
     // =================================================================
@@ -114,8 +134,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getSvgAngle(gua) {
         switch(gua) {
-            case '坎': return 90; case '艮': return 135; case '震': return 180; case '巽': return 225; 
-            case '離': return 270; case '坤': return 315; case '兌': return 0; case '乾': return 45;  
+            case '坎': return 90; 
+            case '艮': return 135; 
+            case '震': return 180; 
+            case '巽': return 225; 
+            case '離': return 270; 
+            case '坤': return 315; 
+            case '兌': return 0; 
+            case '乾': return 45;  
         }
         return 0;
     }
@@ -126,22 +152,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const y = RADIAL_LAYOUT.center.y + radius * Math.sin(rad);
 
         const textEl = document.createElementNS(SVG_NS, 'text');
-        textEl.setAttribute('x', x); textEl.setAttribute('y', y);
+        textEl.setAttribute('x', x); 
+        textEl.setAttribute('y', y);
         textEl.setAttribute('text-anchor', 'middle');
         textEl.setAttribute('dominant-baseline', 'central');
         textEl.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif');
         textEl.setAttribute('font-weight', 'bold');
         textEl.setAttribute('fill', color);
+        
         textEl.setAttribute('transform', `rotate(${angle + 90}, ${x}, ${y})`);
 
         if (isDouble) {
             const t1 = document.createElementNS(SVG_NS, 'tspan');
-            t1.setAttribute('x', x); t1.setAttribute('dy', '-0.5em');
+            t1.setAttribute('x', x); 
+            t1.setAttribute('dy', '-0.5em');
             t1.setAttribute('font-size', '11');
             t1.textContent = text;
             
             const t2 = document.createElementNS(SVG_NS, 'tspan');
-            t2.setAttribute('x', x); t2.setAttribute('dy', '1.5em');
+            t2.setAttribute('x', x); 
+            t2.setAttribute('dy', '1.5em');
             t2.setAttribute('font-size', '10');
             t2.textContent = subText;
             
@@ -165,19 +195,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderStarsShort(centerNum, radius, layerId, prefix) {
+    function renderStarsShort(centerNum, radius, layerId, prefix, fontSize = 14, angleOffset = 0) {
         const layer = getLayer(layerId);
         layer.innerHTML = '';
         LUO_SHU_PATH.forEach((gua, index) => {
             let num = (centerNum + index + 1) % 9;
             if (num === 0) num = 9;
             const starColor = FLYING_STARS_INFO[num].color;
-            drawLabel(layer, `${prefix}-${STAR_NAMES_SHORT[num]}`, getSvgAngle(gua), radius, starColor, 14);
+            drawLabel(layer, `${prefix}-${STAR_NAMES_SHORT[num]}`, getSvgAngle(gua) + angleOffset, radius, starColor, fontSize);
         });
     }
 
     // =================================================================
-    //  SECTION 4: 飛星與圖層更新
+    //  SECTION 4: 更新文字與圖層
     // =================================================================
     const inputYear = document.getElementById('birth-year');
     const selectHouse = document.getElementById('house-gua');
@@ -189,56 +219,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let sum = birthYear.toString().split('').map(Number).reduce((a,b)=>a+b, 0);
         while(sum > 9) sum = sum.toString().split('').map(Number).reduce((a,b)=>a+b,0);
+        
         let kua;
-        if(userSettings.gender === 'male') { kua = 11 - sum; while(kua > 9) kua -= 9; if(kua === 5) kua = 2; } 
-        else { kua = 4 + sum; while(kua > 9) kua -= 9; if(kua === 5) kua = 8; }
+        if(userSettings.gender === 'male') { 
+            kua = 11 - sum; 
+            while(kua > 9) kua -= 9; 
+            if(kua === 5) kua = 2; 
+        } else { 
+            kua = 4 + sum; 
+            while(kua > 9) kua -= 9; 
+            if(kua === 5) kua = 8; 
+        }
         const mingGua = GUA_DATA[kua];
 
         const houseGuaName = selectHouse ? selectHouse.value : '坎';
         const zhaiGua = Object.values(GUA_DATA).find(g => g.name === houseGuaName) || GUA_DATA[1];
 
+        // 取得時空變數
         const termData = getSolarTermMonth();
         const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
         const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
+        const periodStar = calculatePeriodStar(termData.fsYear); // ★ 取得目前元運星
 
         const centerMainText = document.getElementById('center-main-text');
-        if (centerMainText) centerMainText.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
+        if (centerMainText) {
+            centerMainText.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
+        }
         
         const centerSubText = document.getElementById('center-sub-text');
-        if (centerSubText) centerSubText.textContent = `${termData.termName}後-${termData.fsMonth}月`;
+        if (centerSubText) {
+            centerSubText.textContent = `${termData.termName}後-${termData.fsMonth}月`;
+        }
 
-        const bzLayer = getLayer('bz-layer'); bzLayer.innerHTML = '';
+        const bzLayer = getLayer('bz-layer'); 
+        bzLayer.innerHTML = '';
+        
         for(const [g, s] of Object.entries(zhaiGua.stars)) {
             const c = ['生氣','延年','天醫','伏位'].includes(s) ? '#dc5f00' : '#004fe3';
             let textAngle = getSvgAngle(g);
-            if (['生氣', '延年'].includes(s)) textAngle -= 6; 
+            if (['生氣', '延年'].includes(s)) {
+                textAngle -= 6; 
+            }
             drawLabel(bzLayer, s, textAngle, RADIAL_LAYOUT.starRadius, c, 18);
 
             if (['生氣', '延年'].includes(s)) {
                 const sealAngle = getSvgAngle(g) + 12; 
                 const sx = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(sealAngle * Math.PI / 180);
                 const sy = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.starRadius * Math.sin(sealAngle * Math.PI / 180);
+                
                 const sealGroup = document.createElementNS(SVG_NS, 'g');
                 const circle = document.createElementNS(SVG_NS, 'circle');
-                circle.setAttribute('r', RADIAL_LAYOUT.sealSize); circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', '#c0392b'); circle.setAttribute('stroke-width', '1.5');
+                circle.setAttribute('r', RADIAL_LAYOUT.sealSize); 
+                circle.setAttribute('fill', 'none'); 
+                circle.setAttribute('stroke', '#c0392b'); 
+                circle.setAttribute('stroke-width', '1.5');
+                
                 const sealText = document.createElementNS(SVG_NS, 'text');
-                sealText.setAttribute('text-anchor', 'middle'); sealText.setAttribute('dominant-baseline', 'central'); sealText.setAttribute('font-size', '13'); sealText.setAttribute('fill', '#c0392b'); sealText.setAttribute('font-family', 'serif'); sealText.textContent = '吉';
-                sealGroup.appendChild(circle); sealGroup.appendChild(sealText);
+                sealText.setAttribute('text-anchor', 'middle'); 
+                sealText.setAttribute('dominant-baseline', 'central'); 
+                sealText.setAttribute('font-size', '13'); 
+                sealText.setAttribute('fill', '#c0392b'); 
+                sealText.setAttribute('font-family', 'serif'); 
+                sealText.textContent = '吉';
+                
+                sealGroup.appendChild(circle); 
+                sealGroup.appendChild(sealText);
                 sealGroup.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${sealAngle + 90})`);
                 bzLayer.appendChild(sealGroup);
             }
         }
         
+        // --- 內圈資訊 (半徑 202 帶) ---
+        // ★ 【左側】宅紫白 (往左旋轉 -15 度)
+        renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15);
+        // ★ 【正中】人命紫白 (置中不偏移)
         renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
-        renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`);
-        renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', `${termData.fsYear.toString().slice(-2)}年`);
+        // ★ 【右側】流月飛星 (半徑 201，往右旋轉 15 度)
+        renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15);
+        
+        // --- 外圈資訊 (半徑 230 帶) ---
+        // ★ 【外圈左側】元運紫白 (半徑 230，字體 12，往左旋轉 -10 度，文字「元運」)
+        renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '元運', 12, -10);
+        // ★ 【外圈右側】流年飛星 (半徑 230，字體 12，往右旋轉 10 度，文字「流年」)
+        renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '流年', 12, 10);
     }
 
     // =================================================================
-    //  SECTION 5: 羅盤感測與UI更新 (★完全退回 v12 原汁原味寫法★)
+    //  SECTION 5: 羅盤感測與UI更新
     // =================================================================
-    
-    // ★ 在這裡把原本的 DOM 元件全部先抓出來 (跟 v12 寫法一模一樣)
     const elSittingName = document.getElementById('current-mountain');
     const elFacingName = document.getElementById('current-facing');
     const elSittingDeg = document.getElementById('sitting-degree');
@@ -263,14 +331,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ★ 完全使用 v12 成功運作的更新函式
     function updateUI(degree) {
         const deg = Math.round(degree);
         
         if (degreeSlider && document.activeElement !== degreeSlider) {
             degreeSlider.value = deg;
         }
-        if (degreeDisplay) degreeDisplay.textContent = deg;
+        if (degreeDisplay) {
+            degreeDisplay.textContent = deg;
+        }
 
         const facingName = getMountain(deg);
         const sittingDegree = (deg + 180) % 360;
@@ -310,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (compassHeading !== undefined && compassHeading !== null) {
             targetHeading = compassHeading;
-            updateUI(compassHeading); // 呼叫退回的 v12 寫法
+            updateUI(compassHeading); 
         }
     }
 
@@ -349,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderRotation(deg);
             });
         }
-        
+
         const startCompassBtn = document.getElementById('start-compass-btn');
         if (startCompassBtn) {
             startCompassBtn.addEventListener('click', startCompass);
@@ -366,22 +435,35 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (inputYear) inputYear.addEventListener('input', updateAll);
-        
+        if (inputYear) {
+            inputYear.addEventListener('input', updateAll);
+        }
+
         const btnMale = document.getElementById('btn-male');
         const btnFemale = document.getElementById('btn-female');
+        
         if (btnMale) {
-            btnMale.addEventListener('click', () => { userSettings.gender='male'; btnMale.classList.add('active'); btnFemale.classList.remove('active'); updateAll(); });
+            btnMale.addEventListener('click', () => { 
+                userSettings.gender = 'male'; 
+                btnMale.classList.add('active'); 
+                btnFemale.classList.remove('active'); 
+                updateAll(); 
+            });
         }
+        
         if (btnFemale) {
-            btnFemale.addEventListener('click', () => { userSettings.gender='female'; btnFemale.classList.add('active'); btnMale.classList.remove('active'); updateAll(); });
+            btnFemale.addEventListener('click', () => { 
+                userSettings.gender = 'female'; 
+                btnFemale.classList.add('active'); 
+                btnMale.classList.remove('active'); 
+                updateAll(); 
+            });
         }
         
         if (selectHouse) {
             selectHouse.addEventListener('change', updateAll);
         }
         
-        // ★ 確保全域可用
         window.setDegree = function(deg) {
             window.removeEventListener('deviceorientation', handleOrientation);
             setCompassMode(false);
