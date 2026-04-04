@@ -77,21 +77,21 @@ body {
 /* 主標題 (例如：離命) */
 #center-main-text {
     font-size: 2.4vmin; 
-    font-weight: bold;
+    
     color: #da7800; 
     line-height: 1.2;
     white-space: nowrap;
-    font-family: "BiauKai", "DFKai-SB", "KaiTi", serif;
+    font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
 }
 
 /* 副標題 (例如：東四命) */
 #center-sub-text {
     font-size: 1.6vmin; 
     color: #555555; 
-    font-weight: bold; 
+    
     white-space: nowrap;
     margin-top: 0.2vmin;
-    font-family: "BiauKai", "DFKai-SB", "KaiTi", serif;
+    font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
 }
 
 /* --- 控制面板 --- */

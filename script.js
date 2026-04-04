@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textEl.setAttribute('y', y);
         textEl.setAttribute('text-anchor', 'middle');
         textEl.setAttribute('dominant-baseline', 'central');
-        textEl.setAttribute('font-family', '"BiauKai", "DFKai-SB", "KaiTi", serif');
+        textEl.setAttribute('font-family', '"PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif');
         textEl.setAttribute('font-weight', 'bold');
         textEl.setAttribute('fill', color);
         
@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     yearTextEl.style.fontWeight = 'bold';
                     yearTextEl.style.color = '#555555ff'; 
                     yearTextEl.style.marginBottom = '0.2vmin';
-                    yearTextEl.style.fontFamily = '"BiauKai", "DFKai-SB", "KaiTi", serif';
+                    yearTextEl.style.fontFamily = '"PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif';
                     yearTextEl.style.whiteSpace = 'nowrap';
                     centerBg.insertBefore(yearTextEl, centerMainText);
                     centerBg.style.width = '14.5vmin';
