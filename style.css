@@ -3,11 +3,11 @@ body {
     margin: 0;
     padding: 0;
     width: 100vw;
-    height: 100vh;
+    /* ★ 修正 1：改為 min-height，讓內容過多時可以撐開產生正常捲軸 */
+    min-height: 100vh; 
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* ★ 核心修正 1：將 center 改為 flex-start，讓整個內容往上貼，消除頂部大量空白 */
     justify-content: flex-start; 
     background-color: #f5f5f5;
     font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
@@ -18,28 +18,25 @@ body {
 #app {
     position: relative;
     width: 100%;
-    min-height: 100%; 
+    /* ★ 修正 2：同樣改為 min-height: 100vh */
+    min-height: 100vh; 
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* ★ 核心修正 2：確保內部元素也是由上往下排 */
     justify-content: flex-start; 
     
-    /* ★ 核心修正 3：設定頂部安全距離，避開 iPhone 的動態島或狀態列 */
     padding-top: max(4vh, 40px); 
     padding-bottom: 40px; 
 }
 
 /* --- 羅盤容器 --- */
 #compass-container {
-    /* 釋放更多空間給 iPhone 這種長螢幕 */
     width: 94vw; 
     height: 94vw;
     max-width: 55vh;  
     max-height: 55vh; 
     
     position: relative;
-    /* 縮小與下方控制板的距離，視覺更緊湊 */
     margin-bottom: 15px; 
     transition: transform 0.5s ease-out;
 }
@@ -151,17 +148,28 @@ body {
 /*媒體查詢：針對桌機/大螢幕的修正*/
 @media (min-width: 769px) and (min-height: 650px) {
     body, #app { 
-        justify-content: center; /* 電腦版螢幕夠大，恢復置中排列會比較好看 */
-        padding-top: 0;
+        justify-content: flex-start; 
+        /* 稍微縮小頂部的空白，把黃金位置讓給圓盤 */
+        padding-top: 3vh; 
+        padding-bottom: 5vh;
     }
+    
     #compass-container {
         width: 85vmin;
         height: 85vmin;
-        max-width: 65vh; 
-        max-height: 65vh;
-        margin-bottom: 30px;
+        /* ★ 將圓盤的最大高度恢復到 75vh，保持大尺寸霸氣顯示 */
+        max-width: 75vh; 
+        max-height: 75vh;
+        /* 縮短圓盤與控制面板的距離 */
+        margin-bottom: 5px; 
     }
-    #controls { max-width: 400px; }
+    
+    #controls { 
+        max-width: 400px; 
+        /* ★ 核心魔法：將整個控制面板等比例縮小為原來的 85%，把螢幕空間還給圓盤 */
+        transform: scale(0.85); 
+        transform-origin: top center;
+    }
 }
 
 /* 鎖定按鈕樣式 */

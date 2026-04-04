@@ -639,8 +639,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.removeEventListener('deviceorientation', handleOrientation, true);
                 window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
                 setCompassMode(false);
-                updateUI(0);
-                renderRotation(0);
+                updateUI(180);
+                renderRotation(180);
             });
         }
 
@@ -674,8 +674,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updateAll();
-        updateUI(0);
-        renderRotation(0);
+        updateUI(180);
+        renderRotation(180);
     }
     
     init();
