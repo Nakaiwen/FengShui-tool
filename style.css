@@ -77,7 +77,6 @@ body {
 /* 主標題 (例如：離命) */
 #center-main-text {
     font-size: 2.4vmin; 
-    
     color: #da7800; 
     line-height: 1.2;
     white-space: nowrap;
@@ -88,7 +87,6 @@ body {
 #center-sub-text {
     font-size: 1.6vmin; 
     color: #555555; 
-    
     white-space: nowrap;
     margin-top: 0.2vmin;
     font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
@@ -180,7 +178,7 @@ body {
     background-color: #7d2e68; /* 預設解鎖為綠色 */
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
     transition: background-color 0.3s;
@@ -195,4 +193,23 @@ body {
 button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+/* 五氣視角切換按鈕 */
+.qi-toggle-btn {
+    margin-top: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    background-color: #6475a1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 50%;
+    transition: background-color 0.3s, transform 0.1s;
+}
+.qi-toggle-btn:active { transform: scale(0.96); }
+.qi-toggle-btn.active {
+    background-color: #e91700; /* 開啟時變為紅色提醒 */
 }

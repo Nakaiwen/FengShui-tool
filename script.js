@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
         houseGua: '坎' 
     };
 
+    let isQiMode = false; // ★ 五氣視角模式開關
+
     // =================================================================
     //  SECTION 2: 節氣、流年、飛星邏輯與推算引擎
     // =================================================================
@@ -129,6 +131,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const index = LUO_SHU_PATH.indexOf(targetGua);
         let num = (centerNum + index + 1) % 9;
         return num === 0 ? 9 : num;
+    }
+
+    // ★ 核心升級：取得飛星五行
+    function getWuXing(starNum) {
+        const elements = { 1:'Water', 2:'Earth', 3:'Wood', 4:'Wood', 5:'Earth', 6:'Metal', 7:'Metal', 8:'Earth', 9:'Fire' };
+        return elements[starNum];
+    }
+
+    // ★ 核心升級：計算生旺退殺死五氣
+    function getFiveQi(centerStar, palaceStar) {
+        const cElem = getWuXing(centerStar); // 中宮(主)
+        const pElem = getWuXing(palaceStar); // 宮位(客)
+
+        if (cElem === pElem) return { qi: '旺', color: '#e91700ff' }; // 紅色
+
+        const generate = { 'Wood':'Fire', 'Fire':'Earth', 'Earth':'Metal', 'Metal':'Water', 'Water':'Wood' };
+        const destroy = { 'Wood':'Earth', 'Earth':'Water', 'Water':'Fire', 'Fire':'Metal', 'Metal':'Wood' };
+
+        if (generate[pElem] === cElem) return { qi: '生', color: '#e91700ff' }; // 客生主 -> 生 (紅)
+        if (generate[cElem] === pElem) return { qi: '退', color: '#004ad2ff' }; // 主生客 -> 退 (藍)
+        if (destroy[pElem] === cElem) return { qi: '殺', color: '#000000' };   // 客剋主 -> 殺 (黑)
+        if (destroy[cElem] === pElem) return { qi: '死', color: '#000000' };   // 主剋客 -> 死 (黑)
+        return { qi: '', color: '' };
     }
 
     // =================================================================
@@ -215,25 +240,46 @@ document.addEventListener('DOMContentLoaded', () => {
         layer.appendChild(textEl);
     }
 
+    // ★ 升級：支援五氣切換顯示
     function renderPersonMingStars(centerNum, radius, layerId) {
         const layer = getLayer(layerId);
         layer.innerHTML = '';
         LUO_SHU_PATH.forEach((gua, index) => {
             let num = (centerNum + index + 1) % 9;
             if (num === 0) num = 9;
-            const info = FLYING_STARS_INFO[num];
-            drawLabel(layer, info.name, getSvgAngle(gua), radius, info.color, 15, true, info.meaning);
+
+            if (isQiMode) {
+                // 五氣模式
+                const qiData = getFiveQi(centerNum, num);
+                drawLabel(layer, `命${qiData.qi}`, getSvgAngle(gua), radius, qiData.color, 15);
+            } else {
+                // 正常模式
+                const info = FLYING_STARS_INFO[num];
+                drawLabel(layer, info.name, getSvgAngle(gua), radius, info.color, 15, true, info.meaning);
+            }
         });
     }
 
-    function renderStarsShort(centerNum, radius, layerId, prefix, fontSize = 14, angleOffset = 0) {
+    // ★ 升級：支援五氣切換顯示
+    function renderStarsShort(centerNum, radius, layerId, prefix, fontSize = 14, angleOffset = 0, qiPrefix = '') {
         const layer = getLayer(layerId);
         layer.innerHTML = '';
         LUO_SHU_PATH.forEach((gua, index) => {
             let num = (centerNum + index + 1) % 9;
             if (num === 0) num = 9;
-            const starColor = FLYING_STARS_INFO[num].color;
-            drawLabel(layer, `${prefix}-${STAR_NAMES_SHORT[num]}`, getSvgAngle(gua) + angleOffset, radius, starColor, fontSize);
+
+            let text, textColor;
+            if (isQiMode) {
+                // 五氣模式
+                const qiData = getFiveQi(centerNum, num);
+                text = `${qiPrefix}${qiData.qi}`; 
+                textColor = qiData.color;
+            } else {
+                // 正常模式
+                text = `${prefix}-${STAR_NAMES_SHORT[num]}`;
+                textColor = FLYING_STARS_INFO[num].color;
+            }
+            drawLabel(layer, text, getSvgAngle(gua) + angleOffset, radius, textColor, fontSize);
         });
     }
 
@@ -386,11 +432,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15);
+        // ★ 呼叫支援五氣模式的渲染函數，並傳入對應的名稱 (宅、月、運、年)
+        renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15, '宅');
         renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
-        renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15);
-        renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '元運', 12, -10);
-        renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '流年', 12, 10);
+        renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15, '月');
+        renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '元運', 12, -10, '運');
+        renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '流年', 12, 10, '年');
+        
         renderOuterShas(termData.fsYear, RADIAL_LAYOUT.twelveShasRadius, 'twelve-shas-layer');
 
         const comboLayer = getLayer('combinations-layer');
@@ -547,10 +595,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =================================================================
-    //  SECTION 6: 初始化與綁定事件 (★ 包含鎖定記憶引擎)
+    //  SECTION 6: 初始化與綁定事件 (★ 包含鎖定記憶與五氣切換引擎)
     // =================================================================
     function init() {
-        // ★ 1. 讀取 LocalStorage 的記憶
+        // 讀取 LocalStorage 的記憶
         const savedYear = localStorage.getItem('fsSavedYear');
         const savedGender = localStorage.getItem('fsSavedGender');
         const savedGua = localStorage.getItem('fsSavedGua');
@@ -559,6 +607,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnMale = document.getElementById('btn-male');
         const btnFemale = document.getElementById('btn-female');
         const lockBtn = document.getElementById('lock-btn');
+        const qiToggleBtn = document.getElementById('btn-qi-toggle');
+
+        // ★ 綁定五氣切換按鈕
+        if (qiToggleBtn) {
+            qiToggleBtn.addEventListener('click', () => {
+                isQiMode = !isQiMode;
+                qiToggleBtn.classList.toggle('active', isQiMode);
+                qiToggleBtn.textContent = isQiMode ? '👁️ 關閉五氣資訊' : '👁️ 開啟五氣資訊 (生旺退殺死)';
+                updateAll(); // 觸發畫面重繪
+            });
+        }
 
         // 如果有記憶體，把資料填回去
         if (savedYear && inputYear) inputYear.value = savedYear;
@@ -572,12 +631,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (savedGua && selectHouse) selectHouse.value = savedGua;
 
-        // ★ 2. 建立鎖定切換機制
+        // 建立鎖定切換機制
         function toggleLock(forceState = null) {
             const willLock = forceState !== null ? forceState : !(lockBtn.classList.contains('locked'));
             
             if (willLock) {
-                // 執行鎖定：禁用輸入，改變按鈕外觀，儲存資料
                 if(inputYear) inputYear.disabled = true;
                 if(selectHouse) selectHouse.disabled = true;
                 if(btnMale) btnMale.disabled = true;
@@ -585,17 +643,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if(lockBtn) {
                     lockBtn.classList.add('locked');
-                    lockBtn.textContent = '🔒 已鎖定 (點擊解鎖)';
+                    lockBtn.textContent = '🔒 已鎖定 (點擊後可解鎖)';
                 }
 
-                // 寫入瀏覽器記憶體
                 if(inputYear) localStorage.setItem('fsSavedYear', inputYear.value);
                 localStorage.setItem('fsSavedGender', userSettings.gender);
                 if(selectHouse) localStorage.setItem('fsSavedGua', selectHouse.value);
                 localStorage.setItem('fsIsLocked', 'true');
 
             } else {
-                // 執行解鎖：恢復輸入
                 if(inputYear) inputYear.disabled = false;
                 if(selectHouse) selectHouse.disabled = false;
                 if(btnMale) btnMale.disabled = false;
@@ -603,20 +659,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if(lockBtn) {
                     lockBtn.classList.remove('locked');
-                    lockBtn.textContent = '🔓 解鎖狀態 (點擊儲存並鎖定)';
+                    lockBtn.textContent = '🔓 解鎖狀態 (點擊儲存鎖定)';
                 }
                 localStorage.setItem('fsIsLocked', 'false');
             }
         }
 
-        // 綁定鎖定按鈕點擊事件
         if (lockBtn) {
             lockBtn.addEventListener('click', () => toggleLock());
-            // 初始化時如果之前是鎖定的，就觸發鎖定
             if (isLocked) toggleLock(true);
         }
 
-        // --- 羅盤原本的事件綁定 ---
         if (degreeSlider) {
             degreeSlider.addEventListener('input', (e) => {
                 if (isCompassMode) {
