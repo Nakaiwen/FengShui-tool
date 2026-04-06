@@ -488,9 +488,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeStarsInPalace.push(pMing); 
             }
 
-            // 第三步：檢查「活躍星」之間的化學反應 (吉凶星格局)
+            // 第三步：化學反應與格局預測 (★ 強化版：加入流月引動判斷)
             let goodHits = 0; 
             let badHits = 0;
+            
+            // A. 基礎格局判斷
             COMBINATION_RULES.forEach(rule => {
                 if (rule.stars.length === 2) {
                     const [s1, s2] = rule.stars; 
@@ -512,6 +514,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+
+            // B. ★ 核心預測升級：流月「引動」流年凶氣之判斷
+            // 邏輯：如果該宮位流年是「殺/死」，且本月飛入 2(病符), 5(五黃), 3(是非) 等凶星
+            const annualQi = getFiveQi(annualStar, pYear).qi;
+            const isAnnualDangerous = ['殺', '死'].includes(annualQi);
+            const isMonthlyTrigger = [2, 5, 3].includes(pMonth);
+
+            if (isAnnualDangerous && isMonthlyTrigger && activeLayers.includes(4)) {
+                totalScore -= 25; // 強烈引動額外扣分
+                let triggerStarName = STAR_NAMES_SHORT[pMonth];
+                triggerEvents.push(`
+                    <div style="background:#fff0f0; border-left:4px solid #b30000; padding:4px 8px; margin:4px 0; color:#b30000; font-weight:bold;">
+                        ⚠️ 本月引動流年【${annualQi}氣】！<br>
+                        ${triggerStarName}凶星入庫，事件爆發機率極高，請務必避開此區！
+                    </div>
+                `);
+            }
 
             // ★ 第四步：依據最終總分數畫出「星等評分 (Star Rating)」
             const absScore = Math.abs(totalScore);
@@ -616,10 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 bzLayer.appendChild(sealGroup);
             }
 
-            // 將結果存入報告庫
-            if (finalState !== '平穩' || triggerEvents.length > 0) {
-                reports.push({ gua: gua, score: totalScore, state: finalState, bz: bzName, events: triggerEvents });
-            }
+            // 將結果存入報告庫 (一律收錄八宮位，實現完整預測報告)
+            reports.push({ gua: gua, score: totalScore, state: finalState, bz: bzName, events: triggerEvents });
         });
 
         // 渲染大凶煞 (珊瑚紅警戒區)
@@ -731,13 +748,16 @@ document.addEventListener('DOMContentLoaded', () => {
         renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '元運', 12, -10, '運');
         renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '流年', 12, 10, '年');
 
-        // ★ 最終輸出：印出報告到 UI 面板
+        
         const outPanel = document.getElementById('diagnostic-output');
         if (outPanel) {
             if (reports.length === 0) {
-                outPanel.innerHTML = '<div style="color:#666; padding: 10px 0; text-align:center;">✅ 勾選層級內氣場平穩，無大吉凶。</div>';
+                outPanel.innerHTML = '<div style="color:#666; padding: 10px 0; text-align:center;">✅ 勾選層級內氣場平穩，無極端大吉凶。</div>';
             } else {
-                reports.sort((a, b) => a.score - b.score); // 分數越低(越凶)排越上面
+                // ★ 修改：依照您指定的順序固定排序 (乾位起始)
+                const GUA_ORDER = ['乾', '坎', '艮', '震', '巽', '離', '坤', '兌'];
+                reports.sort((a, b) => GUA_ORDER.indexOf(a.gua) - GUA_ORDER.indexOf(b.gua));
+
                 let html = '';
                 reports.forEach(r => {
                     let icon = '';
@@ -748,16 +768,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (r.state === '大凶') { icon = '🚨'; titleColor = '#e91700'; }
                     else if (r.state === '極吉') { icon = '👑'; titleColor = '#b8860b'; }
                     else if (r.state === '大吉') { icon = '✨'; titleColor = '#dc5f00'; }
-                    else { icon = '✅'; titleColor = '#555'; }
+                    else { icon = '✅'; titleColor = '#2a9d8f'; } // 平穩用清爽的青綠色
 
-                    let eventText = r.events.length > 0 ? `<div style="margin-top:6px; background:#fff; padding:5px; border-radius:5px;">👉 觸發：<br>${r.events.join('<br>')}</div>` : '';
+                    // 準備事件文字 (如果沒有觸發事件，則顯示平穩描述)
+                    let eventContent = r.events.length > 0 
+                        ? `<div style="margin-top:6px; background:#fff; padding:6px; border-radius:5px; border:1px solid #eee;">${r.events.join('')}</div>` 
+                        : `<div style="margin-top:4px; font-size:12px; color:#888;">氣場平穩，無重大碰撞。</div>`;
                     
                     html += `
-                        <div style="border-bottom: 1px dashed #ddd; padding: 10px 0;">
-                            <strong style="color:${titleColor};">${icon} ${r.gua}宮 (${r.state})</strong> 
-                            <span style="font-size: 12px; color: #888;">[綜合評分: ${r.score}]</span><br>
-                            <div style="font-size: 13px; color: #444; margin-top:4px;">先天八宅：${r.bz}方</div>
-                            ${eventText}
+                        <div style="border-bottom: 1px solid #eee; padding: 12px 0;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong style="color:${titleColor}; font-size:15px;">${icon} ${r.gua}宮 (${r.state})</strong>
+                                <span style="font-size: 11px; color: #aaa; background:#f0f0f0; padding:2px 6px; border-radius:10px;">Score: ${r.score}</span>
+                            </div>
+                            <div style="font-size: 13px; color: #444; margin-top:4px;">先天方位：<span style="font-weight:bold;">${r.bz}</span></div>
+                            ${eventContent}
                         </div>
                     `;
                 });
