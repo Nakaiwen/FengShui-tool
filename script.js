@@ -44,24 +44,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ★ 預測庫：加入具體描述
     const COMBINATION_RULES = [
-        { type: 'good', stars: [4, 1], name: '四一同宮', desc: '利文昌、考試、升遷與桃花。' },
-        { type: 'good', stars: [6, 8], name: '六八同宮', desc: '大利武職、偏財、事業爆發。' },
-        { type: 'good', stars: [8, 9], name: '八九同宮', desc: '大吉慶、婚喜、財運亨通。' },
-        { type: 'bad',  stars: [7, 9], name: '九七穿途', desc: '易引發火災、心血管疾病或官非。' },
-        { type: 'bad',  stars: [2, 5], name: '二五交加', desc: '極凶！高機率引發重病、血光意外。' },
-        { type: 'bad',  stars: [3, 7], name: '三七疊臨', desc: '易遭竊盜、金屬所傷或劫財破財。' }
+        { type: 'good', stars: [4, 1], name: '四一同宮', desc: '利文昌、考試、升遷與桃花。', boost: '建議佈局：放置四支水種萬年青或掛上四隻毛筆，引動文昌氣場。' },
+        { type: 'good', stars: [6, 8], name: '六八同宮', desc: '大利武職、偏財、事業爆發。', boost: '建議佈局：放置金屬聚寶盆或銅製飾品，並鋪設黃色地墊催財。' },
+        { type: 'good', stars: [8, 9], name: '八九同宮', desc: '大吉慶、婚喜、財運亨通。', boost: '建議佈局：放置紅色中國結或點亮紅燈，引動喜慶財氣。' },
+        { type: 'bad',  stars: [7, 9], name: '九七穿途', desc: '注意火災、心血管疾病或官非。' },
+        { type: 'bad',  stars: [2, 5], name: '二五交加', desc: '注意重病、血光意外。' },
+        { type: 'bad',  stars: [3, 7], name: '三七疊臨', desc: '注意遭竊盜、金屬所傷或劫財破財。' }
     ];
 
+    // ★ 核心數據升級：新增乾坤生六子人物與身體部位
     const GUA_DATA = {
-        1: { name: '坎', number: 1, stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
-        2: { name: '坤', number: 2, stars: { '坤':'伏位', '艮':'生氣', '兌':'天醫', '乾':'延年', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
-        3: { name: '震', number: 3, stars: { '震':'伏位', '離':'生氣', '坎':'天醫', '巽':'延年', '艮':'六煞', '坤':'禍害', '乾':'五鬼', '兌':'絕命' } },
-        4: { name: '巽', number: 4, stars: { '巽':'伏位', '坎':'生氣', '離':'天醫', '震':'延年', '兌':'六煞', '乾':'禍害', '坤':'五鬼', '艮':'絕命' } },
-        6: { name: '乾', number: 6, stars: { '乾':'伏位', '兌':'生氣', '艮':'天醫', '坤':'延年', '坎':'六煞', '巽':'禍害', '震':'五鬼', '離':'絕命' } },
-        7: { name: '兌', number: 7, stars: { '兌':'伏位', '乾':'生氣', '坤':'天醫', '艮':'延年', '巽':'六煞', '坎':'禍害', '離':'五鬼', '震':'絕命' } },
-        8: { name: '艮', number: 8, stars: { '艮':'伏位', '坤':'生氣', '乾':'天醫', '兌':'延年', '震':'六煞', '離':'禍害', '坎':'五鬼', '巽':'絕命' } },
-        9: { name: '離', number: 9, stars: { '離':'伏位', '震':'生氣', '巽':'天醫', '坎':'延年', '坤':'六煞', '艮':'禍害', '兌':'五鬼', '乾':'絕命' } }
+        1: { name: '坎', number: 1, member: '中男(二子)', body: '耳、腎、血液、泌尿系統', stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
+        2: { name: '坤', number: 2, member: '老母(女主人)', body: '腹、脾胃、肉、皮膚', stars: { '坤':'伏位', '艮':'生氣', '兌':'天醫', '乾':'延年', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
+        3: { name: '震', number: 3, member: '長男(大子)', body: '足、肝臟、神經系統', stars: { '震':'伏位', '離':'生氣', '坎':'天醫', '巽':'延年', '艮':'六煞', '坤':'禍害', '乾':'五鬼', '兌':'絕命' } },
+        4: { name: '巽', number: 4, member: '長女(大女)', body: '股(腿)、膽、呼吸系統', stars: { '巽':'伏位', '坎':'生氣', '離':'天醫', '震':'延年', '兌':'六煞', '乾':'禍害', '坤':'五鬼', '艮':'絕命' } },
+        6: { name: '乾', number: 6, member: '老父(男主人)', body: '頭、面、骨骼、大腸', stars: { '乾':'伏位', '兌':'生氣', '艮':'天醫', '坤':'延年', '坎':'六煞', '巽':'禍害', '震':'五鬼', '離':'絕命' } },
+        7: { name: '兌', number: 7, member: '少女(三女)', body: '口、舌、肺、呼吸道', stars: { '兌':'伏位', '乾':'生氣', '坤':'天醫', '艮':'延年', '巽':'六煞', '坎':'禍害', '離':'五鬼', '震':'絕命' } },
+        8: { name: '艮', number: 8, member: '少男(三子)', body: '手、背、鼻、脾胃', stars: { '艮':'伏位', '坤':'生氣', '乾':'天醫', '兌':'延年', '震':'六煞', '離':'禍害', '坎':'五鬼', '巽':'絕命' } },
+        9: { name: '離', number: 9, member: '中女(二女)', body: '目(眼)、心、血液循環', stars: { '離':'伏位', '震':'生氣', '巽':'天醫', '坎':'延年', '坤':'六煞', '艮':'禍害', '兌':'五鬼', '乾':'絕命' } }
     };
+
+    
 
     let userSettings = {
         gender: 'male',
@@ -398,397 +401,437 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById('target-date'); 
 
     function updateAll() {
-        if (!inputYear) return;
-        const birthYear = parseInt(inputYear.value);
-        if (isNaN(birthYear)) return;
+    if (!inputYear) return;
+    const birthYear = parseInt(inputYear.value);
+    if (isNaN(birthYear)) return;
 
-        let sum = birthYear.toString().split('').map(Number).reduce((a,b)=>a+b, 0);
-        while(sum > 9) sum = sum.toString().split('').map(Number).reduce((a,b)=>a+b,0);
+    let sum = birthYear.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+    while (sum > 9) sum = sum.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+
+    let kua;
+    if (userSettings.gender === 'male') {
+        kua = 11 - sum;
+        while (kua > 9) kua -= 9;
+        if (kua === 5) kua = 2;
+    } else {
+        kua = 4 + sum;
+        while (kua > 9) kua -= 9;
+        if (kua === 5) kua = 8;
+    }
+    const mingGua = GUA_DATA[kua];
+
+    const houseGuaName = selectHouse ? selectHouse.value : '坎';
+    const zhaiGua = Object.values(GUA_DATA).find(g => g.name === houseGuaName) || GUA_DATA[1];
+
+    // 讀取使用者選擇的日期
+    let selectedDate = new Date();
+    if (dateInput && dateInput.value) {
+        const parts = dateInput.value.split('-');
+        if (parts.length === 3) {
+            selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+    }
+
+    // 取得流年流月資料
+    const termData = getSolarTermMonth(selectedDate);
+    const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
+    const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
+    const periodStar = calculatePeriodStar(termData.fsYear);
+
+    // 確保 UI 面板存在
+    setupDiagnosticPanel();
+
+    // 取得使用者勾選的疊加層級 (1~5)
+    let activeLayers = [];
+    document.querySelectorAll('.layer-chk').forEach(chk => {
+        if (chk.checked) activeLayers.push(parseInt(chk.value));
+    });
+
+    let reports = []; 
+    const bzLayer = getLayer('bz-layer');
+    bzLayer.innerHTML = '';
+    const comboLayer = getLayer('combinations-layer');
+    comboLayer.innerHTML = '';
+
+    // ★ 核心掃描：迴圈跑 8 宮位
+    LUO_SHU_PATH.forEach(gua => {
+        const guaInfo = Object.values(GUA_DATA).find(g => g.name === gua);
         
-        let kua;
-        if(userSettings.gender === 'male') { 
-            kua = 11 - sum; 
-            while(kua > 9) kua -= 9; 
-            if(kua === 5) kua = 2; 
-        } else { 
-            kua = 4 + sum; 
-            while(kua > 9) kua -= 9; 
-            if(kua === 5) kua = 8; 
-        }
-        const mingGua = GUA_DATA[kua];
+        const bzName = zhaiGua.stars[gua];
+        const pZhai = getStarInGua(zhaiGua.number, gua);
+        const pPeriod = getStarInGua(periodStar, gua);
+        const pYear = getStarInGua(annualStar, gua);
+        const pMonth = getStarInGua(monthStar, gua);
+        const pMing = getStarInGua(mingGua.number, gua);
 
-        const houseGuaName = selectHouse ? selectHouse.value : '坎';
-        const zhaiGua = Object.values(GUA_DATA).find(g => g.name === houseGuaName) || GUA_DATA[1];
+        let totalScore = 0;
+        let activeStarsInPalace = []; 
+        let triggerEvents = [];
 
-        // 讀取使用者選擇的日期
-        let selectedDate = new Date();
-        if (dateInput && dateInput.value) {
-            const parts = dateInput.value.split('-');
-            if (parts.length === 3) {
-                selectedDate = new Date(parts[0], parts[1] - 1, parts[2]); 
-            }
-        }
+        // 第一步：八宅基礎分
+        totalScore += getBzScore(bzName);
 
-        // 取得流年流月資料
-        const termData = getSolarTermMonth(selectedDate);
-        const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
-        const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
-        const periodStar = calculatePeriodStar(termData.fsYear); 
+        // 第二步：收集活躍星與五氣分
+        if (activeLayers.includes(1)) { totalScore += getQiScore(getFiveQi(zhaiGua.number, pZhai).qi); activeStarsInPalace.push(pZhai); }
+        if (activeLayers.includes(2)) { totalScore += getQiScore(getFiveQi(periodStar, pPeriod).qi); activeStarsInPalace.push(pPeriod); }
+        if (activeLayers.includes(3)) { totalScore += getQiScore(getFiveQi(annualStar, pYear).qi); activeStarsInPalace.push(pYear); }
+        if (activeLayers.includes(4)) { totalScore += getQiScore(getFiveQi(monthStar, pMonth).qi); activeStarsInPalace.push(pMonth); }
+        if (activeLayers.includes(5)) { totalScore += getQiScore(getFiveQi(mingGua.number, pMing).qi); activeStarsInPalace.push(pMing); }
 
-        // 確保 UI 面板存在
-        setupDiagnosticPanel();
-
-        // 取得使用者勾選的疊加層級 (1~5)
-        let activeLayers = [];
-        document.querySelectorAll('.layer-chk').forEach(chk => {
-            if (chk.checked) activeLayers.push(parseInt(chk.value));
-        });
-
-        let reports = []; // 存放最終生成的報告
-        const bzLayer = getLayer('bz-layer'); 
-        bzLayer.innerHTML = '';
-        const comboLayer = getLayer('combinations-layer');
-        comboLayer.innerHTML = ''; 
-
-        // ★ 核心掃描：迴圈跑 8 宮位，執行大腦計分
-        LUO_SHU_PATH.forEach(gua => {
-            const bzName = zhaiGua.stars[gua];
-            const pZhai = getStarInGua(zhaiGua.number, gua);
-            const pPeriod = getStarInGua(periodStar, gua);
-            const pYear = getStarInGua(annualStar, gua);
-            const pMonth = getStarInGua(monthStar, gua);
-            const pMing = getStarInGua(mingGua.number, gua);
-
-            let totalScore = 0;
-            let activeStarsInPalace = []; // 只收集有打勾的星星
-            let triggerEvents = [];
-
-            // 第一步：八宅方賦予權重分數
-            totalScore += getBzScore(bzName);
-
-            // 第二步：依勾選層級加入五氣分數
-            if (activeLayers.includes(1)) { 
-                totalScore += getQiScore(getFiveQi(zhaiGua.number, pZhai).qi); 
-                activeStarsInPalace.push(pZhai); 
-            }
-            if (activeLayers.includes(2)) { 
-                totalScore += getQiScore(getFiveQi(periodStar, pPeriod).qi); 
-                activeStarsInPalace.push(pPeriod); 
-            }
-            if (activeLayers.includes(3)) { 
-                totalScore += getQiScore(getFiveQi(annualStar, pYear).qi); 
-                activeStarsInPalace.push(pYear); 
-            }
-            if (activeLayers.includes(4)) { 
-                totalScore += getQiScore(getFiveQi(monthStar, pMonth).qi); 
-                activeStarsInPalace.push(pMonth); 
-            }
-            if (activeLayers.includes(5)) { 
-                totalScore += getQiScore(getFiveQi(mingGua.number, pMing).qi); 
-                activeStarsInPalace.push(pMing); 
-            }
-
-            // 第三步：化學反應與格局預測 (★ 強化版：加入流月引動判斷)
-            let goodHits = 0; 
-            let badHits = 0;
-            
-            // A. 基礎格局判斷
-            COMBINATION_RULES.forEach(rule => {
-                if (rule.stars.length === 2) {
-                    const [s1, s2] = rule.stars; 
-                    const count1 = activeStarsInPalace.filter(s => s === s1).length; 
-                    const count2 = activeStarsInPalace.filter(s => s === s2).length;
-                    let hits = (s1 !== s2) ? count1 * count2 : (count1 * (count1 - 1)) / 2;
-                    
-                    if (hits > 0) { 
-                        if (rule.type === 'good') { 
-                            goodHits += hits; 
-                            totalScore += 15; 
-                            triggerEvents.push(`<span style="color:#2e7d32;">[吉] ${rule.name} - ${rule.desc}</span>`); 
-                        } 
-                        if (rule.type === 'bad') { 
-                            badHits += hits; 
-                            totalScore -= 20; 
-                            triggerEvents.push(`<span style="color:#e91700;">[凶] ${rule.name} - ${rule.desc}</span>`); 
-                        } 
-                    }
-                }
-            });
-
-            // B. ★ 核心預測升級：流月「引動」流年凶氣之判斷
-            // 邏輯：如果該宮位流年是「殺/死」，且本月飛入 2(病符), 5(五黃), 3(是非) 等凶星
-            const annualQi = getFiveQi(annualStar, pYear).qi;
-            const isAnnualDangerous = ['殺', '死'].includes(annualQi);
-            const isMonthlyTrigger = [2, 5, 3].includes(pMonth);
-
-            if (isAnnualDangerous && isMonthlyTrigger && activeLayers.includes(4)) {
-                totalScore -= 25; // 強烈引動額外扣分
-                let triggerStarName = STAR_NAMES_SHORT[pMonth];
-                triggerEvents.push(`
-                    <div style="background:#fff0f0; border-left:4px solid #b30000; padding:4px 8px; margin:4px 0; color:#b30000; font-weight:bold;">
-                        ⚠️ 本月引動流年【${annualQi}氣】！<br>
-                        ${triggerStarName}凶星入庫，事件爆發機率極高，請務必避開此區！
-                    </div>
-                `);
-            }
-
-            // ★ 第四步：依據最終總分數畫出「星等評分 (Star Rating)」
-            const absScore = Math.abs(totalScore);
-            const fullStars = Math.floor(absScore / 10);
-            const hasHalfStar = (absScore % 10) >= 5; // 尾數 >= 5 給半顆星
-            const totalVisualStars = fullStars + (hasHalfStar ? 1 : 0);
-            const starType = totalScore > 0 ? 'good' : 'bad'; // 正分紅星，負分黑星
-
-            if (totalVisualStars > 0) {
-                const centerAngle = getSvgAngle(gua); 
+        // 第三步：化學反應（吉凶組合） (★ 加入趨吉佈局提示)
+        COMBINATION_RULES.forEach(rule => {
+            if (rule.stars.length === 2) {
+                const [s1, s2] = rule.stars; 
+                const c1 = activeStarsInPalace.filter(s => s === s1).length; 
+                const c2 = activeStarsInPalace.filter(s => s === s2).length;
+                let hits = (s1 !== s2) ? c1 * c2 : (c1 * (c1 - 1)) / 2;
                 
-                // ==========================================
-                // ★ 星星排版微調區
-                // ==========================================
-                const STAR_SPACING = 6;  // 1. 微調星星的左右間距 (數字越大越開)
-                const MAX_PER_ROW = 6;   // 2. 一排最多顯示幾顆星 (超過自動換行)
-                const ROW_GAP = 8;       // 3. 第二排星星往內縮的半徑距離 (換排高度差)
-                // ==========================================
-
-                // 準備要把哪些星星畫出來的陣列 (false=全星, true=半星)
-                let starsToDraw = Array(fullStars).fill(false);
-                if (hasHalfStar) starsToDraw.push(true);
-
-                // 計算總共有幾排
-                const totalRows = Math.ceil(starsToDraw.length / MAX_PER_ROW);
-
-                // ★ 新增：判斷排數來決定起始半徑 (單排 100，雙排以上從 104 開始往下長)
-                const baseRadius = totalRows > 1 ? 104 : RADIAL_LAYOUT.combinationsRadius;
-
-                for (let row = 0; row < totalRows; row++) {
-                    // 取出這排要畫的星星
-                    let rowStars = starsToDraw.slice(row * MAX_PER_ROW, (row + 1) * MAX_PER_ROW);
-                    
-                    // 計算這排的半徑 (以 baseRadius 為基準往內縮)
-                    let currentRadius = baseRadius - (row * ROW_GAP);
-                    
-                    // 計算這排第一顆星的起始角度 (確保完美置中)
-                    let currentAngle = centerAngle - ((rowStars.length - 1) * STAR_SPACING) / 2;
-
-                    // 依序畫出這排的星星
-                    rowStars.forEach(isHalf => {
-                        drawScoreStar(comboLayer, currentAngle, currentRadius, starType, isHalf);
-                        currentAngle += STAR_SPACING;
-                    });
+                if (hits > 0) { 
+                    if (rule.type === 'good') { 
+                        totalScore += 15; 
+                        // ★ 吉格輸出：增加 boost 趨吉佈局顯示區塊
+                        triggerEvents.push(`
+                            <div style="color:#2e7d32; margin-bottom:6px;">
+                                <b>[吉] ${rule.name}</b> - ${rule.desc}
+                                ${rule.boost ? `
+                                <div style="font-size:11.5px; color:#1b5e20; background:#e8f5e9; padding:5px 10px; border-radius:4px; margin-top:4px; border-left:3px solid #2e7d32; line-height:1.4;">
+                                    🚀 <b>趨吉佈局：</b>${rule.boost}
+                                </div>` : ''}
+                            </div>
+                        `); 
+                    } 
+                    if (rule.type === 'bad') { 
+                        totalScore -= 20; 
+                        // ★ 凶格輸出：維持醒目的紅色警告
+                        triggerEvents.push(`
+                            <div style="color:#e91700; margin-bottom:4px;">
+                                <b>[凶] ${rule.name}</b> - ${rule.desc}
+                            </div>
+                        `); 
+                    } 
                 }
             }
+        });
 
-            // 第五步：判定最終吉凶狀態 (五段等級) 與背景色
-            let finalState = ''; 
-            let bgColor = '';
+        // =========================================================
+        // ★ 進階大腦：精準【受剋判定】與【通關化解】邏輯
+        // =========================================================
+        const starWuxingMap = { 1:'水', 2:'土', 3:'木', 4:'木', 5:'土', 6:'金', 7:'金', 8:'土', 9:'火' };
+        const guaWuxingMap = { '坎':'水', '坤':'土', '震':'木', '巽':'木', '乾':'金', '兌':'金', '艮':'土', '離':'火' };
+        const destroyMap = { '火':'金', '金':'木', '木':'土', '土':'水', '水':'火' };
+        const bridgeMap = { '火_金':'土', '金_木':'水', '木_土':'火', '土_水':'金', '水_火':'木' };
+        
+        // 化解建議對照
+        const REMEDY_MAP = {
+            '土': '放置陶瓷擺件、黃色地墊或天然礦石，以土元素化解。複數數量以5、10為主。',
+            '水': '放置水種植物、魚缸或黑色地墊，以水元素化解。複數數量以1、6為主。',
+            '火': '開盞長明燈、紅色掛畫或紅色地墊，以火元素化解。複數數量以2、7為主。',
+            '金': '放置金屬擺件、銅製飾品或白色地毯，以金元素化解。複數數量以4、9為主。',
+            '木': '放置綠色植物或木質傢俱，以木元素化解。複數數量以3、8為主。'
+        };
+
+        const currentGuaWuxing = guaWuxingMap[gua];
+        let presentWuxings = new Set();
+        activeStarsInPalace.forEach(s => presentWuxings.add(starWuxingMap[s]));
+
+        // =========================================================
+        // ★ 進階大腦：受剋判定、通關化解、及【剋洩交加】特級預警
+        // =========================================================
+        const drainMap = { '金':'水', '水':'木', '木':'火', '火':'土', '土':'金' };
+        
+        let injuryNote = "";
+        let isHealed = false;
+        let healerStar = null;
+        let destroyCount = 0; // 統計剋星數量
+        let drainCount = 0;   // 統計洩星數量
+
+        // 掃描每一顆活躍星的生剋關係
+        activeStarsInPalace.forEach(s => {
+            const sWuxing = starWuxingMap[s];
             
-            if (totalScore >= 40) { 
-                finalState = '極吉'; 
-                bgColor = 'rgba(255, 236, 27, 0.55)'; // 璀璨金黃
-            } 
-            else if (totalScore >= 20) { 
-                finalState = '大吉'; 
-                bgColor = 'rgba(255, 184, 62, 0.45)'; // 鵝黃色
-            } 
-            else if (totalScore <= -40) { 
-                finalState = '極凶'; 
-                bgColor = 'rgba(255, 89, 89, 0.55)'; // 深紅色
-            } 
-            else if (totalScore <= -20) { 
-                finalState = '大凶'; 
-                bgColor = 'rgba(255, 131, 97, 0.45)'; // 珊瑚紅
-            } 
-            else { 
-                finalState = '平穩'; 
-                bgColor = 'rgba(135, 206, 235, 0.4)'; // 天藍色
-            }
-
-            // 繪製八宅底色與文字
-            let centerAngle = getSvgAngle(gua);
-            drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle - 22.5, centerAngle + 22.5, bgColor);
-
-            const c = ['生氣','延年','天醫','伏位'].includes(bzName) ? '#252525ff' : '#252525ff';
-            let textAngle = centerAngle; 
-            if (['生氣', '延年'].includes(bzName)) textAngle -= 6; 
-            drawLabel(bzLayer, bzName, textAngle, RADIAL_LAYOUT.starRadius, c, 16); 
-
-            if (['生氣', '延年'].includes(bzName)) {
-                const sealAngle = centerAngle + 12; 
-                const sx = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(sealAngle * Math.PI / 180); 
-                const sy = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.starRadius * Math.sin(sealAngle * Math.PI / 180);
-                const sealGroup = document.createElementNS(SVG_NS, 'g'); 
-                const circle = document.createElementNS(SVG_NS, 'circle'); 
-                circle.setAttribute('r', RADIAL_LAYOUT.sealSize); 
-                circle.setAttribute('fill', 'none'); 
-                circle.setAttribute('stroke', '#c0392b'); 
-                circle.setAttribute('stroke-width', '1.5'); 
-                const sealText = document.createElementNS(SVG_NS, 'text'); 
-                sealText.setAttribute('text-anchor', 'middle'); 
-                sealText.setAttribute('dominant-baseline', 'central'); 
-                sealText.setAttribute('font-size', '13'); 
-                sealText.setAttribute('fill', '#c0392b'); 
-                sealText.setAttribute('font-family', 'serif'); 
-                sealText.textContent = '吉'; 
-                sealGroup.appendChild(circle); 
-                sealGroup.appendChild(sealText); 
-                sealGroup.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${sealAngle + 90})`); 
-                bzLayer.appendChild(sealGroup);
-            }
-
-            // 將結果存入報告庫 (一律收錄八宮位，實現完整預測報告)
-            reports.push({ gua: gua, score: totalScore, state: finalState, bz: bzName, events: triggerEvents });
-        });
-
-        // 渲染大凶煞 (珊瑚紅警戒區)
-        const shasLayer = getLayer('twelve-shas-layer'); 
-        if(shasLayer) shasLayer.innerHTML = '';
-        
-        const labels24 = Array(24).fill(null).map(() => ({ main: '', sub: '', color: '', subColor: '' }));
-        const ybIdx = (termData.fsYear - 4) % 12; 
-        
-        for (let i = 0; i < 12; i++) { 
-            const mIdx = i * 2; 
-            const shaIdx = (i - ybIdx + 12) % 12; 
-            const sName = TWELVE_SHAS_SEQUENCE[shaIdx]; 
-            labels24[mIdx].main = sName; 
-            labels24[mIdx].color = (sName === '太歲') ? '#e91700ff' : '#6421c3ff'; 
-        }
-        
-        const stemIdx = termData.fsYear % 10; 
-        const DU_TIAN_MAP = { 0: [4,5,6], 1: [20,21,22], 2: [16,17,18], 3: [12,13,14], 4: [8,9,10], 5: [4,5,6], 6: [20,21,22], 7: [16,17,18], 8: [12,13,14], 9: [8,9,10] }; 
-        const dtIndices = DU_TIAN_MAP[stemIdx]; 
-        const dtNames = ['戊己都天', '夾煞都天', '戊己都天'];
-        
-        for (let i = 0; i < 3; i++) { 
-            const idx = dtIndices[i]; 
-            const dn = dtNames[i]; 
-            const dc = '#e91700ff'; 
-            if (labels24[idx].main) { 
-                labels24[idx].sub = dn; 
-                labels24[idx].subColor = dc; 
-            } else { 
-                labels24[idx].main = dn; 
-                labels24[idx].color = dc; 
-            } 
-        }
-        
-        let ssIndices = []; 
-        if ([6,10,2].includes(ybIdx)) { ssIndices = [23,0,1]; } 
-        else if ([4,8,0].includes(ybIdx)) { ssIndices = [11,12,13]; } 
-        else if ([3,7,11].includes(ybIdx)) { ssIndices = [17,18,19]; } 
-        else if ([9,1,5].includes(ybIdx)) { ssIndices = [5,6,7]; }
-        
-        ssIndices.forEach(idx => { 
-            const ssn = "三煞"; 
-            const ssc = "#e91700ff"; 
-            if (!labels24[idx].main) { 
-                labels24[idx].main = ssn; 
-                labels24[idx].color = ssc; 
-            } else if (!labels24[idx].sub) { 
-                labels24[idx].sub = ssn; 
-                labels24[idx].subColor = ssc; 
-            } else { 
-                labels24[idx].sub += "·三煞"; 
-            } 
-        });
-
-        // 畫出外圍凶煞底色
-        for (let i = 0; i < 24; i++) { 
-            const data = labels24[i]; 
-            if (data.color === '#e91700ff' || data.subColor === '#e91700ff') { 
-                const cAng = 90 + (i * 15); 
-                drawAnnularSector(shasLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 240, 267, cAng - 7.5, cAng + 7.5, 'rgba(252, 133, 115, 0.5)'); 
-            } 
-        }
-
-        // 畫出外圍凶煞文字
-        for (let i = 0; i < 24; i++) { 
-            const data = labels24[i]; 
-            if (data.main) { 
-                const ang = 90 + (i * 15); 
-                if (data.sub) { 
-                    drawLabel(shasLayer, data.main, ang, RADIAL_LAYOUT.twelveShasRadius, data.color, 12, true, data.sub, data.subColor); 
-                } else { 
-                    drawLabel(shasLayer, data.main, ang, RADIAL_LAYOUT.twelveShasRadius, data.color, 12); 
-                } 
-            } 
-        }
-
-        // 渲染中心圓盤資訊
-        const centerMainText = document.getElementById('center-main-text');
-        if (centerMainText) {
-            centerMainText.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
-            const centerBg = document.getElementById('center-bg');
-            if (centerBg) { 
-                let yearTextEl = document.getElementById('center-year-text'); 
-                if (!yearTextEl) { 
-                    yearTextEl = document.createElement('div'); 
-                    yearTextEl.id = 'center-year-text'; 
-                    yearTextEl.style.fontSize = '1.8vmin'; 
-                    yearTextEl.style.fontWeight = 'bold'; 
-                    yearTextEl.style.color = '#555555ff'; 
-                    yearTextEl.style.marginBottom = '0.2vmin'; 
-                    yearTextEl.style.fontFamily = '"PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif'; 
-                    yearTextEl.style.whiteSpace = 'nowrap'; 
-                    centerBg.insertBefore(yearTextEl, centerMainText); 
-                    centerBg.style.width = '14.5vmin'; 
-                    centerBg.style.height = '14.5vmin'; 
-                } 
-                yearTextEl.textContent = `${termData.fsYear} ${getGanzhiYear(termData.fsYear)}年`; 
-            }
-        }
-        
-        const centerSubText = document.getElementById('center-sub-text'); 
-        if (centerSubText) { centerSubText.textContent = `${termData.termName}後-${termData.fsMonth}月`; }
-
-        // 渲染各層飛星
-        renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15, '宅');
-        renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
-        renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15, '月');
-        renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '元運', 12, -10, '運');
-        renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '流年', 12, 10, '年');
-
-        
-        const outPanel = document.getElementById('diagnostic-output');
-        if (outPanel) {
-            if (reports.length === 0) {
-                outPanel.innerHTML = '<div style="color:#666; padding: 10px 0; text-align:center;">✅ 勾選層級內氣場平穩，無極端大吉凶。</div>';
-            } else {
-                // ★ 修改：依照您指定的順序固定排序 (乾位起始)
-                const GUA_ORDER = ['乾', '坎', '艮', '震', '巽', '離', '坤', '兌'];
-                reports.sort((a, b) => GUA_ORDER.indexOf(a.gua) - GUA_ORDER.indexOf(b.gua));
-
-                let html = '';
-                reports.forEach(r => {
-                    let icon = '';
-                    let titleColor = '';
-                    
-                    // 根據五段等級給予專屬圖示與文字顏色
-                    if (r.state === '極凶') { icon = '💥'; titleColor = '#b30000'; }
-                    else if (r.state === '大凶') { icon = '🚨'; titleColor = '#e91700'; }
-                    else if (r.state === '極吉') { icon = '👑'; titleColor = '#b8860b'; }
-                    else if (r.state === '大吉') { icon = '✨'; titleColor = '#dc5f00'; }
-                    else { icon = '✅'; titleColor = '#2a9d8f'; } // 平穩用清爽的青綠色
-
-                    // 準備事件文字 (如果沒有觸發事件，則顯示平穩描述)
-                    let eventContent = r.events.length > 0 
-                        ? `<div style="margin-top:6px; background:#fff; padding:6px; border-radius:5px; border:1px solid #eee;">${r.events.join('')}</div>` 
-                        : `<div style="margin-top:4px; font-size:12px; color:#888;">氣場平穩，無重大碰撞。</div>`;
-                    
-                    html += `
-                        <div style="border-bottom: 1px solid #eee; padding: 12px 0;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <strong style="color:${titleColor}; font-size:15px;">${icon} ${r.gua}宮 (${r.state})</strong>
-                                <span style="font-size: 11px; color: #aaa; background:#f0f0f0; padding:2px 6px; border-radius:10px;">Score: ${r.score}</span>
+            // 判斷是否為「剋」
+            if (destroyMap[sWuxing] === currentGuaWuxing) {
+                destroyCount++;
+                const needBridge = bridgeMap[`${sWuxing}_${currentGuaWuxing}`];
+                
+                // 檢查同宮是否有通關五行
+                if (presentWuxings.has(needBridge)) {
+                    isHealed = true;
+                    healerStar = activeStarsInPalace.find(star => starWuxingMap[star] === needBridge);
+                } else {
+                    const remedyText = REMEDY_MAP[needBridge] || '請尋求專業老師指導。';
+                    injuryNote = `
+                        <div style="background:#fff0f0; border-left:4px solid #b30000; padding:8px 10px; margin:5px 0; color:#b30000; font-size:12.5px;">
+                            💥 <b>【受剋預警】</b>：<br>
+                            ${STAR_NAMES_SHORT[s]}屬<b>${sWuxing}</b>，剋入本宮(<b>${currentGuaWuxing}</b>)，<br>
+                            <b>${guaInfo.member}</b> 受傷！需嚴防：<b>${guaInfo.body}</b>。<br>
+                            <div style="margin-top:6px; color:#444; font-size:12px; background:#fff; padding:6px; border-radius:4px; border:1px dashed #b30000; line-height:1.5;">
+                                🛠️ <b>佈局建議：</b>${remedyText}
                             </div>
-                            <div style="font-size: 13px; color: #444; margin-top:4px;">先天方位：<span style="font-weight:bold;">${r.bz}</span></div>
-                            ${eventContent}
                         </div>
                     `;
+                }
+            }
+            
+            // 判斷是否為「洩」
+            if (drainMap[currentGuaWuxing] === sWuxing) {
+                drainCount++;
+            }
+        });
+
+        // ★ 最終判定：優先檢查是否符合「剋洩交加」最嚴重狀態
+        if (destroyCount > 0 && drainCount > 0 && !isHealed) {
+            totalScore -= 30; // 特級凶象，重扣分
+            
+            // 針對剋洩交加的專屬化解建議 (補充本宮能量)
+            const BOOST_REMEDY = {
+                '金': '建議大量補充金元素：放置 4 或 9 件銅製錢幣、白色地毯，並保持此方明亮。',
+                '木': '建議大量補充木元素：放置 3 或 8 盆長青植物、綠色裝飾，維持生機。',
+                '水': '建議大量補充水元素：放置 1 或 6 件動水擺件、黑色裝飾，活化能量。',
+                '火': '建議大量補充火元素：點亮 2 或 7 盞暖色長明燈、紅色掛畫，支撐氣場。',
+                '土': '建議大量補充土元素：放置陶藝或是石雕擺件、聚寶盆，或5顆、10顆天然礦石。'
+            };
+            const currentBoost = BOOST_REMEDY[currentGuaWuxing] || '請尋求專業老師指導。';
+
+            triggerEvents.push(`
+                <div style="background:#4a0000; border-left:5px solid #ff0000; padding:10px; margin:5px 0; color:#fff; font-size:13px; border-radius:4px; line-height:1.6;">
+                    🚨 <b>【特級預警：剋洩交加】</b><br>
+                    此方位能量耗損過度！本宮(<b>${currentGuaWuxing}</b>)正遭受外部強力剋入，且內部能量被大量洩出。<br>
+                    這對 <b>${guaInfo.member}</b> 的影響最為劇烈，極易引發意外或突發健康問題！<br>
+                    <div style="margin-top:8px; color:#ffeb3b; font-size:12.5px; background:rgba(255,255,255,0.1); padding:8px; border-radius:4px; border:1px dashed #ffeb3b;">
+                        🛠️ <b>緊急佈局方案：</b><br>${currentBoost}
+                    </div>
+                </div>
+            `);
+
+        } else if (isHealed && !injuryNote) {
+            // 通關成功的情況
+            totalScore += 20; 
+            triggerEvents.push(`
+                <div style="background:#f0fff4; border-left:4px solid #2e7d32; padding:8px 10px; margin:5px 0; color:#2e7d32; font-size:12.5px;">
+                    🌿 <b>【通關化解】</b>：<br>
+                    本有剋戰凶象，幸得同宮 <b>${STAR_NAMES_SHORT[healerStar]}</b> 轉化氣場，化凶為吉！
+                </div>
+            `);
+            
+        } else if (injuryNote) {
+            // 只有受剋且未通關的情況
+            totalScore -= 20;
+            triggerEvents.push(injuryNote);
+        }
+
+
+
+        // 保留原有的流年氣場引動警告
+        const annualQi = getFiveQi(annualStar, pYear).qi;
+        if (annualQi === '殺' && [2, 5, 3].includes(pMonth) && activeLayers.includes(4)) {
+            triggerEvents.push(`<div style="background:#fff9f0; border-left:4px solid #da7800; padding:4px 8px; margin:4px 0; color:#da7800; font-size:12px;">⚠️ 氣場引動：流月凶星進入流年殺位，易有突發意外。</div>`);
+        }
+
+        // 第四步：星等繪製
+        const absScore = Math.abs(totalScore);
+        const fullStars = Math.floor(absScore / 10);
+        const hasHalfStar = (absScore % 10) >= 5;
+        const totalVisualStars = fullStars + (hasHalfStar ? 1 : 0);
+        const starType = totalScore > 0 ? 'good' : 'bad';
+
+        if (totalVisualStars > 0) {
+            const centerAngle = getSvgAngle(gua);
+            const STAR_SPACING = 6; const MAX_PER_ROW = 6; const ROW_GAP = 8;
+            let starsToDraw = Array(fullStars).fill(false);
+            if (hasHalfStar) starsToDraw.push(true);
+            const totalRows = Math.ceil(starsToDraw.length / MAX_PER_ROW);
+            const baseRadius = totalRows > 1 ? 104 : RADIAL_LAYOUT.combinationsRadius;
+            for (let row = 0; row < totalRows; row++) {
+                let rowStars = starsToDraw.slice(row * MAX_PER_ROW, (row + 1) * MAX_PER_ROW);
+                let currentRadius = baseRadius - (row * ROW_GAP);
+                let currentAngle = centerAngle - ((rowStars.length - 1) * STAR_SPACING) / 2;
+                rowStars.forEach(isHalf => {
+                    drawScoreStar(comboLayer, currentAngle, currentRadius, starType, isHalf);
+                    currentAngle += STAR_SPACING;
                 });
-                outPanel.innerHTML = html;
             }
         }
+
+        // 第五步：判定氣場狀態 (溫和中性化描述)
+        let finalState = ''; 
+        let bgColor = '';
+        
+        if (totalScore >= 40) { 
+            finalState = '極其祥和'; 
+            bgColor = 'rgba(255, 236, 27, 0.55)'; 
+        } 
+        else if (totalScore >= 20) { 
+            finalState = '氣場趨吉'; 
+            bgColor = 'rgba(255, 184, 62, 0.45)'; 
+        } 
+        else if (totalScore <= -40) { 
+            finalState = '能量受阻'; 
+            bgColor = 'rgba(255, 89, 89, 0.55)'; 
+        } 
+        else if (totalScore <= -20) { 
+            finalState = '氣場波動'; 
+            bgColor = 'rgba(255, 131, 97, 0.45)'; 
+        } 
+        else { 
+            finalState = '氣場中和'; 
+            bgColor = 'rgba(135, 206, 235, 0.4)'; 
+        }
+
+        let centerAngle = getSvgAngle(gua);
+        drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle - 22.5, centerAngle + 22.5, bgColor);
+        drawLabel(bzLayer, bzName, (['生氣', '延年'].includes(bzName) ? centerAngle - 6 : centerAngle), RADIAL_LAYOUT.starRadius, '#252525ff', 16);
+
+        if (['生氣', '延年'].includes(bzName)) {
+            const sealAngle = centerAngle + 12;
+            const sx = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(sealAngle * Math.PI / 180);
+            const sy = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.starRadius * Math.sin(sealAngle * Math.PI / 180);
+            const sealGroup = document.createElementNS(SVG_NS, 'g');
+            const circle = document.createElementNS(SVG_NS, 'circle');
+            circle.setAttribute('r', RADIAL_LAYOUT.sealSize);
+            circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', '#c0392b'); circle.setAttribute('stroke-width', '1.5');
+            const sealText = document.createElementNS(SVG_NS, 'text');
+            sealText.setAttribute('text-anchor', 'middle'); sealText.setAttribute('dominant-baseline', 'central'); sealText.setAttribute('font-size', '13'); sealText.setAttribute('fill', '#c0392b'); sealText.setAttribute('font-family', 'serif'); sealText.textContent = '吉';
+            sealGroup.appendChild(circle); sealGroup.appendChild(sealText);
+            sealGroup.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${sealAngle + 90})`);
+            bzLayer.appendChild(sealGroup);
+        }
+
+        reports.push({ 
+            gua: gua, score: totalScore, state: finalState, bz: bzName, 
+            events: triggerEvents, member: guaInfo.member, body: guaInfo.body
+        });
+    });
+
+    // 渲染外圈凶煞 (24山) 邏輯維持不變...
+    const shasLayer = getLayer('twelve-shas-layer');
+    if (shasLayer) shasLayer.innerHTML = '';
+    const labels24 = Array(24).fill(null).map(() => ({ main: '', sub: '', color: '', subColor: '' }));
+    const ybIdx = (termData.fsYear - 4) % 12;
+    for (let i = 0; i < 12; i++) {
+        const mIdx = i * 2;
+        const shaIdx = (i - ybIdx + 12) % 12;
+        const sName = TWELVE_SHAS_SEQUENCE[shaIdx];
+        labels24[mIdx].main = sName; labels24[mIdx].color = (sName === '太歲') ? '#e91700ff' : '#6421c3ff';
+    }
+    const stemIdx = termData.fsYear % 10;
+    const DU_TIAN_MAP = { 0: [4, 5, 6], 1: [20, 21, 22], 2: [16, 17, 18], 3: [12, 13, 14], 4: [8, 9, 10], 5: [4, 5, 6], 6: [20, 21, 22], 7: [16, 17, 18], 8: [12, 13, 14], 9: [8, 9, 10] };
+    const dtIndices = DU_TIAN_MAP[stemIdx];
+    for (let i = 0; i < 3; i++) {
+        const idx = dtIndices[i]; const dn = ['戊己都天', '夾煞都天', '戊己都天'][i];
+        if (labels24[idx].main) { labels24[idx].sub = dn; labels24[idx].subColor = '#e91700ff'; }
+        else { labels24[idx].main = dn; labels24[idx].color = '#e91700ff'; }
+    }
+    let ssIdx = [];
+    if ([6, 10, 2].includes(ybIdx)) ssIdx = [23, 0, 1];
+    else if ([4, 8, 0].includes(ybIdx)) ssIdx = [11, 12, 13];
+    else if ([3, 7, 11].includes(ybIdx)) ssIdx = [17, 18, 19];
+    else if ([9, 1, 5].includes(ybIdx)) ssIdx = [5, 6, 7];
+    ssIdx.forEach(idx => {
+        if (!labels24[idx].main) { labels24[idx].main = "三煞"; labels24[idx].color = "#e91700ff"; }
+        else if (!labels24[idx].sub) { labels24[idx].sub = "三煞"; labels24[idx].subColor = "#e91700ff"; }
+        else labels24[idx].sub += "·三煞";
+    });
+    for (let i = 0; i < 24; i++) {
+        if (labels24[i].color === '#e91700ff' || labels24[i].subColor === '#e91700ff') {
+            drawAnnularSector(shasLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 240, 267, 90 + (i * 15) - 7.5, 90 + (i * 15) + 7.5, 'rgba(252, 133, 115, 0.5)');
+        }
+        if (labels24[i].main) {
+            drawLabel(shasLayer, labels24[i].main, 90 + (i * 15), RADIAL_LAYOUT.twelveShasRadius, labels24[i].color, 12, !!labels24[i].sub, labels24[i].sub, labels24[i].subColor);
+        }
+    }
+
+    // 中心資訊...
+    const centerMainText = document.getElementById('center-main-text');
+    if (centerMainText) {
+        centerMainText.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
+        const centerBg = document.getElementById('center-bg');
+        if (centerBg) {
+            let yearTextEl = document.getElementById('center-year-text') || (()=>{
+                const el = document.createElement('div'); el.id = 'center-year-text'; el.style.fontSize = '1.8vmin'; el.style.fontWeight = 'bold'; el.style.color = '#555555ff'; el.style.marginBottom = '0.2vmin';
+                centerBg.insertBefore(el, centerMainText); return el;
+            })();
+            yearTextEl.textContent = `${termData.fsYear} ${getGanzhiYear(termData.fsYear)}年`;
+        }
+    }
+    const centerSubText = document.getElementById('center-sub-text');
+    if (centerSubText) centerSubText.textContent = `${termData.termName}後-${termData.fsMonth}月`;
+
+    renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15, '宅');
+    renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
+    renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15, '月');
+    renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '運', 12, -10, '運');
+    renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '年', 12, 10, '年');
+
+    // ★ 報告輸出 HTML 模板 (含方位顯示與代表家人)
+    const outPanel = document.getElementById('diagnostic-output');
+    if (outPanel) {
+        const GUA_ORDER = ['乾', '坎', '艮', '震', '巽', '離', '坤', '兌'];
+        reports.sort((a, b) => GUA_ORDER.indexOf(a.gua) - GUA_ORDER.indexOf(b.gua));
+        let html = '';
+        reports.forEach(r => {
+            let icon = ''; 
+            let titleColor = '';
+            // 方位對照表
+            const GUA_DIRECTION = { '乾':'西北方', '坎':'正北方', '艮':'東北方', '震':'正東方', '巽':'東南方', '離':'正南方', '坤':'西南方', '兌':'正西方' };
+            const direction = GUA_DIRECTION[r.gua] || '';
+
+            // 基礎保養建議對照 (當沒有特定剋戰事件時，根據宮位五行提供保養方)
+            const BASIC_MAINTENANCE = {
+                '金': '建議保持通風明亮，可放置白色系裝飾或 4、9 件金屬擺件補強氣場。',
+                '木': '建議維持環境整潔，可放置綠色植物或 3、8 件木質飾品增添生機。',
+                '水': '建議避免潮濕陰暗，可放置黑色地墊或 1、6 件動水擺件活化能量。',
+                '火': '建議增加採光，可點亮 2、7 盞暖色長明燈或放置紅色裝飾引動熱能。',
+                '土': '建議維持環境穩定，可放置陶瓷器皿、天然礦石或 5、10 件黃色物件。'
+            };
+
+            // 根據中性狀態設定圖示與顏色
+            if (r.state === '能量受阻') { icon = '🛡️'; titleColor = '#b30000'; } 
+            else if (r.state === '氣場波動') { icon = '⚠️'; titleColor = '#e91700'; } 
+            else if (r.state === '極其祥和') { icon = '🌟'; titleColor = '#b8860b'; } 
+            else if (r.state === '氣場趨吉') { icon = '✨'; titleColor = '#dc5f00'; } 
+            else { icon = '🍃'; titleColor = '#2a9d8f'; } // 氣場中和
+
+            const memberStyle = (r.state !== '氣場中和') ? 'color:#d35400; font-weight:bold;' : 'color:#888;';
+            const guaWuxingMap = { '坎':'水', '坤':'土', '震':'木', '巽':'木', '乾':'金', '兌':'金', '艮':'土', '離':'火' };
+            const currentGuaWuxing = guaWuxingMap[r.gua];
+            const maintenanceText = BASIC_MAINTENANCE[currentGuaWuxing] || '維持環境整潔。';
+
+            // 根據氣場狀態給予中性描述與佈局引導
+            let baseStatusText = "";
+            if (r.state === '能量受阻' || r.state === '氣場波動') {
+                baseStatusText = `
+                    <div style="margin-top:4px; font-size:12px; color:#b30000;">
+                        💡 此方能量較為波動，建議參考以下佈局進行優化：
+                        <div style="margin-top:4px; color:#666; background:#fff; padding:6px; border-radius:4px; border:1px dashed #e91700; line-height:1.5;">
+                            🛠️ <b>基礎保養：</b>${maintenanceText}
+                        </div>
+                    </div>`;
+            } else if (r.state === '極其祥和' || r.state === '氣場趨吉') {
+                baseStatusText = `<div style="margin-top:4px; font-size:12px; color:#2e7d32;">💡 此方氣場正向，適合停留或進行重點開運佈局。</div>`;
+            } else {
+                baseStatusText = `<div style="margin-top:4px; font-size:12px; color:#888;">💡 此方氣場平穩，維持整潔通風即可。</div>`;
+            }
+
+            // 如果有特定事件（格局、受剋、通關、特級預警），顯示事件內容；
+            // 若無特定事件但氣場不穩，則顯示基礎保養建議。
+            let eventContent = r.events.length > 0 ? `<div style="margin-top:6px;">${r.events.join('')}</div>` : baseStatusText;
+            
+            html += `
+                <div style="border-bottom: 1px solid #eee; padding: 12px 0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong style="color:${titleColor}; font-size:15px;">${icon} ${r.gua}宮/${direction} (${r.state})</strong>
+                        <span style="font-size: 11px; color: #aaa; background:#f0f0f0; padding:2px 6px; border-radius:10px;">Score: ${r.score}</span>
+                    </div>
+                    <div style="font-size: 12.5px; margin-top:5px;">
+                        <span style="color:#666;">代表家人：</span><span style="${memberStyle}">${r.member}</span>
+                    </div>
+                    ${eventContent}
+                </div>
+            `;
+        });
+        outPanel.innerHTML = html;
+    }
     }
 
     // =================================================================
