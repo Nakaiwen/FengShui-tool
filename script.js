@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             panel.innerHTML = `
                 <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 16px; color: #da7800; display: flex; align-items: center; justify-content: center;">
-                    🔮 動態吉凶大腦預測
+                    🔮 動態吉凶預測
                 </h3>
                 <div style="font-size: 13px; margin-bottom: 10px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
                     <strong style="display:block; margin-bottom:6px;">選擇星氣疊加層 (打勾自動結算)：</strong>
