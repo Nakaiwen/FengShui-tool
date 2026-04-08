@@ -54,18 +54,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ★ 核心數據升級：新增乾坤生六子人物與身體部位
     const GUA_DATA = {
-        1: { name: '坎', number: 1, member: '中男(二子)', body: '耳、腎、血液、泌尿系統', stars: { '坎':'伏位', '巽':'生氣', '震':'天醫', '離':'延年', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
-        2: { name: '坤', number: 2, member: '老母(女主人)', body: '腹、脾胃、肉、皮膚', stars: { '坤':'伏位', '艮':'生氣', '兌':'天醫', '乾':'延年', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
-        3: { name: '震', number: 3, member: '長男(大子)', body: '足、肝臟、神經系統', stars: { '震':'伏位', '離':'生氣', '坎':'天醫', '巽':'延年', '艮':'六煞', '坤':'禍害', '乾':'五鬼', '兌':'絕命' } },
-        4: { name: '巽', number: 4, member: '長女(大女)', body: '股(腿)、膽、呼吸系統', stars: { '巽':'伏位', '坎':'生氣', '離':'天醫', '震':'延年', '兌':'六煞', '乾':'禍害', '坤':'五鬼', '艮':'絕命' } },
-        6: { name: '乾', number: 6, member: '老父(男主人)', body: '頭、面、骨骼、大腸', stars: { '乾':'伏位', '兌':'生氣', '艮':'天醫', '坤':'延年', '坎':'六煞', '巽':'禍害', '震':'五鬼', '離':'絕命' } },
-        7: { name: '兌', number: 7, member: '少女(三女)', body: '口、舌、肺、呼吸道', stars: { '兌':'伏位', '乾':'生氣', '坤':'天醫', '艮':'延年', '巽':'六煞', '坎':'禍害', '離':'五鬼', '震':'絕命' } },
-        8: { name: '艮', number: 8, member: '少男(三子)', body: '手、背、鼻、脾胃', stars: { '艮':'伏位', '坤':'生氣', '乾':'天醫', '兌':'延年', '震':'六煞', '離':'禍害', '坎':'五鬼', '巽':'絕命' } },
-        9: { name: '離', number: 9, member: '中女(二女)', body: '目(眼)、心、血液循環', stars: { '離':'伏位', '震':'生氣', '巽':'天醫', '坎':'延年', '坤':'六煞', '艮':'禍害', '兌':'五鬼', '乾':'絕命' } }
+        1: { name: '坎', number: 1, member: '中男(二子)', body: '耳、腎、血液、泌尿系統', stars: { '坎':'伏位', '巽':'生氣/吉', '震':'天醫', '離':'延年/吉', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
+        2: { name: '坤', number: 2, member: '老母(女主人)', body: '腹、脾胃、肉、皮膚', stars: { '坤':'伏位', '艮':'生氣/吉', '兌':'天醫', '乾':'延年/吉', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
+        3: { name: '震', number: 3, member: '長男(大子)', body: '足、肝臟、神經系統', stars: { '震':'伏位', '離':'生氣/吉', '坎':'天醫', '巽':'延年/吉', '艮':'六煞', '坤':'禍害', '乾':'五鬼', '兌':'絕命' } },
+        4: { name: '巽', number: 4, member: '長女(大女)', body: '股(腿)、膽、呼吸系統', stars: { '巽':'伏位', '坎':'生氣/吉', '離':'天醫', '震':'延年/吉', '兌':'六煞', '乾':'禍害', '坤':'五鬼', '艮':'絕命' } },
+        6: { name: '乾', number: 6, member: '老父(男主人)', body: '頭、面、骨骼、大腸', stars: { '乾':'伏位', '兌':'生氣/吉', '艮':'天醫', '坤':'延年/吉', '坎':'六煞', '巽':'禍害', '震':'五鬼', '離':'絕命' } },
+        7: { name: '兌', number: 7, member: '少女(三女)', body: '口、舌、肺、呼吸道', stars: { '兌':'伏位', '乾':'生氣/吉', '坤':'天醫', '艮':'延年/吉', '巽':'六煞', '坎':'禍害', '離':'五鬼', '震':'絕命' } },
+        8: { name: '艮', number: 8, member: '少男(三子)', body: '手、背、鼻、脾胃', stars: { '艮':'伏位', '坤':'生氣/吉', '乾':'天醫', '兌':'延年/吉', '震':'六煞', '離':'禍害', '坎':'五鬼', '巽':'絕命' } },
+        9: { name: '離', number: 9, member: '中女(二女)', body: '目(眼)、心、血液循環', stars: { '離':'伏位', '震':'生氣/吉', '巽':'天醫', '坎':'延年/吉', '坤':'六煞', '艮':'禍害', '兌':'五鬼', '乾':'絕命' } }
+    };
+
+    // 八宮對沖定義（用於判定「關」方）
+    const OPPOSITE_GUA = {
+        '坎': '離', '離': '坎',
+        '震': '兌', '兌': '震',
+        '巽': '乾', '乾': '巽',
+        '艮': '坤', '坤': '艮'
     };
 
     
-
     let userSettings = {
         gender: 'male',
         houseGua: '坎' 
@@ -162,32 +169,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================================================================
     
     // 將五氣轉為指定分數
+    // 將五氣轉為指定分數 (已更新旺、退、死、殺，並新增「關」)
     function getQiScore(qiString) {
         switch(qiString) {
             case '生': return 20; 
-            case '旺': return 15; 
-            case '退': return -10; 
-            case '死': return -15; 
+            case '旺': return 20;   // 提升至 20
+            case '退': return 0;    // 調整為 0
+            case '死': return -10; 
             case '殺': return -20; 
+            case '關': return -20;  // 新增關方扣分
             default: return 0;
         }
     }
     
-    // 將八宅轉為指定分數
+    // 將八宅轉為指定分數 (目前權重全數歸零)
     function getBzScore(bzString) {
         switch(bzString) {
             case '生氣': 
             case '延年': 
-                return 20;
             case '伏位': 
             case '天醫': 
-                return 10;
             case '五鬼': 
             case '六煞': 
-                return -10;
             case '禍害': 
             case '絕命': 
-                return -20;
+                return 0;
             default: return 0;
         }
     }
@@ -373,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderStarsShort(centerNum, radius, layerId, prefix, fontSize = 14, angleOffset = 0, qiPrefix = '') {
+    function renderStarsShort(centerNum, radius, layerId, prefix, fontSize = 14, angleOffset = 0, qiPrefix = '', guanGua = null) {
         const layer = getLayer(layerId);
         layer.innerHTML = '';
         LUO_SHU_PATH.forEach((gua, index) => {
@@ -382,11 +388,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let text, textColor;
             if (isQiMode) {
+                // ★ 邏輯更新：在五氣模式下，判定是否為關方
                 const qiData = getFiveQi(centerNum, num);
-                text = `${qiPrefix}${qiData.qi}`; 
+                let currentQiPrefix = qiPrefix;
+                
+                // 如果是宅氣層且目前宮位是關方，將「宅」改為「宅關」
+                if (qiPrefix === '宅' && gua === guanGua) {
+                    currentQiPrefix = '宅關';
+                    text = currentQiPrefix; // 關方通常不標註生旺退死，直接標註「宅關」
+                } else {
+                    text = `${currentQiPrefix}${qiData.qi}`;
+                }
+                
                 textColor = qiData.color;
             } else {
-                text = `${prefix}-${STAR_NAMES_SHORT[num]}`;
+                // 紫白模式：判定是否為關方
+                let currentPrefix = prefix;
+                if (prefix === '宅' && gua === guanGua) {
+                    currentPrefix = '宅-關';
+                }
+                text = `${currentPrefix}-${STAR_NAMES_SHORT[num]}`;
                 textColor = FLYING_STARS_INFO[num].color;
             }
             drawLabel(layer, text, getSvgAngle(gua) + angleOffset, radius, textColor, fontSize);
@@ -470,9 +491,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 第一步：八宅基礎分
         totalScore += getBzScore(bzName);
+        // 我們將八宅的描述文字格式化
+        const bzDescription = `<div style="color:#666; font-size:12px; margin-bottom:4px;">八宅方位：<span style="color:#d35400; font-weight:bold;">${bzName}</span></div>`;
+
+        // 將此描述加入 triggerEvents 的最前面，確保它顯示在報告頂端
+        triggerEvents.unshift(bzDescription);
 
         // 第二步：收集活躍星與五氣分
-        if (activeLayers.includes(1)) { totalScore += getQiScore(getFiveQi(zhaiGua.number, pZhai).qi); activeStarsInPalace.push(pZhai); }
+        if (activeLayers.includes(1)) { 
+            // 找出宅氣的五氣
+            const qiData = getFiveQi(zhaiGua.number, pZhai);
+            let finalQi = qiData.qi;
+            
+            // ★ 核心邏輯：如果是宅卦對宮，分數判定改為「關」
+            const currentHouseName = zhaiGua.name;
+            if (gua === OPPOSITE_GUA[currentHouseName]) {
+                finalQi = '關';
+            }
+            
+            totalScore += getQiScore(finalQi); 
+            activeStarsInPalace.push(pZhai); 
+        }
+        
+        // 其餘層級 (2~5) 維持原有的 getQiScore(getFiveQi(...).qi) 邏輯
         if (activeLayers.includes(2)) { totalScore += getQiScore(getFiveQi(periodStar, pPeriod).qi); activeStarsInPalace.push(pPeriod); }
         if (activeLayers.includes(3)) { totalScore += getQiScore(getFiveQi(annualStar, pYear).qi); activeStarsInPalace.push(pYear); }
         if (activeLayers.includes(4)) { totalScore += getQiScore(getFiveQi(monthStar, pMonth).qi); activeStarsInPalace.push(pMonth); }
@@ -494,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="color:#2e7d32; margin-bottom:6px;">
                                 <b>[吉] ${rule.name}</b> - ${rule.desc}
                                 ${rule.boost ? `
-                                <div style="font-size:11.5px; color:#1b5e20; background:#e8f5e9; padding:5px 10px; border-radius:4px; margin-top:4px; border-left:3px solid #2e7d32; line-height:1.4;">
+                                <div style="font-size:12px; color:#1b5e20; background:#e8f5e9; padding:5px 10px; border-radius:4px; margin-top:4px; border-left:3px solid #2e7d32; line-height:1.4;">
                                     🚀 <b>趨吉佈局：</b>${rule.boost}
                                 </div>` : ''}
                             </div>
@@ -585,19 +626,19 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 針對剋洩交加的專屬化解建議 (補充本宮能量)
             const BOOST_REMEDY = {
-                '金': '建議大量補充金元素：放置 4 或 9 件銅製錢幣、白色地毯，並保持此方明亮。',
-                '木': '建議大量補充木元素：放置 3 或 8 盆長青植物、綠色裝飾，維持生機。',
-                '水': '建議大量補充水元素：放置 1 或 6 件動水擺件、黑色裝飾，活化能量。',
-                '火': '建議大量補充火元素：點亮 2 或 7 盞暖色長明燈、紅色掛畫，支撐氣場。',
-                '土': '建議大量補充土元素：放置陶藝或是石雕擺件、聚寶盆，或5顆、10顆天然礦石。'
+                '金': '建議擇吉日吉時，大量補充金元素：放置 4 或 9 件銅製錢幣、白色地毯，並保持此方乾淨明亮。',
+                '木': '建議擇吉日吉時，大量補充木元素：放置 3 或 8 盆長青植物、綠色裝飾，維持生機，並保持此方乾淨明亮。',
+                '水': '建議擇吉日吉時，大量補充水元素：放置 1 或 6 件動水擺件、黑色裝飾，活化能量，並保持此方乾淨明亮。',
+                '火': '建議擇吉日吉時，大量補充火元素：點亮 2 或 7 盞暖色長明燈、紅色掛畫，支撐氣場，並保持此方乾淨明亮。',
+                '土': '建議擇吉日吉時，大量補充土元素：放置陶藝或是石雕擺件、聚寶盆，或5顆、10顆天然礦石，並保持此方乾淨明亮。'
             };
             const currentBoost = BOOST_REMEDY[currentGuaWuxing] || '請尋求專業老師指導。';
 
             triggerEvents.push(`
                 <div style="background:#4a0000; border-left:5px solid #ff0000; padding:10px; margin:5px 0; color:#fff; font-size:13px; border-radius:4px; line-height:1.6;">
                     🚨 <b>【特級預警：剋洩交加】</b><br>
-                    此方位能量耗損過度！本宮(<b>${currentGuaWuxing}</b>)正遭受外部強力剋入，且內部能量被大量洩出。<br>
-                    這對 <b>${guaInfo.member}</b> 的影響最為劇烈，極易引發意外或突發健康問題！<br>
+                    此方位能量耗損過度！請注意此方位內部能量(<b>${currentGuaWuxing}</b>)正遭受大量剋洩耗損。<br>
+                    這對 <b>${guaInfo.member}</b> 的影響較為明顯，若在此方位施工動土，極易引發意外或突發健康問題！<br>
                     <div style="margin-top:8px; color:#ffeb3b; font-size:12.5px; background:rgba(255,255,255,0.1); padding:8px; border-radius:4px; border:1px dashed #ffeb3b;">
                         🛠️ <b>緊急佈局方案：</b><br>${currentBoost}
                     </div>
@@ -757,7 +798,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const centerSubText = document.getElementById('center-sub-text');
     if (centerSubText) centerSubText.textContent = `${termData.termName}後-${termData.fsMonth}月`;
 
-    renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15, '宅');
+    // 找出當前宅卦的對宮
+    const currentHouseName = zhaiGua.name;
+    const guanGua = OPPOSITE_GUA[currentHouseName];
+
+    // 更新宅紫白圖層，傳入 guanGua 參數
+    renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15, '宅', guanGua);
     renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
     renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15, '月');
     renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '運', 12, -10, '運');
