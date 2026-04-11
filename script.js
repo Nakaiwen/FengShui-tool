@@ -323,7 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
         layer.appendChild(textEl);
     }
 
-
     // ★ 全新繪製 SVG 星等評分符號函式 (支援精緻半顆星)
     function drawScoreStar(layer, angle, radius, type, isHalf = false) {
         const rad = angle * (Math.PI / 180);
@@ -359,6 +358,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         layer.appendChild(g);
+    }
+
+    // ★ 新增：繪製吉格光暈工具
+    function drawLuckyGlow(layer, gua, type) {
+    const angle = getSvgAngle(gua);
+    
+    // 設定扇形光暈的範圍（建議略大於或重疊於原本的背景層）
+    const rIn = 135;  // 內半徑
+    const rOut = 240; // 外半徑
+    const startAngle = angle - 22.5;
+    const endAngle = angle + 22.5;
+
+    // 根據吉格類型設定顏色 (例如文昌綠、財位金)
+    const color = (type === '四一') ? 'rgba(88, 206, 92, 0.4)' : 'rgba(255, 226, 62, 0.4)';
+
+    // ★ 核心修改：呼叫原本的扇形繪製工具
+    const glowPath = drawAnnularSector(
+        layer, 
+        RADIAL_LAYOUT.center.x, 
+        RADIAL_LAYOUT.center.y, 
+        rIn, rOut, 
+        startAngle, endAngle, 
+        color
+    );
+
+    // 為扇形路徑加上濾鏡與呼吸動畫類別 [cite: 2, 4]
+    if (glowPath) {
+        // ★ 關鍵：必須加入這行類別綁定，CSS 動畫才會生效
+        glowPath.classList.add("lucky-pulse"); 
+        
+        // 確保濾鏡正確套用
+        glowPath.setAttribute("filter", "url(#blurFilter)"); 
+    }
     }
 
     function renderPersonMingStars(centerNum, radius, layerId) {
@@ -519,39 +551,44 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeLayers.includes(4)) { totalScore += getQiScore(getFiveQi(monthStar, pMonth).qi); activeStarsInPalace.push(pMonth); }
         if (activeLayers.includes(5)) { totalScore += getQiScore(getFiveQi(mingGua.number, pMing).qi); activeStarsInPalace.push(pMing); }
 
+
         // 第三步：化學反應（吉凶組合） (★ 加入趨吉佈局提示)
         COMBINATION_RULES.forEach(rule => {
-            if (rule.stars.length === 2) {
-                const [s1, s2] = rule.stars; 
-                const c1 = activeStarsInPalace.filter(s => s === s1).length; 
-                const c2 = activeStarsInPalace.filter(s => s === s2).length;
-                let hits = (s1 !== s2) ? c1 * c2 : (c1 * (c1 - 1)) / 2;
-                
-                if (hits > 0) { 
-                    if (rule.type === 'good') { 
-                        totalScore += 15; 
-                        // ★ 吉格輸出：增加 boost 趨吉佈局顯示區塊
-                        triggerEvents.push(`
-                            <div style="color:#2e7d32; margin-bottom:6px;">
-                                <b>[吉] ${rule.name}</b> - ${rule.desc}
-                                ${rule.boost ? `
-                                <div style="font-size:12px; color:#1b5e20; background:#e8f5e9; padding:5px 10px; border-radius:4px; margin-top:4px; border-left:3px solid #2e7d32; line-height:1.4;">
-                                    🚀 <b>趨吉佈局：</b>${rule.boost}
-                                </div>` : ''}
-                            </div>
-                        `); 
-                    } 
-                    if (rule.type === 'bad') { 
-                        totalScore -= 20; 
-                        // ★ 凶格輸出：維持醒目的紅色警告
-                        triggerEvents.push(`
-                            <div style="color:#e91700; margin-bottom:4px;">
-                                <b>[凶] ${rule.name}</b> - ${rule.desc}
-                            </div>
-                        `); 
-                    } 
-                }
-            }
+    if (rule.stars.length === 2) {
+        const [s1, s2] = rule.stars; 
+        const c1 = activeStarsInPalace.filter(s => s === s1).length; 
+        const c2 = activeStarsInPalace.filter(s => s === s2).length;
+        let hits = (s1 !== s2) ? c1 * c2 : (c1 * (c1 - 1)) / 2;
+        
+        if (hits > 0) { 
+            if (rule.type === 'good') { 
+                totalScore += 15; 
+
+                // ★ 新增：呼叫光暈繪製，將動態效果畫在 bzLayer (背景層) 
+                drawLuckyGlow(bzLayer, gua, rule.name.includes('四一') ? '四一' : '財位');
+
+                // ★ 吉格輸出：增加 boost 趨吉佈局顯示區塊
+                triggerEvents.push(`
+                    <div style="color:#2e7d32; margin-bottom:6px;">
+                        <b>[吉] ${rule.name}</b> - ${rule.desc}
+                        ${rule.boost ? `
+                        <div style="font-size:12px; color:#1b5e20; background:#e8f5e9; padding:5px 10px; border-radius:4px; margin-top:4px; border-left:3px solid #2e7d32; line-height:1.4;">
+                            🚀 <b>趨吉佈局：</b>${rule.boost}
+                        </div>` : ''}
+                    </div>
+                `); 
+            } 
+            if (rule.type === 'bad') { 
+                totalScore -= 20; 
+                // ★ 凶格輸出：維持醒目的紅色警告
+                triggerEvents.push(`
+                    <div style="color:#e91700; margin-bottom:4px;">
+                        <b>[凶] ${rule.name}</b> - ${rule.desc}
+                    </div>
+                `); 
+            } 
+        }
+    }
         });
 
         // =========================================================
@@ -720,7 +757,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let centerAngle = getSvgAngle(gua);
-        drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle - 22.5, centerAngle + 22.5, bgColor);
+        // ★ 互動強化：繪製扇形區域並綁定點擊事件 
+        const guaSector = drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle - 22.5, centerAngle + 22.5, bgColor);
+    
+        if (guaSector) {
+        guaSector.style.cursor = 'pointer';
+        guaSector.setAttribute('id', `svg-gua-${gua}`);
+        // 點擊圓盤自動跳轉至下方對應的診斷報告
+        guaSector.onclick = () => {
+            const targetReport = document.getElementById(`report-${gua}`);
+            if (targetReport) {
+                targetReport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // 暫時高亮提醒使用者跳轉成功
+                targetReport.style.transition = 'background-color 0.5s';
+                targetReport.style.backgroundColor = '#fff9c4'; 
+                setTimeout(() => targetReport.style.backgroundColor = '', 2000);
+            }
+        };
+        }
+
         drawLabel(bzLayer, bzName, (['生氣', '延年'].includes(bzName) ? centerAngle - 6 : centerAngle), RADIAL_LAYOUT.starRadius, '#252525ff', 16);
 
         if (['生氣', '延年'].includes(bzName)) {

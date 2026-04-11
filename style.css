@@ -213,3 +213,16 @@ button:disabled {
 .qi-toggle-btn.active {
     background-color: #e91700; /* 開啟時變為紅色提醒 */
 }
+
+
+/* 呼吸閃爍動畫：控制透明度變化 */
+@keyframes breathing-shine {
+  0%, 70% { opacity: 0.3; } /* 最暗時 */
+  20% { opacity: 0.7; }      /* 最亮時 */
+}
+
+/* 綁定類別到動畫 */
+.lucky-pulse {
+  animation: breathing-shine 3s ease-in-out infinite;
+  will-change: opacity; /* 提升渲染效能 */
+}
