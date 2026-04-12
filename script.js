@@ -1091,7 +1091,7 @@ document.addEventListener('DOMContentLoaded', () => {
             qiToggleBtn.addEventListener('click', () => {
                 isQiMode = !isQiMode;
                 qiToggleBtn.classList.toggle('active', isQiMode);
-                qiToggleBtn.textContent = isQiMode ? '👁️ 關閉五氣資訊' : '👁️ 開啟五氣資訊 (生旺退殺死)';
+                qiToggleBtn.textContent = isQiMode ? '👁️ 關閉五氣資訊' : '👁️ 開啟五氣資訊';
                 updateAll(); 
             });
         }
@@ -1132,7 +1132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if(lockBtn) {
                     lockBtn.classList.add('locked');
-                    lockBtn.textContent = '🔒 已鎖定 (點擊後可解鎖)';
+                    lockBtn.textContent = '🔒 資訊已鎖定';
                 }
 
                 if(inputYear) localStorage.setItem('fsSavedYear', inputYear.value);
@@ -1150,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if(lockBtn) {
                     lockBtn.classList.remove('locked');
-                    lockBtn.textContent = '🔓 解鎖狀態 (點擊儲存鎖定)';
+                    lockBtn.textContent = '🔓 資訊已解鎖';
                 }
                 localStorage.setItem('fsIsLocked', 'false');
             }

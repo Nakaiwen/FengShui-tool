@@ -435,28 +435,38 @@
                         </select>
                 </div>
 
-                <button id="lock-btn" class="lock-btn">🔓 解鎖狀態 (點擊儲存鎖定)</button>
-                <button id="btn-qi-toggle" class="qi-toggle-btn">開啟五氣資訊 (生旺退殺死)</button>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <button id="btn-qi-toggle" class="qi-toggle-btn" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; line-height: 1.4; box-sizing: border-box;">
+        👁️ 開啟五氣資訊
+    </button>
+    <button id="lock-btn" class="lock-btn" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; line-height: 1.4; box-sizing: border-box;">
+        🔓 資訊解鎖 (鎖定)
+    </button>
+</div>
 
-                <div id="info-display" style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; text-align: center;">
-                    <div style="color: #d35400; font-size: 16px; font-weight: bold; line-height: 2;">
-                        <span id="current-mountain">?</span>山<span id="current-facing">?</span>向
-                        
-                        <span style="color: #888; font-size: 13px; font-weight: normal; margin-left: 8px;">
-                            (坐<span id="sitting-degree">0</span>° 向<span id="facing-degree">0</span>°)
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="input-group">
-                    <label for="degree-slider">旋轉角度 (座向): <span id="degree-display">0</span>°</label>
-                    <input type="range" id="degree-slider" min="0" max="360" value="0">
-                </div>
+<div id="info-display" style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; text-align: center;">
+    <div style="color: #d35400; font-size: 16px; font-weight: bold; line-height: 2;">
+        <span id="current-mountain">?</span>山<span id="current-facing">?</span>向
+        
+        <span style="color: #888; font-size: 13px; font-weight: normal; margin-left: 8px;">
+            (坐<span id="sitting-degree">0</span>° 向<span id="facing-degree">0</span>°)
+        </span>
+    </div>
+</div>
 
-                <div class="action-row">
-                    <button id="start-compass-btn" class="btn-main">📡 啟動電子羅盤</button>
-                    <button id="reset-btn" class="btn-sub">關閉歸零</button>
-                </div>
+<div class="input-group">
+    <label for="degree-slider">旋轉角度 (座向): <span id="degree-display">0</span>°</label>
+    <input type="range" id="degree-slider" min="0" max="360" value="0">
+</div>
+
+<div class="action-row" style="display: flex; gap: 10px; margin-top: 15px;">
+    <button id="start-compass-btn" class="btn-main" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; box-sizing: border-box;">
+        📡 啟動電子羅盤
+    </button>
+    <button id="reset-btn" class="btn-sub" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; box-sizing: border-box;">
+        🔄 羅盤關閉歸零
+    </button>
+</div>
 
             </div>
         </div> </div> <script src="script.js"></script>
