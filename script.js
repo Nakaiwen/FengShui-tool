@@ -204,9 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!panel) {
             panel = document.createElement('div');
             panel.id = 'ai-diagnostic-panel';
-            // ★ 加上 control-panel 類別來繼承主面板的圓角、陰影、背景色
             panel.className = 'control-panel'; 
-            // ★ 核心修正：將 width 設為 100%，保證與上方完全對齊
             panel.style.cssText = 'margin-top: 15px; text-align: left; width: 100%; box-sizing: border-box; z-index: 100; position: relative;';
             
             panel.innerHTML = `
@@ -223,7 +221,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <label><input type="checkbox" id="chk-layer-5" class="layer-chk" value="5" checked> 5.命星</label>
                     </div>
                 </div>
-                <div id="diagnostic-output" style="font-size: 14px; max-height: 350px; overflow-y: auto; padding-right: 5px;"></div>
+                <div id="diagnostic-output" style="font-size: 14px; max-height: 420px; overflow-y: auto; padding-right: 5px; border-bottom: 1px solid #eee;"></div>
+                
+                <div id="diagnostic-footer" style="padding-top: 4px; text-align: center;"></div>
             `;
             const controls = document.getElementById('controls');
             if(controls) { 
@@ -551,44 +551,43 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeLayers.includes(4)) { totalScore += getQiScore(getFiveQi(monthStar, pMonth).qi); activeStarsInPalace.push(pMonth); }
         if (activeLayers.includes(5)) { totalScore += getQiScore(getFiveQi(mingGua.number, pMing).qi); activeStarsInPalace.push(pMing); }
 
-
         // 第三步：化學反應（吉凶組合） (★ 加入趨吉佈局提示)
         COMBINATION_RULES.forEach(rule => {
-    if (rule.stars.length === 2) {
-        const [s1, s2] = rule.stars; 
-        const c1 = activeStarsInPalace.filter(s => s === s1).length; 
-        const c2 = activeStarsInPalace.filter(s => s === s2).length;
-        let hits = (s1 !== s2) ? c1 * c2 : (c1 * (c1 - 1)) / 2;
-        
-        if (hits > 0) { 
-            if (rule.type === 'good') { 
-                totalScore += 15; 
+            if (rule.stars.length === 2) {
+                const [s1, s2] = rule.stars; 
+                const c1 = activeStarsInPalace.filter(s => s === s1).length; 
+                const c2 = activeStarsInPalace.filter(s => s === s2).length;
+                let hits = (s1 !== s2) ? c1 * c2 : (c1 * (c1 - 1)) / 2;
+                
+                if (hits > 0) { 
+                    if (rule.type === 'good') { 
+                        totalScore += 15; 
 
-                // ★ 新增：呼叫光暈繪製，將動態效果畫在 bzLayer (背景層) 
-                drawLuckyGlow(bzLayer, gua, rule.name.includes('四一') ? '四一' : '財位');
+                        // ★ 新增：呼叫光暈繪製，將動態效果畫在 bzLayer (背景層) 
+                        drawLuckyGlow(bzLayer, gua, rule.name.includes('四一') ? '四一' : '財位');
 
-                // ★ 吉格輸出：增加 boost 趨吉佈局顯示區塊
-                triggerEvents.push(`
-                    <div style="color:#2e7d32; margin-bottom:6px;">
-                        <b>[吉] ${rule.name}</b> - ${rule.desc}
-                        ${rule.boost ? `
-                        <div style="font-size:12px; color:#1b5e20; background:#e8f5e9; padding:5px 10px; border-radius:4px; margin-top:4px; border-left:3px solid #2e7d32; line-height:1.4;">
-                            🚀 <b>趨吉佈局：</b>${rule.boost}
-                        </div>` : ''}
-                    </div>
-                `); 
-            } 
-            if (rule.type === 'bad') { 
-                totalScore -= 20; 
-                // ★ 凶格輸出：維持醒目的紅色警告
-                triggerEvents.push(`
-                    <div style="color:#e91700; margin-bottom:4px;">
-                        <b>[凶] ${rule.name}</b> - ${rule.desc}
-                    </div>
-                `); 
-            } 
-        }
-    }
+                        // ★ 吉格輸出：增加 boost 趨吉佈局顯示區塊
+                        triggerEvents.push(`
+                            <div style="color:#2e7d32; margin-bottom:6px;">
+                                <b>[吉] ${rule.name}</b> - ${rule.desc}
+                                ${rule.boost ? `
+                                <div style="font-size:12px; color:#1b5e20; background:#e8f5e9; padding:5px 10px; border-radius:4px; margin-top:4px; border-left:3px solid #2e7d32; line-height:1.4;">
+                                    🚀 <b>趨吉佈局：</b>${rule.boost}
+                                </div>` : ''}
+                            </div>
+                        `); 
+                    } 
+                    if (rule.type === 'bad') { 
+                        totalScore -= 20; 
+                        // ★ 凶格輸出：維持醒目的紅色警告
+                        triggerEvents.push(`
+                            <div style="color:#e91700; margin-bottom:4px;">
+                                <b>[凶] ${rule.name}</b> - ${rule.desc}
+                            </div>
+                        `); 
+                    } 
+                }
+            }
         });
 
         // =========================================================
@@ -698,8 +697,6 @@ document.addEventListener('DOMContentLoaded', () => {
             triggerEvents.push(injuryNote);
         }
 
-
-
         // 保留原有的流年氣場引動警告
         const annualQi = getFiveQi(annualStar, pYear).qi;
         if (annualQi === '殺' && [2, 5, 3].includes(pMonth) && activeLayers.includes(4)) {
@@ -761,19 +758,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const guaSector = drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle - 22.5, centerAngle + 22.5, bgColor);
     
         if (guaSector) {
-        guaSector.style.cursor = 'pointer';
-        guaSector.setAttribute('id', `svg-gua-${gua}`);
-        // 點擊圓盤自動跳轉至下方對應的診斷報告
-        guaSector.onclick = () => {
-            const targetReport = document.getElementById(`report-${gua}`);
-            if (targetReport) {
-                targetReport.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // 暫時高亮提醒使用者跳轉成功
-                targetReport.style.transition = 'background-color 0.5s';
-                targetReport.style.backgroundColor = '#fff9c4'; 
-                setTimeout(() => targetReport.style.backgroundColor = '', 2000);
-            }
-        };
+            guaSector.style.cursor = 'pointer';
+            guaSector.setAttribute('id', `svg-gua-${gua}`);
+            // 點擊圓盤自動跳轉至下方對應的診斷報告
+            guaSector.onclick = () => {
+                const targetReport = document.getElementById(`report-${gua}`);
+                if (targetReport) {
+                    targetReport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // 暫時高亮提醒使用者跳轉成功
+                    targetReport.style.transition = 'background-color 0.5s';
+                    targetReport.style.backgroundColor = '#fff9c4'; 
+                    setTimeout(() => targetReport.style.backgroundColor = '', 2000);
+                }
+            };
         }
 
         drawLabel(bzLayer, bzName, (['生氣', '延年'].includes(bzName) ? centerAngle - 6 : centerAngle), RADIAL_LAYOUT.starRadius, '#252525ff', 16);
@@ -919,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let eventContent = r.events.length > 0 ? `<div style="margin-top:6px;">${r.events.join('')}</div>` : baseStatusText;
             
             html += `
-                <div style="border-bottom: 1px solid #eee; padding: 12px 0;">
+                <div id="report-${r.gua}" style="border-bottom: 1px solid #eee; padding: 12px 0;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <strong style="color:${titleColor}; font-size:15px;">${icon} ${r.gua}宮/${direction} (${r.state})</strong>
                         <span style="font-size: 11px; color: #aaa; background:#f0f0f0; padding:2px 6px; border-radius:10px;">Score: ${r.score}</span>
@@ -931,7 +928,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         });
+
+        // 1. 將診斷內容渲染到捲動區域
         outPanel.innerHTML = html;
+    }
+
+    // 2. 將「吉時表」按鈕單獨渲染到固定的頁腳區域 (不在捲動區內)
+    const footerPanel = document.getElementById('diagnostic-footer');
+    if (footerPanel) {
+        footerPanel.innerHTML = `
+            <div style="margin-top: 15px; padding: 15px; text-align: center; border-top: 2px dashed #eee;">
+                <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
+                    💡 診斷完成後，建議參考本月吉時進行佈局引動：
+                </p>
+                <button id="btn-view-lucky-time" style="
+                    background: linear-gradient(135deg, #da7800, #ff9800);
+                    color: white;
+                    border: none;
+                    padding: 12px 25px;
+                    font-size: 15px;
+                    font-weight: bold;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(218, 120, 0, 0.3);
+                    transition: transform 0.2s ease;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    📅 查看該月吉時表
+                </button>
+            </div>
+        `;
+
+        // 3. 正式獲取該按鈕元素並綁定點擊事件 
+        const luckyTimeBtn = document.getElementById('btn-view-lucky-time');
+        if (luckyTimeBtn) {
+            luckyTimeBtn.onclick = () => {
+                // 取得目前的年份與月份
+                const year = termData.fsYear;
+                const month = termData.fsMonth;
+                
+                // 組合 URL 並開啟新分頁 
+                const targetUrl = `https://nakaiwen.github.io/lucky_export/?year=${year}&month=${month}`;
+                window.open(targetUrl, '_blank');
+            };
+        }
     }
     }
 
