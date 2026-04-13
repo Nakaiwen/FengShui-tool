@@ -1076,151 +1076,165 @@ document.addEventListener('DOMContentLoaded', () => {
     //  SECTION 7: 初始化與綁定事件
     // =================================================================
     function init() {
-        const savedYear = localStorage.getItem('fsSavedYear');
-        const savedGender = localStorage.getItem('fsSavedGender');
-        const savedGua = localStorage.getItem('fsSavedGua');
-        const savedDate = localStorage.getItem('fsSavedDate'); 
-        const isLocked = localStorage.getItem('fsIsLocked') === 'true';
+    // --- 1. 抓取 LocalStorage 暫存狀態 ---
+    const savedYear = localStorage.getItem('fsSavedYear');
+    const savedGender = localStorage.getItem('fsSavedGender');
+    const savedGua = localStorage.getItem('fsSavedGua');
+    const savedDate = localStorage.getItem('fsSavedDate'); 
+    const isLocked = localStorage.getItem('fsIsLocked') === 'true';
 
-        const btnMale = document.getElementById('btn-male');
-        const btnFemale = document.getElementById('btn-female');
-        const lockBtn = document.getElementById('lock-btn');
-        const qiToggleBtn = document.getElementById('btn-qi-toggle');
+    // --- 2. 獲取 DOM 元素 ---
+    const btnMale = document.getElementById('btn-male');
+    const btnFemale = document.getElementById('btn-female');
+    const lockBtn = document.getElementById('lock-btn');
+    const qiToggleBtn = document.getElementById('btn-qi-toggle');
 
-        if (qiToggleBtn) {
-            qiToggleBtn.addEventListener('click', () => {
-                isQiMode = !isQiMode;
-                qiToggleBtn.classList.toggle('active', isQiMode);
-                qiToggleBtn.textContent = isQiMode ? '👁️ 關閉五氣資訊' : '👁️ 開啟五氣資訊';
-                updateAll(); 
-            });
+    // --- 3. 五氣資訊按鈕事件綁定 ---
+    if (qiToggleBtn) {
+        qiToggleBtn.addEventListener('click', () => {
+            isQiMode = !isQiMode;
+            qiToggleBtn.classList.toggle('active', isQiMode);
+            qiToggleBtn.textContent = isQiMode ? '👁️ 關閉五氣資訊' : '👁️ 開啟五氣資訊';
+            updateAll(); 
+        });
+    }
+
+    // --- 4. 基礎個人資訊初始化 ---
+    if (savedYear && inputYear) inputYear.value = savedYear;
+    if (savedGender) {
+        userSettings.gender = savedGender;
+        if (savedGender === 'male' && btnMale && btnFemale) {
+            btnMale.classList.add('active'); btnFemale.classList.remove('active');
+        } else if (savedGender === 'female' && btnMale && btnFemale) {
+            btnFemale.classList.add('active'); btnMale.classList.remove('active');
         }
+    }
+    if (savedGua && selectHouse) selectHouse.value = savedGua;
+    
+    // --- ★ 5. 觀測日期初始化 (修正核心：解鎖時永遠抓當天) ---
+    if (dateInput) {
+        // 取得今天的系統真實日期
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-        if (savedYear && inputYear) inputYear.value = savedYear;
-        if (savedGender) {
-            userSettings.gender = savedGender;
-            if (savedGender === 'male' && btnMale && btnFemale) {
-                btnMale.classList.add('active'); btnFemale.classList.remove('active');
-            } else if (savedGender === 'female' && btnMale && btnFemale) {
-                btnFemale.classList.add('active'); btnMale.classList.remove('active');
-            }
+        // 判斷邏輯：如果目前是「鎖定狀態」且有暫存日期，才用暫存的；否則一律帶入今天日期
+        if (isLocked && savedDate) {
+            dateInput.value = savedDate;
+        } else {
+            dateInput.value = formattedDate;
         }
-        if (savedGua && selectHouse) selectHouse.value = savedGua;
         
-        if (dateInput) {
-            if (savedDate) {
-                dateInput.value = savedDate;
-            } else {
-                const today = new Date();
-                const yyyy = today.getFullYear();
-                const mm = String(today.getMonth() + 1).padStart(2, '0');
-                const dd = String(today.getDate()).padStart(2, '0');
-                dateInput.value = `${yyyy}-${mm}-${dd}`;
-            }
-            dateInput.addEventListener('change', updateAll);
-        }
+        dateInput.addEventListener('change', updateAll);
+    }
 
-        function toggleLock(forceState = null) {
-            const willLock = forceState !== null ? forceState : !(lockBtn.classList.contains('locked'));
+    // --- 6. 鎖定/解鎖功能 ---
+    function toggleLock(forceState = null) {
+        const willLock = forceState !== null ? forceState : !(lockBtn.classList.contains('locked'));
+        
+        if (willLock) {
+            if(inputYear) inputYear.disabled = true;
+            if(selectHouse) selectHouse.disabled = true;
+            if(btnMale) btnMale.disabled = true;
+            if(btnFemale) btnFemale.disabled = true;
+            if(dateInput) dateInput.disabled = true; 
             
-            if (willLock) {
-                if(inputYear) inputYear.disabled = true;
-                if(selectHouse) selectHouse.disabled = true;
-                if(btnMale) btnMale.disabled = true;
-                if(btnFemale) btnFemale.disabled = true;
-                if(dateInput) dateInput.disabled = true; 
-                
-                if(lockBtn) {
-                    lockBtn.classList.add('locked');
-                    lockBtn.textContent = '🔒 資訊已鎖定';
-                }
-
-                if(inputYear) localStorage.setItem('fsSavedYear', inputYear.value);
-                localStorage.setItem('fsSavedGender', userSettings.gender);
-                if(selectHouse) localStorage.setItem('fsSavedGua', selectHouse.value);
-                if(dateInput) localStorage.setItem('fsSavedDate', dateInput.value); 
-                localStorage.setItem('fsIsLocked', 'true');
-
-            } else {
-                if(inputYear) inputYear.disabled = false;
-                if(selectHouse) selectHouse.disabled = false;
-                if(btnMale) btnMale.disabled = false;
-                if(btnFemale) btnFemale.disabled = false;
-                if(dateInput) dateInput.disabled = false; 
-
-                if(lockBtn) {
-                    lockBtn.classList.remove('locked');
-                    lockBtn.textContent = '🔓 資訊已解鎖';
-                }
-                localStorage.setItem('fsIsLocked', 'false');
+            if(lockBtn) {
+                lockBtn.classList.add('locked');
+                lockBtn.textContent = '🔒 資訊已鎖定';
             }
+
+            if(inputYear) localStorage.setItem('fsSavedYear', inputYear.value);
+            localStorage.setItem('fsSavedGender', userSettings.gender);
+            if(selectHouse) localStorage.setItem('fsSavedGua', selectHouse.value);
+            if(dateInput) localStorage.setItem('fsSavedDate', dateInput.value); 
+            localStorage.setItem('fsIsLocked', 'true');
+
+        } else {
+            if(inputYear) inputYear.disabled = false;
+            if(selectHouse) selectHouse.disabled = false;
+            if(btnMale) btnMale.disabled = false;
+            if(btnFemale) btnFemale.disabled = false;
+            if(dateInput) dateInput.disabled = false; 
+
+            if(lockBtn) {
+                lockBtn.classList.remove('locked');
+                lockBtn.textContent = '🔓 資訊已解鎖';
+            }
+            localStorage.setItem('fsIsLocked', 'false');
         }
+    }
 
-        if (lockBtn) {
-            lockBtn.addEventListener('click', () => toggleLock());
-            if (isLocked) toggleLock(true);
-        }
+    if (lockBtn) {
+        lockBtn.addEventListener('click', () => toggleLock());
+        if (isLocked) toggleLock(true);
+    }
 
-        if (degreeSlider) {
-            degreeSlider.addEventListener('input', (e) => {
-                if (isCompassMode) {
-                    window.removeEventListener('deviceorientation', handleOrientation, true);
-                    window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
-                    setCompassMode(false); 
-                }
-                const deg = Number(e.target.value);
-                updateUI(deg);
-                renderRotation(deg);
-            });
-        }
-
-        const startCompassBtn = document.getElementById('start-compass-btn');
-        if (startCompassBtn) startCompassBtn.addEventListener('click', startCompass);
-
-        const resetBtn = document.getElementById('reset-btn');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
+    // --- 7. 羅盤操作相關綁定 ---
+    if (degreeSlider) {
+        degreeSlider.addEventListener('input', (e) => {
+            if (isCompassMode) {
                 window.removeEventListener('deviceorientation', handleOrientation, true);
                 window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
-                setCompassMode(false);
-                updateUI(180);
-                renderRotation(180);
-            });
-        }
-
-        if (inputYear) inputYear.addEventListener('input', updateAll);
-        
-        if (btnMale) {
-            btnMale.addEventListener('click', () => { 
-                userSettings.gender = 'male'; 
-                btnMale.classList.add('active'); 
-                btnFemale.classList.remove('active'); 
-                updateAll(); 
-            });
-        }
-        
-        if (btnFemale) {
-            btnFemale.addEventListener('click', () => { 
-                userSettings.gender = 'female'; 
-                btnFemale.classList.add('active'); 
-                btnMale.classList.remove('active'); 
-                updateAll(); 
-            });
-        }
-        
-        if (selectHouse) selectHouse.addEventListener('change', updateAll);
-        
-        window.setDegree = function(deg) {
-            window.removeEventListener('deviceorientation', handleOrientation);
-            setCompassMode(false);
-            updateUI(deg); 
+                setCompassMode(false); 
+            }
+            const deg = Number(e.target.value);
+            updateUI(deg);
             renderRotation(deg);
-        }
-
-        updateAll();
-        updateUI(180);
-        renderRotation(180);
+        });
     }
+
+    const startCompassBtn = document.getElementById('start-compass-btn');
+    if (startCompassBtn) startCompassBtn.addEventListener('click', startCompass);
+
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            window.removeEventListener('deviceorientation', handleOrientation, true);
+            window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
+            setCompassMode(false);
+            updateUI(180);
+            renderRotation(180);
+        });
+    }
+
+    // --- 8. 其他輸入變更綁定 ---
+    if (inputYear) inputYear.addEventListener('input', updateAll);
+    
+    if (btnMale) {
+        btnMale.addEventListener('click', () => { 
+            userSettings.gender = 'male'; 
+            btnMale.classList.add('active'); 
+            btnFemale.classList.remove('active'); 
+            updateAll(); 
+        });
+    }
+    
+    if (btnFemale) {
+        btnFemale.addEventListener('click', () => { 
+            userSettings.gender = 'female'; 
+            btnFemale.classList.add('active'); 
+            btnMale.classList.remove('active'); 
+            updateAll(); 
+        });
+    }
+    
+    if (selectHouse) selectHouse.addEventListener('change', updateAll);
+    
+    window.setDegree = function(deg) {
+        window.removeEventListener('deviceorientation', handleOrientation);
+        setCompassMode(false);
+        updateUI(deg); 
+        renderRotation(deg);
+    }
+
+    // --- 9. 最終執行繪製 ---
+    updateAll();
+    updateUI(180);
+    renderRotation(180);
+}
     
     init();
 });
