@@ -399,76 +399,91 @@
   </g>
         </svg>
 
-        <div id="center-overlay">
+<div id="center-overlay">
     <div id="center-bg"> 
         <div id="center-main-text"></div>
         <div id="center-sub-text"></div>
     </div>
-        </div>
+</div>
             
-        </div> <div id="controls">
-            <div class="control-panel">
-                <div class="profile-settings">
-                  
-                    <label>出生年：</label>
-                    <input type="number" id="birth-year" value="1990" min="1900" max="2099">
-                    <div class="gender-toggle">
-                        <button id="btn-male" class="gender-btn active">男</button>
-                        <button id="btn-female" class="gender-btn">女</button>
-                    </div>
-                    <div style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 5px; margin-top: 5px;">
-                    <label for="target-date">觀測日期：</label>
-                    <input type="date" id="target-date" style="padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit;">
-                    </div>
+<div id="controls">
+    <div class="control-panel">
+      
+        <div class="profile-settings">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 5px; flex-wrap: wrap;">
+                <span style="color: #d35400; font-weight: bold; font-size: 15px; white-space: nowrap;">命主(甲)</span>
+                <label style="white-space: nowrap; margin-left: 5px;">出生年：</label>
+                <input type="number" id="input-year-a" value="1990" min="1900" max="2099" style="width: 75px;">
+                <div class="gender-toggle" style="margin-left: 2px;">
+                    <button id="btn-male-a" class="gender-btn active">男</button>
+                    <button id="btn-female-a" class="gender-btn">女</button>
                 </div>
-                <div class="control-group">
-                    <label for="house-gua">屋宅坐向：</label>
-                        <select id="house-gua">
-                          <option value="坎">坎宅 (坐北向南)</option>
-                          <option value="艮">艮宅 (坐東北向西南)</option>
-                          <option value="震">震宅 (坐東向西)</option>
-                          <option value="巽">巽宅 (坐東南向西北)</option>
-                          <option value="離">離宅 (坐南向北)</option>
-                          <option value="坤">坤宅 (坐西南向東北)</option>
-                          <option value="兌">兌宅 (坐西向東)</option>
-                          <option value="乾">乾宅 (坐西北向東南)</option>
-                        </select>
-                </div>
-
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-    <button id="btn-qi-toggle" class="qi-toggle-btn" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; line-height: 1.4; box-sizing: border-box;">
-        👁️ 開啟五氣資訊
-    </button>
-    <button id="lock-btn" class="lock-btn" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; line-height: 1.4; box-sizing: border-box;">
-        🔓 資訊解鎖 (鎖定)
-    </button>
-</div>
-
-<div id="info-display" style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; text-align: center;">
-    <div style="color: #d35400; font-size: 16px; font-weight: bold; line-height: 2;">
-        <span id="current-mountain">?</span>山<span id="current-facing">?</span>向
-        
-        <span style="color: #888; font-size: 13px; font-weight: normal; margin-left: 8px;">
-            (坐<span id="sitting-degree">0</span>° 向<span id="facing-degree">0</span>°)
-        </span>
-    </div>
-</div>
-
-<div class="input-group">
-    <label for="degree-slider">旋轉角度 (座向): <span id="degree-display">0</span>°</label>
-    <input type="range" id="degree-slider" min="0" max="360" value="0">
-</div>
-
-<div class="action-row" style="display: flex; gap: 10px; margin-top: 15px;">
-    <button id="start-compass-btn" class="btn-main" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; box-sizing: border-box;">
-        📡 啟動電子羅盤
-    </button>
-    <button id="reset-btn" class="btn-sub" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; box-sizing: border-box;">
-        🔄 羅盤關閉歸零
-    </button>
-</div>
-
             </div>
-        </div> </div> <script src="script.js"></script>
+
+            <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px; flex-wrap: wrap;">
+                <span style="color: #2980b9; font-weight: bold; font-size: 15px; white-space: nowrap;">家人(乙)</span>
+                <label style="white-space: nowrap; margin-left: 5px;">出生年：</label>
+                <input type="number" id="input-year-b" min="1900" max="2099" placeholder="選填" style="width: 75px;">
+                <div class="gender-toggle" style="margin-left: 2px;">
+                    <button id="btn-male-b" class="gender-btn active">男</button>
+                    <button id="btn-female-b" class="gender-btn">女</button>
+                </div>
+            </div>
+            <div style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 5px; margin-top: 5px;">
+                <label for="target-date">觀測日期：</label>
+                <input type="date" id="target-date" style="padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit;">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="house-gua">屋宅坐向：</label>
+            <select id="house-gua">
+                <option value="坎">坎宅 (坐北向南)</option>
+                <option value="艮">艮宅 (坐東北向西南)</option>
+                <option value="震">震宅 (坐東向西)</option>
+                <option value="巽">巽宅 (坐東南向西北)</option>
+                <option value="離">離宅 (坐南向北)</option>
+                <option value="坤">坤宅 (坐西南向東北)</option>
+                <option value="兌">兌宅 (坐西向東)</option>
+                <option value="乾">乾宅 (坐西北向東南)</option>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button id="btn-qi-toggle" class="qi-toggle-btn" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; line-height: 1.4; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 42px;">
+                👁️ 開啟五氣資訊
+            </button>
+            <button id="lock-btn" class="lock-btn" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; line-height: 1.4; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 42px;">
+                🔓 資訊解鎖 (鎖定)
+            </button>
+        </div>
+
+        <div id="info-display" style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; text-align: center;">
+            <div style="color: #d35400; font-size: 16px; font-weight: bold; line-height: 2;">
+                <span id="current-mountain">?</span>山<span id="current-facing">?</span>向
+                
+                <span style="color: #888; font-size: 13px; font-weight: normal; margin-left: 8px;">
+                    (坐<span id="sitting-degree">0</span>° 向<span id="facing-degree">0</span>°)
+                </span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="degree-slider">旋轉角度 (座向): <span id="degree-display">0</span>°</label>
+            <input type="range" id="degree-slider" min="0" max="360" value="0">
+        </div>
+
+        <div class="action-row" style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="start-compass-btn" class="btn-main" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 42px;">
+                📡 啟動電子羅盤
+            </button>
+            <button id="reset-btn" class="btn-sub" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 42px;">
+                🔄 羅盤關閉歸零
+            </button>
+        </div>
+
+    </div>
+</div> 
+<script src="script.js"></script>
 </body>
 </html>

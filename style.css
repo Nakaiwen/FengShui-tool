@@ -76,11 +76,12 @@ body {
 
 /* 主標題 (例如：離命) */
 #center-main-text {
-    font-size: 2.4vmin; 
+    font-size: 1.6vmin; 
     color: #da7800; 
     line-height: 1.2;
     white-space: nowrap;
     font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
+    margin: 3px 0; /* 增加一點上下行距 */
 }
 
 /* 副標題 (例如：東四命) */
@@ -88,16 +89,37 @@ body {
     font-size: 1.6vmin; 
     color: #555555; 
     white-space: nowrap;
-    margin-top: 0.2vmin;
+    margin-top: 3px;
     font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
 }
 
-/* --- 控制面板 --- */
+/* 第三行：甲:兑   乙:離 */
+#center-ming-text {
+    font-size: 1.6vmin; 
+    color: #da7800;
+    font-weight: bold;
+}
+
+/* 第一行：2026 丙午年 */
+#center-year-text {
+    font-size: 1.8vmin; 
+    color: #575757;
+    font-weight: bold;
+}
+
+/* --- 控制面板置中優化 --- */
 #controls {
     position: relative; 
     width: 92%;
     max-width: 380px;
     z-index: 100;
+    /* 強制在父層容器中水平置中 */
+    margin-left: auto;
+    margin-right: auto;
+    /* 確保面板內部的 Flex 容器也會影響子元件 */
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
 }
 
 .control-panel {
@@ -108,6 +130,30 @@ body {
     text-align: center;
     pointer-events: auto;
     backdrop-filter: blur(5px);
+    /* 確保面板寬度撐滿父層設定 */
+    width: 100%;
+    box-sizing: border-box; 
+}
+
+/* 確保資訊解讀區內部的內容也置中 */
+#info-display {
+    width: 100%;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 水平置中山向文字 */
+    text-align: center;
+}
+
+/* 調整動作按鈕列的置中與間距 */
+.action-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    width: 100%;
+    justify-content: center; /* 確保按鈕在容器內置中排列 */
 }
 
 .control-group { margin-bottom: 12px; }

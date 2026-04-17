@@ -73,9 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     
+    // 將原本的 userSettings 替換為支援雙人的版本
     let userSettings = {
-        gender: 'male',
-        houseGua: '坎' 
+    genderA: 'male',
+    genderB: 'male'
     };
 
     let isQiMode = false; // ★ 五氣視角模式開關
@@ -393,22 +394,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     }
 
-    function renderPersonMingStars(centerNum, radius, layerId) {
-        const layer = getLayer(layerId);
-        layer.innerHTML = '';
-        LUO_SHU_PATH.forEach((gua, index) => {
-            let num = (centerNum + index + 1) % 9;
-            if (num === 0) num = 9;
+    // ★ 更新：完全沿用 renderPersonMingStars 字型與排版設定的通用紫白繪製函式
+    function renderRichStars(baseStar, radius, layerId, badgeText, angleOffset = 0, guanGua = null) {
+    const layer = getLayer(layerId);
+    if (!layer) return;
+    layer.innerHTML = '';
 
-            if (isQiMode) {
-                const qiData = getFiveQi(centerNum, num);
-                drawLabel(layer, `命${qiData.qi}`, getSvgAngle(gua), radius, qiData.color, 15);
-            } else {
-                const info = FLYING_STARS_INFO[num];
-                // ★ 這裡改為「命-短星名」加上原本的「意義」
-                drawLabel(layer, `命-${STAR_NAMES_SHORT[num]}`, getSvgAngle(gua), radius, info.color, 15, true, info.meaning);
-            }
-        });
+    LUO_SHU_PATH.forEach(gua => {
+        let star = getStarInGua(baseStar, gua);
+        // 計算加上偏移量後的最終角度 (如偏左 -15, 置中 0)
+        const finalAngle = getSvgAngle(gua) + angleOffset;
+
+        // 處理「宅紫白」獨有的對宮 (氣口/關位)
+        if (guanGua && gua === guanGua) {
+            // 關位顯示：例如「宅-關」，副標為「氣口」
+            drawLabel(layer, `${badgeText}-關`, finalAngle, radius, '#555555ff', 15, true, '氣口');
+            return; // 畫完關位就跳出換下一個宮位
+        }
+
+        // 判斷是否開啟了五氣模式 (生旺退殺死)
+        if (typeof isQiMode !== 'undefined' && isQiMode) {
+            const qiData = getFiveQi(baseStar, star);
+            // 五氣模式顯示：例如「宅生」、「命旺」
+            drawLabel(layer, `${badgeText}${qiData.qi}`, finalAngle, radius, qiData.color, 15);
+        } else {
+            const info = FLYING_STARS_INFO[star];
+            // 飛星模式顯示：例如「宅-1白」或「命-8白」
+            const mainText = `${badgeText}-${STAR_NAMES_SHORT[star]}`;
+            
+            // ★ 核心修改：使用原生的 drawLabel，帶入字型大小 15，並加上 info.meaning (毒癌/喜慶等)
+            drawLabel(layer, mainText, finalAngle, radius, info.color, 15, true, info.meaning);
+        }
+    });
     }
 
     function renderStarsShort(centerNum, radius, layerId, prefix, fontSize = 14, angleOffset = 0, qiPrefix = '', guanGua = null) {
@@ -449,34 +466,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================================================================
     //  SECTION 5: 結算邏輯與更新文字圖層
     // =================================================================
-    const inputYear = document.getElementById('birth-year');
-    const selectHouse = document.getElementById('house-gua');
-    const dateInput = document.getElementById('target-date'); 
-
     function updateAll() {
-    if (!inputYear) return;
-    const birthYear = parseInt(inputYear.value);
-    if (isNaN(birthYear)) return;
+    const inputYearA = document.getElementById('input-year-a');
+    const inputYearB = document.getElementById('input-year-b');
+    
+    // 防呆機制：如果甲的年份還沒填，就不跑羅盤
+    if (!inputYearA || !inputYearA.value) return; 
 
-    let sum = birthYear.toString().split('').map(Number).reduce((a, b) => a + b, 0);
-    while (sum > 9) sum = sum.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+    const birthYearA = parseInt(inputYearA.value);
+    const birthYearB = parseInt(inputYearB.value);
 
-    let kua;
-    if (userSettings.gender === 'male') {
-        kua = 11 - sum;
-        while (kua > 9) kua -= 9;
-        if (kua === 5) kua = 2;
+    // 取得使用者設定的性別 (預設為男)
+    const genderA = (typeof userSettings !== 'undefined' && userSettings.genderA) ? userSettings.genderA : 'male';
+    const genderB = (typeof userSettings !== 'undefined' && userSettings.genderB) ? userSettings.genderB : 'male';
+
+    // --- 計算命主 (甲) 命卦 ---
+    let mingGuaA = null;
+    if (!isNaN(birthYearA)) {
+        let sumA = birthYearA.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+        while (sumA > 9) sumA = sumA.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+        let kuaA = (genderA === 'male') ? (11 - sumA) : (4 + sumA);
+        while (kuaA > 9) kuaA -= 9;
+        if (kuaA === 5) kuaA = (genderA === 'male') ? 2 : 8;
+        mingGuaA = GUA_DATA[kuaA];
     } else {
-        kua = 4 + sum;
-        while (kua > 9) kua -= 9;
-        if (kua === 5) kua = 8;
+        return; // 命主必填，否則停止渲染
     }
-    const mingGua = GUA_DATA[kua];
 
+    // --- 計算家人 (乙) 命卦 (若有填寫) ---
+    let mingGuaB = null;
+    if (!isNaN(birthYearB)) {
+        let sumB = birthYearB.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+        while (sumB > 9) sumB = sumB.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+        let kuaB = (genderB === 'male') ? (11 - sumB) : (4 + sumB);
+        while (kuaB > 9) kuaB -= 9;
+        if (kuaB === 5) kuaB = (genderB === 'male') ? 2 : 8;
+        mingGuaB = GUA_DATA[kuaB];
+    }
+
+    const selectHouse = document.getElementById('house-gua');
     const houseGuaName = selectHouse ? selectHouse.value : '坎';
     const zhaiGua = Object.values(GUA_DATA).find(g => g.name === houseGuaName) || GUA_DATA[1];
 
     // 讀取使用者選擇的日期
+    const dateInput = document.getElementById('target-date');
     let selectedDate = new Date();
     if (dateInput && dateInput.value) {
         const parts = dateInput.value.split('-');
@@ -484,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
         }
     }
+        
 
     // 取得流年流月資料
     const termData = getSolarTermMonth(selectedDate);
@@ -515,58 +549,44 @@ document.addEventListener('DOMContentLoaded', () => {
         const pPeriod = getStarInGua(periodStar, gua);
         const pYear = getStarInGua(annualStar, gua);
         const pMonth = getStarInGua(monthStar, gua);
-        const pMing = getStarInGua(mingGua.number, gua);
+        
+        // 取得甲與乙的命星 (確保 mingGuaA 與 mingGuaB 在迴圈外已被定義)
+        const pMingA = mingGuaA ? getStarInGua(mingGuaA.number, gua) : null;
+        const pMingB = mingGuaB ? getStarInGua(mingGuaB.number, gua) : null;
 
-        let totalScore = 0;
-        let activeStarsInPalace = []; 
+        let sharedScore = 0;
+        let sharedStars = []; 
         let triggerEvents = [];
 
-        // 第一步：八宅基礎分
-        totalScore += getBzScore(bzName);
-        // 我們將八宅的描述文字格式化
-        const bzDescription = `<div style="color:#666; font-size:12px; margin-bottom:4px;">八宅方位：<span style="color:#d35400; font-weight:bold;">${bzName}</span></div>`;
+        // 第一步：空間共用 - 宅卦八宅基礎分
+        sharedScore += getBzScore(bzName);
+        
 
-        // 將此描述加入 triggerEvents 的最前面，確保它顯示在報告頂端
-        triggerEvents.unshift(bzDescription);
-
-        // 第二步：收集活躍星與五氣分
+        // 第二步：收集空間活躍星與五氣分 (宅、運、年、月)
         if (activeLayers.includes(1)) { 
-            // 找出宅氣的五氣
             const qiData = getFiveQi(zhaiGua.number, pZhai);
             let finalQi = qiData.qi;
-            
-            // ★ 核心邏輯：如果是宅卦對宮，分數判定改為「關」
             const currentHouseName = zhaiGua.name;
-            if (gua === OPPOSITE_GUA[currentHouseName]) {
-                finalQi = '關';
-            }
-            
-            totalScore += getQiScore(finalQi); 
-            activeStarsInPalace.push(pZhai); 
+            if (gua === OPPOSITE_GUA[currentHouseName]) { finalQi = '關'; }
+            sharedScore += getQiScore(finalQi); 
+            sharedStars.push(pZhai); 
         }
-        
-        // 其餘層級 (2~5) 維持原有的 getQiScore(getFiveQi(...).qi) 邏輯
-        if (activeLayers.includes(2)) { totalScore += getQiScore(getFiveQi(periodStar, pPeriod).qi); activeStarsInPalace.push(pPeriod); }
-        if (activeLayers.includes(3)) { totalScore += getQiScore(getFiveQi(annualStar, pYear).qi); activeStarsInPalace.push(pYear); }
-        if (activeLayers.includes(4)) { totalScore += getQiScore(getFiveQi(monthStar, pMonth).qi); activeStarsInPalace.push(pMonth); }
-        if (activeLayers.includes(5)) { totalScore += getQiScore(getFiveQi(mingGua.number, pMing).qi); activeStarsInPalace.push(pMing); }
+        if (activeLayers.includes(2)) { sharedScore += getQiScore(getFiveQi(periodStar, pPeriod).qi); sharedStars.push(pPeriod); }
+        if (activeLayers.includes(3)) { sharedScore += getQiScore(getFiveQi(annualStar, pYear).qi); sharedStars.push(pYear); }
+        if (activeLayers.includes(4)) { sharedScore += getQiScore(getFiveQi(monthStar, pMonth).qi); sharedStars.push(pMonth); }
 
-        // 第三步：化學反應（吉凶組合） (★ 加入趨吉佈局提示)
+        // 第三步：化學反應（吉凶組合） (★ 加入趨吉佈局提示) -> 空間共用
         COMBINATION_RULES.forEach(rule => {
             if (rule.stars.length === 2) {
                 const [s1, s2] = rule.stars; 
-                const c1 = activeStarsInPalace.filter(s => s === s1).length; 
-                const c2 = activeStarsInPalace.filter(s => s === s2).length;
+                const c1 = sharedStars.filter(s => s === s1).length; 
+                const c2 = sharedStars.filter(s => s === s2).length;
                 let hits = (s1 !== s2) ? c1 * c2 : (c1 * (c1 - 1)) / 2;
                 
                 if (hits > 0) { 
                     if (rule.type === 'good') { 
-                        totalScore += 15; 
-
-                        // ★ 新增：呼叫光暈繪製，將動態效果畫在 bzLayer (背景層) 
+                        sharedScore += 15; 
                         drawLuckyGlow(bzLayer, gua, rule.name.includes('四一') ? '四一' : '財位');
-
-                        // ★ 吉格輸出：增加 boost 趨吉佈局顯示區塊
                         triggerEvents.push(`
                             <div style="color:#2e7d32; margin-bottom:6px;">
                                 <b>[吉] ${rule.name}</b> - ${rule.desc}
@@ -578,8 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         `); 
                     } 
                     if (rule.type === 'bad') { 
-                        totalScore -= 20; 
-                        // ★ 凶格輸出：維持醒目的紅色警告
+                        sharedScore -= 20; 
                         triggerEvents.push(`
                             <div style="color:#e91700; margin-bottom:4px;">
                                 <b>[凶] ${rule.name}</b> - ${rule.desc}
@@ -591,14 +610,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // =========================================================
-        // ★ 進階大腦：精準【受剋判定】與【通關化解】邏輯
+        // ★ 進階大腦：精準【受剋判定】與【通關化解】邏輯 (空間共用)
         // =========================================================
         const starWuxingMap = { 1:'水', 2:'土', 3:'木', 4:'木', 5:'土', 6:'金', 7:'金', 8:'土', 9:'火' };
         const guaWuxingMap = { '坎':'水', '坤':'土', '震':'木', '巽':'木', '乾':'金', '兌':'金', '艮':'土', '離':'火' };
         const destroyMap = { '火':'金', '金':'木', '木':'土', '土':'水', '水':'火' };
         const bridgeMap = { '火_金':'土', '金_木':'水', '木_土':'火', '土_水':'金', '水_火':'木' };
+        const drainMap = { '金':'水', '水':'木', '木':'火', '火':'土', '土':'金' };
         
-        // 化解建議對照
         const REMEDY_MAP = {
             '土': '放置陶瓷擺件、黃色地墊或天然礦石，以土元素化解。複數數量以5、10為主。',
             '水': '放置水種植物、魚缸或黑色地墊，以水元素化解。複數數量以1、6為主。',
@@ -609,32 +628,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const currentGuaWuxing = guaWuxingMap[gua];
         let presentWuxings = new Set();
-        activeStarsInPalace.forEach(s => presentWuxings.add(starWuxingMap[s]));
+        sharedStars.forEach(s => presentWuxings.add(starWuxingMap[s]));
 
-        // =========================================================
-        // ★ 進階大腦：受剋判定、通關化解、及【剋洩交加】特級預警
-        // =========================================================
-        const drainMap = { '金':'水', '水':'木', '木':'火', '火':'土', '土':'金' };
-        
         let injuryNote = "";
         let isHealed = false;
         let healerStar = null;
-        let destroyCount = 0; // 統計剋星數量
-        let drainCount = 0;   // 統計洩星數量
+        let destroyCount = 0; 
+        let drainCount = 0;   
 
-        // 掃描每一顆活躍星的生剋關係
-        activeStarsInPalace.forEach(s => {
+        sharedStars.forEach(s => {
             const sWuxing = starWuxingMap[s];
-            
-            // 判斷是否為「剋」
             if (destroyMap[sWuxing] === currentGuaWuxing) {
                 destroyCount++;
                 const needBridge = bridgeMap[`${sWuxing}_${currentGuaWuxing}`];
-                
-                // 檢查同宮是否有通關五行
                 if (presentWuxings.has(needBridge)) {
                     isHealed = true;
-                    healerStar = activeStarsInPalace.find(star => starWuxingMap[star] === needBridge);
+                    healerStar = sharedStars.find(star => starWuxingMap[star] === needBridge);
                 } else {
                     const remedyText = REMEDY_MAP[needBridge] || '請尋求專業老師指導。';
                     injuryNote = `
@@ -649,18 +658,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                 }
             }
-            
-            // 判斷是否為「洩」
             if (drainMap[currentGuaWuxing] === sWuxing) {
                 drainCount++;
             }
         });
 
-        // ★ 最終判定：優先檢查是否符合「剋洩交加」最嚴重狀態
         if (destroyCount > 0 && drainCount > 0 && !isHealed) {
-            totalScore -= 30; // 特級凶象，重扣分
-            
-            // 針對剋洩交加的專屬化解建議 (補充本宮能量)
+            sharedScore -= 30; 
             const BOOST_REMEDY = {
                 '金': '建議擇吉日吉時，大量補充金元素：放置 4 或 9 件銅製錢幣、白色地毯，並保持此方乾淨明亮。',
                 '木': '建議擇吉日吉時，大量補充木元素：放置 3 或 8 盆長青植物、綠色裝飾，維持生機，並保持此方乾淨明亮。',
@@ -669,7 +673,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 '土': '建議擇吉日吉時，大量補充土元素：放置陶藝或是石雕擺件、聚寶盆，或5顆、10顆天然礦石，並保持此方乾淨明亮。'
             };
             const currentBoost = BOOST_REMEDY[currentGuaWuxing] || '請尋求專業老師指導。';
-
             triggerEvents.push(`
                 <div style="background:#4a0000; border-left:5px solid #ff0000; padding:10px; margin:5px 0; color:#fff; font-size:13px; border-radius:4px; line-height:1.6;">
                     🚨 <b>【特級預警：剋洩交加】</b><br>
@@ -680,38 +683,107 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             `);
-
         } else if (isHealed && !injuryNote) {
-            // 通關成功的情況
-            totalScore += 20; 
+            sharedScore += 20; 
             triggerEvents.push(`
                 <div style="background:#f0fff4; border-left:4px solid #2e7d32; padding:8px 10px; margin:5px 0; color:#2e7d32; font-size:12.5px;">
                     🌿 <b>【通關化解】</b>：<br>
                     本有剋戰凶象，幸得同宮 <b>${STAR_NAMES_SHORT[healerStar]}</b> 轉化氣場，化凶為吉！
                 </div>
             `);
-            
         } else if (injuryNote) {
-            // 只有受剋且未通關的情況
-            totalScore -= 20;
+            sharedScore -= 20;
             triggerEvents.push(injuryNote);
         }
 
-        // 保留原有的流年氣場引動警告
         const annualQi = getFiveQi(annualStar, pYear).qi;
         if (annualQi === '殺' && [2, 5, 3].includes(pMonth) && activeLayers.includes(4)) {
             triggerEvents.push(`<div style="background:#fff9f0; border-left:4px solid #da7800; padding:4px 8px; margin:4px 0; color:#da7800; font-size:12px;">⚠️ 氣場引動：流月凶星進入流年殺位，易有突發意外。</div>`);
         }
 
-        // 第四步：星等繪製
-        const absScore = Math.abs(totalScore);
+        // =========================================================
+        // ★ 核心升級：雙人專屬分數結算 (繼承 sharedScore 後各自加總)
+        // =========================================================
+        let scoreA = sharedScore;
+        let scoreB = mingGuaB ? sharedScore : null;
+        let pA_HTML = '';
+        let pB_HTML = '';
+
+        // 動態判斷性別頭像
+        const avatarA = (genderA === 'female') ? '👩' : '👨';
+        const avatarB = (genderB === 'female') ? '👩' : '👨';
+
+        // 命主(甲) 結算
+        if (mingGuaA) {
+            const bzA = mingGuaA.stars[gua];
+            scoreA += getBzScore(bzA);
+            let qiText = '';
+            if (activeLayers.includes(5)) {
+                const qA = getFiveQi(mingGuaA.number, pMingA).qi;
+                scoreA += getQiScore(qA);
+                qiText = ` / 命氣:${qA}`;
+            }
+            pA_HTML = `<div style="color:#d35400; font-size:13.5px; margin-bottom:5px;">${avatarA} <b>命主(甲)：</b>命盤八宅[${bzA}]${qiText} ➔ 總評: <b>${scoreA}</b>分</div>`;
+        }
+
+        // 家人(乙) 結算
+        if (mingGuaB) {
+            const bzB = mingGuaB.stars[gua];
+            scoreB += getBzScore(bzB);
+            let qiText = '';
+            if (activeLayers.includes(5)) {
+                const qB = getFiveQi(mingGuaB.number, pMingB).qi;
+                scoreB += getQiScore(qB);
+                qiText = ` / 命氣:${qB}`;
+            }
+            pB_HTML = `<div style="color:#2980b9; font-size:13.5px; margin-bottom:10px;">${avatarB} <b>家人(乙)：</b>命盤八宅[${bzB}]${qiText} ➔ 總評: <b>${scoreB}</b>分</div>`;
+        }
+
+    
+
+        // =========================================================
+        // ★ 核心升級：繪製左甲右乙的扇形底色與星等
+        // =========================================================
+        function getStateAndColor(sc) {
+            if (sc >= 40) return { state: '極其祥和', color: 'rgba(255, 236, 27, 0.55)' };
+            if (sc >= 20) return { state: '氣場趨吉', color: 'rgba(255, 184, 62, 0.45)' };
+            if (sc <= -40) return { state: '能量受阻', color: 'rgba(255, 89, 89, 0.55)' };
+            if (sc <= -20) return { state: '氣場波動', color: 'rgba(255, 131, 97, 0.45)' };
+            return { state: '氣場中和', color: 'rgba(135, 206, 235, 0.4)' };
+        }
+
+        const resA = getStateAndColor(scoreA);
+        const resB = mingGuaB ? getStateAndColor(scoreB) : resA; // 若無乙，右半邊同甲顏色
+
+        let centerAngle = getSvgAngle(gua);
+        
+        // 繪製左半邊 (甲的顏色： -22.5度 到 0度)
+        const guaSectorA = drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle - 22.5, centerAngle, resA.color);
+        // 繪製右半邊 (乙的顏色： 0度 到 +22.5度)
+        const guaSectorB = drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle, centerAngle + 22.5, resB.color);
+
+        // 綁定點擊跳轉 (左右兩半都綁)
+        const clickHandler = () => {
+            const targetReport = document.getElementById(`report-${gua}`);
+            if (targetReport) {
+                targetReport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                targetReport.style.transition = 'background-color 0.5s';
+                targetReport.style.backgroundColor = '#fff9c4'; 
+                setTimeout(() => targetReport.style.backgroundColor = '', 2000);
+            }
+        };
+        if (guaSectorA) { guaSectorA.style.cursor = 'pointer'; guaSectorA.setAttribute('id', `svg-gua-a-${gua}`); guaSectorA.onclick = clickHandler; }
+        if (guaSectorB) { guaSectorB.style.cursor = 'pointer'; guaSectorB.setAttribute('id', `svg-gua-b-${gua}`); guaSectorB.onclick = clickHandler; }
+
+        // 星等繪製 (取兩人平均分數畫星星)
+        const avgScore = mingGuaB ? Math.round((scoreA + scoreB) / 2) : scoreA;
+        const absScore = Math.abs(avgScore);
         const fullStars = Math.floor(absScore / 10);
         const hasHalfStar = (absScore % 10) >= 5;
         const totalVisualStars = fullStars + (hasHalfStar ? 1 : 0);
-        const starType = totalScore > 0 ? 'good' : 'bad';
+        const starType = avgScore > 0 ? 'good' : 'bad';
 
         if (totalVisualStars > 0) {
-            const centerAngle = getSvgAngle(gua);
             const STAR_SPACING = 6; const MAX_PER_ROW = 6; const ROW_GAP = 8;
             let starsToDraw = Array(fullStars).fill(false);
             if (hasHalfStar) starsToDraw.push(true);
@@ -728,53 +800,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 第五步：判定氣場狀態 (溫和中性化描述)
-        let finalState = ''; 
-        let bgColor = '';
-        
-        if (totalScore >= 40) { 
-            finalState = '極其祥和'; 
-            bgColor = 'rgba(255, 236, 27, 0.55)'; 
-        } 
-        else if (totalScore >= 20) { 
-            finalState = '氣場趨吉'; 
-            bgColor = 'rgba(255, 184, 62, 0.45)'; 
-        } 
-        else if (totalScore <= -40) { 
-            finalState = '能量受阻'; 
-            bgColor = 'rgba(255, 89, 89, 0.55)'; 
-        } 
-        else if (totalScore <= -20) { 
-            finalState = '氣場波動'; 
-            bgColor = 'rgba(255, 131, 97, 0.45)'; 
-        } 
-        else { 
-            finalState = '氣場中和'; 
-            bgColor = 'rgba(135, 206, 235, 0.4)'; 
-        }
-
-        let centerAngle = getSvgAngle(gua);
-        // ★ 互動強化：繪製扇形區域並綁定點擊事件 
-        const guaSector = drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle - 22.5, centerAngle + 22.5, bgColor);
-    
-        if (guaSector) {
-            guaSector.style.cursor = 'pointer';
-            guaSector.setAttribute('id', `svg-gua-${gua}`);
-            // 點擊圓盤自動跳轉至下方對應的診斷報告
-            guaSector.onclick = () => {
-                const targetReport = document.getElementById(`report-${gua}`);
-                if (targetReport) {
-                    targetReport.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // 暫時高亮提醒使用者跳轉成功
-                    targetReport.style.transition = 'background-color 0.5s';
-                    targetReport.style.backgroundColor = '#fff9c4'; 
-                    setTimeout(() => targetReport.style.backgroundColor = '', 2000);
-                }
-            };
-        }
-
+        // 繪製空間八宅文字與吉印
         drawLabel(bzLayer, bzName, (['生氣', '延年'].includes(bzName) ? centerAngle - 6 : centerAngle), RADIAL_LAYOUT.starRadius, '#252525ff', 16);
-
         if (['生氣', '延年'].includes(bzName)) {
             const sealAngle = centerAngle + 12;
             const sx = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(sealAngle * Math.PI / 180);
@@ -790,9 +817,21 @@ document.addEventListener('DOMContentLoaded', () => {
             bzLayer.appendChild(sealGroup);
         }
 
+        // 產出下方的報告資料陣列 (支援雙人顯示)
+        const finalStateDisplay = mingGuaB ? `甲:${resA.state} / 乙:${resB.state}` : resA.state;
+        const finalScoreDisplay = mingGuaB ? `甲:${scoreA} / 乙:${scoreB}` : scoreA;
+        
+        // 產出下方的報告資料陣列 (新增 rawScoreA 存入原始數字)
         reports.push({ 
-            gua: gua, score: totalScore, state: finalState, bz: bzName, 
-            events: triggerEvents, member: guaInfo.member, body: guaInfo.body
+            gua: gua, 
+            score: finalScoreDisplay, 
+            rawScoreA: scoreA, // ★ 關鍵：把甲的原始分數存下來，後面才抓得到
+            state: finalStateDisplay, 
+            bz: bzName, 
+            events: triggerEvents, 
+            member: guaInfo.member, 
+            body: guaInfo.body,
+            memberScores: pA_HTML + pB_HTML  // ★ 新增這行：把甲乙個人分數獨立打包
         });
     });
 
@@ -834,19 +873,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 中心資訊...
-    const centerMainText = document.getElementById('center-main-text');
-    if (centerMainText) {
-        centerMainText.textContent = `${zhaiGua.name}宅 ${mingGua.name}命`;
-        const centerBg = document.getElementById('center-bg');
-        if (centerBg) {
-            let yearTextEl = document.getElementById('center-year-text') || (()=>{
-                const el = document.createElement('div'); el.id = 'center-year-text'; el.style.fontSize = '1.8vmin'; el.style.fontWeight = 'bold'; el.style.color = '#555555ff'; el.style.marginBottom = '0.2vmin';
-                centerBg.insertBefore(el, centerMainText); return el;
-            })();
-            yearTextEl.textContent = `${termData.fsYear} ${getGanzhiYear(termData.fsYear)}年`;
-        }
+    // =================================================================
+//  中心資訊更新 (純斷行與文字邏輯，不變更 CSS 樣式)
+// =================================================================
+const centerBg = document.getElementById('center-bg');
+
+if (centerBg) {
+    // 1. 第一行：年份與干支 (例如：2026 丙午年)
+    let yearRow = document.getElementById('center-year-text');
+    if (!yearRow) {
+        yearRow = document.createElement('div');
+        yearRow.id = 'center-year-text';
+        // 確保放在最上面
+        centerBg.prepend(yearRow);
     }
+    yearRow.textContent = `${termData.fsYear} ${getGanzhiYear(termData.fsYear)}年`;
+
+    // 2. 第二行：屋宅名稱 (例如：離宅)
+    const houseRow = document.getElementById('center-main-text');
+    if (houseRow) {
+        houseRow.textContent = `${zhaiGua.name}宅`;
+    }
+
+    // 3. 第三行：命卦資訊 (例如：甲命：兑   乙命：離)
+    let mingRow = document.getElementById('center-ming-text');
+    if (!mingRow) {
+        mingRow = document.createElement('div');
+        mingRow.id = 'center-ming-text';
+        // 插入在屋宅名稱之後，日期資訊之前
+        centerBg.insertBefore(mingRow, document.getElementById('center-sub-text'));
+    }
+    if (mingGuaB) {
+        mingRow.textContent = `甲命:${mingGuaA.name}   乙命:${mingGuaB.name}`;
+    } else {
+        mingRow.textContent = `甲命:${mingGuaA.name}`;
+    }
+
+    // 4. 第四行：節氣與月份 (例如：清明後-3月)
+    const subRow = document.getElementById('center-sub-text');
+    if (subRow) {
+        subRow.textContent = `${termData.termName}後-${termData.fsMonth}月`;
+    }
+}
+
     const centerSubText = document.getElementById('center-sub-text');
     if (centerSubText) centerSubText.textContent = `${termData.termName}後-${termData.fsMonth}月`;
 
@@ -855,11 +924,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const guanGua = OPPOSITE_GUA[currentHouseName];
 
     // 更新宅紫白圖層，傳入 guanGua 參數
-    renderStarsShort(zhaiGua.number, RADIAL_LAYOUT.personMingRadius, 'zhai-zi-bai-layer', '宅', 11, -15, '宅', guanGua);
-    renderPersonMingStars(mingGua.number, RADIAL_LAYOUT.personMingRadius, 'person-ming-layer');
-    renderStarsShort(monthStar, RADIAL_LAYOUT.monthlyRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15, '月');
-    renderStarsShort(periodStar, RADIAL_LAYOUT.annualRadius, 'period-layer', '運', 12, -10, '運');
-    renderStarsShort(annualStar, RADIAL_LAYOUT.annualRadius, 'annual-layer', '年', 12, 10, '年');
+// --- ★ 修改：將「空間層(宅、命)」整合至半徑 200 的軌道 ---
+    const spaceRingRadius = 200;
+
+    // 1. 宅紫白 (置中：角度偏移 0)
+    renderRichStars(zhaiGua.number, spaceRingRadius, 'zhai-zi-bai-layer', '宅', 0, guanGua);
+
+    // 2. 命主甲 (偏左：角度偏移 -15)
+    // 使用原本的 person-ming-layer 圖層來畫甲的星星
+    if (mingGuaA) {
+        renderRichStars(mingGuaA.number, spaceRingRadius, 'person-ming-layer', '甲', -15);
+    }
+
+    // 3. 家人乙 (偏右：角度偏移 +15)
+    // 使用新的 person-ming-b-layer 圖層來畫乙的星星
+    if (mingGuaB) {
+        renderRichStars(mingGuaB.number, spaceRingRadius, 'person-ming-b-layer', '乙', 15);
+    }
+    
+    // --- ★ 修改：將運、年、月整合至半徑 228 的同一圈 ---
+    const timeRingRadius = 228;
+    // 1. 元運紫白 (偏左：角度偏移 -15)
+    renderStarsShort(periodStar, timeRingRadius, 'period-layer', '運', 11, -15, '運');
+    // 2. 流年紫白 (置中：角度偏移 0，字體稍微放大一點點突顯主角)
+    renderStarsShort(annualStar, timeRingRadius, 'annual-layer', '年', 12, 0, '年');
+    // 3. 流月紫白 (偏右：角度偏移 15)
+    renderStarsShort(monthStar, timeRingRadius, 'monthly-layer', `${termData.fsMonth}月`, 11, 15, '月');
 
     // ★ 報告輸出 HTML 模板 (含方位顯示與代表家人)
     const outPanel = document.getElementById('diagnostic-output');
@@ -911,23 +1001,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 baseStatusText = `<div style="margin-top:4px; font-size:12px; color:#888;">💡 此方氣場平穩，維持整潔通風即可。</div>`;
             }
 
+            // --- ★ 修正1：在這裡定義 bzDescription ---
+            const bzDescription = `<div style="color:#666; font-size:12px; margin-bottom:4px; padding-bottom:4px; border-bottom:1px dashed #ccc;">八宅方位名稱：<span style="color:#d35400; font-weight:bold;">${r.bz}</span></div>`;
+
+            // --- 專業解讀邏輯：整合八宅體質與飛星能量 ---
+            let professionalInterpretation = "";
+            // 判斷主體結論（以分數正負判斷）
+            const mainScore = r.rawScoreA;
+            const conclusion = mainScore > 0 ? `<span style="color:#2e7d32; font-weight:bold;">以吉論</span>` : 
+                   mainScore < 0 ? `<span style="color:#b30000; font-weight:bold;">需注意</span>` : "氣場平穩";
+
+            professionalInterpretation = `
+            <div style="margin-top:8px; font-size:13px; color:#444; background:#fdf7f2; padding:10px; border-radius:8px; border:1px solid #ead6c5; line-height:1.6;">
+            🎓 <b>專業鑑定：</b>雖然此方位在八宅法屬於「<b>${r.bz}</b>」，但經由目前勾選的紫白飛星能量結算後，最終得分為 <b>${r.score}</b> 分，因此該區目前的整體氣場${conclusion}。
+            </div>
+            `;
+
             // 如果有特定事件（格局、受剋、通關、特級預警），顯示事件內容；
             // 若無特定事件但氣場不穩，則顯示基礎保養建議。
             let eventContent = r.events.length > 0 ? `<div style="margin-top:6px;">${r.events.join('')}</div>` : baseStatusText;
             
+            // --- ★ 修正2：使用 \${eventContent} 取代寫死的 \${r.events.join('')} ---
             html += `
-                <div id="report-${r.gua}" style="border-bottom: 1px solid #eee; padding: 12px 0;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong style="color:${titleColor}; font-size:15px;">${icon} ${r.gua}宮/${direction} (${r.state})</strong>
-                        <span style="font-size: 11px; color: #aaa; background:#f0f0f0; padding:2px 6px; border-radius:10px;">Score: ${r.score}</span>
-                    </div>
-                    <div style="font-size: 12.5px; margin-top:5px;">
-                        <span style="color:#666;">代表家人：</span><span style="${memberStyle}">${r.member}</span>
-                    </div>
-                    ${eventContent}
-                </div>
-            `;
+        <div id="report-${r.gua}" style="border-bottom: 1px solid #eee; padding: 12px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:${titleColor}; font-size:15px;">${icon} ${r.gua}宮/${direction} (${r.state})</strong>
+            <span style="font-size: 11px; color: #aaa; background:#f0f0f0; padding:2px 6px; border-radius:10px;">Score: ${r.score}</span>
+        </div>
+        
+        <div style="font-size: 12.5px; margin-top:5px; margin-bottom:10px;">
+            <span style="color:#666;">代表家人：</span><span style="${memberStyle}">${r.member}</span>
+        </div>
+        
+        ${bzDescription}
+
+        <div style="margin-top:8px;">
+            ${r.memberScores}
+        </div>
+
+        ${professionalInterpretation}
+
+        ${eventContent}
+    </div>
+    `;
         });
+        
 
         // 1. 將診斷內容渲染到捲動區域
         outPanel.innerHTML = html;
@@ -1076,51 +1194,69 @@ document.addEventListener('DOMContentLoaded', () => {
     //  SECTION 7: 初始化與綁定事件
     // =================================================================
     function init() {
-    // --- 1. 抓取 LocalStorage 暫存狀態 ---
-    const savedYear = localStorage.getItem('fsSavedYear');
-    const savedGender = localStorage.getItem('fsSavedGender');
+    // --- 1. 抓取 LocalStorage 暫存狀態 (擴充雙人版) ---
+    const savedYearA = localStorage.getItem('fsSavedYearA');
+    const savedYearB = localStorage.getItem('fsSavedYearB');
+    const savedGenderA = localStorage.getItem('fsSavedGenderA');
+    const savedGenderB = localStorage.getItem('fsSavedGenderB');
     const savedGua = localStorage.getItem('fsSavedGua');
     const savedDate = localStorage.getItem('fsSavedDate'); 
     const isLocked = localStorage.getItem('fsIsLocked') === 'true';
 
-    // --- 2. 獲取 DOM 元素 ---
-    const btnMale = document.getElementById('btn-male');
-    const btnFemale = document.getElementById('btn-female');
-    const lockBtn = document.getElementById('lock-btn');
+    // --- 2. 取得 DOM 元素 ---
+    const inputYearA = document.getElementById('input-year-a');
+    const inputYearB = document.getElementById('input-year-b');
+    const btnMaleA = document.getElementById('btn-male-a');
+    const btnFemaleA = document.getElementById('btn-female-a');
+    const btnMaleB = document.getElementById('btn-male-b');
+    const btnFemaleB = document.getElementById('btn-female-b');
+    const selectHouse = document.getElementById('house-gua');
+    const dateInput = document.getElementById('target-date');
     const qiToggleBtn = document.getElementById('btn-qi-toggle');
+    const lockBtn = document.getElementById('lock-btn');
+    const degreeSlider = document.getElementById('degree-slider');
 
-    // --- 3. 五氣資訊按鈕事件綁定 ---
+    // --- 3. 五氣切換 ---
     if (qiToggleBtn) {
         qiToggleBtn.addEventListener('click', () => {
-            isQiMode = !isQiMode;
+            if (typeof isQiMode !== 'undefined') isQiMode = !isQiMode;
             qiToggleBtn.classList.toggle('active', isQiMode);
             qiToggleBtn.textContent = isQiMode ? '👁️ 關閉五氣資訊' : '👁️ 開啟五氣資訊';
             updateAll(); 
         });
     }
 
-    // --- 4. 基礎個人資訊初始化 ---
-    if (savedYear && inputYear) inputYear.value = savedYear;
-    if (savedGender) {
-        userSettings.gender = savedGender;
-        if (savedGender === 'male' && btnMale && btnFemale) {
-            btnMale.classList.add('active'); btnFemale.classList.remove('active');
-        } else if (savedGender === 'female' && btnMale && btnFemale) {
-            btnFemale.classList.add('active'); btnMale.classList.remove('active');
+    // --- 4. 基礎個人資訊初始化 (雙人) ---
+    // 命主甲
+    if (savedYearA && inputYearA) inputYearA.value = savedYearA;
+    if (savedGenderA) {
+        userSettings.genderA = savedGenderA;
+        if (savedGenderA === 'male' && btnMaleA && btnFemaleA) {
+            btnMaleA.classList.add('active'); btnFemaleA.classList.remove('active');
+        } else if (savedGenderA === 'female' && btnMaleA && btnFemaleA) {
+            btnFemaleA.classList.add('active'); btnMaleA.classList.remove('active');
+        }
+    }
+    // 家人乙
+    if (savedYearB && inputYearB) inputYearB.value = savedYearB;
+    if (savedGenderB) {
+        userSettings.genderB = savedGenderB;
+        if (savedGenderB === 'male' && btnMaleB && btnFemaleB) {
+            btnMaleB.classList.add('active'); btnFemaleB.classList.remove('active');
+        } else if (savedGenderB === 'female' && btnMaleB && btnFemaleB) {
+            btnFemaleB.classList.add('active'); btnMaleB.classList.remove('active');
         }
     }
     if (savedGua && selectHouse) selectHouse.value = savedGua;
     
-    // --- ★ 5. 觀測日期初始化 (修正核心：解鎖時永遠抓當天) ---
+    // --- ★ 5. 觀測日期初始化 ---
     if (dateInput) {
-        // 取得今天的系統真實日期
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
         const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-        // 判斷邏輯：如果目前是「鎖定狀態」且有暫存日期，才用暫存的；否則一律帶入今天日期
         if (isLocked && savedDate) {
             dateInput.value = savedDate;
         } else {
@@ -1130,15 +1266,18 @@ document.addEventListener('DOMContentLoaded', () => {
         dateInput.addEventListener('change', updateAll);
     }
 
-    // --- 6. 鎖定/解鎖功能 ---
+    // --- 6. 鎖定/解鎖功能 (雙人防護) ---
     function toggleLock(forceState = null) {
         const willLock = forceState !== null ? forceState : !(lockBtn.classList.contains('locked'));
         
         if (willLock) {
-            if(inputYear) inputYear.disabled = true;
+            if(inputYearA) inputYearA.disabled = true;
+            if(inputYearB) inputYearB.disabled = true;
             if(selectHouse) selectHouse.disabled = true;
-            if(btnMale) btnMale.disabled = true;
-            if(btnFemale) btnFemale.disabled = true;
+            if(btnMaleA) btnMaleA.disabled = true;
+            if(btnFemaleA) btnFemaleA.disabled = true;
+            if(btnMaleB) btnMaleB.disabled = true;
+            if(btnFemaleB) btnFemaleB.disabled = true;
             if(dateInput) dateInput.disabled = true; 
             
             if(lockBtn) {
@@ -1146,17 +1285,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 lockBtn.textContent = '🔒 資訊已鎖定';
             }
 
-            if(inputYear) localStorage.setItem('fsSavedYear', inputYear.value);
-            localStorage.setItem('fsSavedGender', userSettings.gender);
+            if(inputYearA) localStorage.setItem('fsSavedYearA', inputYearA.value);
+            if(inputYearB) localStorage.setItem('fsSavedYearB', inputYearB.value);
+            localStorage.setItem('fsSavedGenderA', userSettings.genderA);
+            localStorage.setItem('fsSavedGenderB', userSettings.genderB);
             if(selectHouse) localStorage.setItem('fsSavedGua', selectHouse.value);
             if(dateInput) localStorage.setItem('fsSavedDate', dateInput.value); 
             localStorage.setItem('fsIsLocked', 'true');
 
         } else {
-            if(inputYear) inputYear.disabled = false;
+            if(inputYearA) inputYearA.disabled = false;
+            if(inputYearB) inputYearB.disabled = false;
             if(selectHouse) selectHouse.disabled = false;
-            if(btnMale) btnMale.disabled = false;
-            if(btnFemale) btnFemale.disabled = false;
+            if(btnMaleA) btnMaleA.disabled = false;
+            if(btnFemaleA) btnFemaleA.disabled = false;
+            if(btnMaleB) btnMaleB.disabled = false;
+            if(btnFemaleB) btnFemaleB.disabled = false;
             if(dateInput) dateInput.disabled = false; 
 
             if(lockBtn) {
@@ -1175,48 +1319,68 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 7. 羅盤操作相關綁定 ---
     if (degreeSlider) {
         degreeSlider.addEventListener('input', (e) => {
-            if (isCompassMode) {
+            if (typeof isCompassMode !== 'undefined' && isCompassMode) {
                 window.removeEventListener('deviceorientation', handleOrientation, true);
                 window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
-                setCompassMode(false); 
+                if (typeof setCompassMode === 'function') setCompassMode(false); 
             }
             const deg = Number(e.target.value);
-            updateUI(deg);
-            renderRotation(deg);
+            if (typeof updateUI === 'function') updateUI(deg);
+            if (typeof renderRotation === 'function') renderRotation(deg);
         });
     }
 
     const startCompassBtn = document.getElementById('start-compass-btn');
-    if (startCompassBtn) startCompassBtn.addEventListener('click', startCompass);
+    if (startCompassBtn) startCompassBtn.addEventListener('click', () => {
+        if (typeof startCompass === 'function') startCompass();
+    });
 
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
             window.removeEventListener('deviceorientation', handleOrientation, true);
             window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
-            setCompassMode(false);
-            updateUI(180);
-            renderRotation(180);
+            if (typeof setCompassMode === 'function') setCompassMode(false);
+            if (typeof updateUI === 'function') updateUI(180);
+            if (typeof renderRotation === 'function') renderRotation(180);
         });
     }
 
-    // --- 8. 其他輸入變更綁定 ---
-    if (inputYear) inputYear.addEventListener('input', updateAll);
-    
-    if (btnMale) {
-        btnMale.addEventListener('click', () => { 
-            userSettings.gender = 'male'; 
-            btnMale.classList.add('active'); 
-            btnFemale.classList.remove('active'); 
+    // --- 8. 其他輸入變更綁定 (雙人事件監聽) ---
+    // 命主甲
+    if (inputYearA) inputYearA.addEventListener('input', updateAll);
+    if (btnMaleA) {
+        btnMaleA.addEventListener('click', () => { 
+            userSettings.genderA = 'male'; 
+            btnMaleA.classList.add('active'); 
+            btnFemaleA.classList.remove('active'); 
             updateAll(); 
         });
     }
-    
-    if (btnFemale) {
-        btnFemale.addEventListener('click', () => { 
-            userSettings.gender = 'female'; 
-            btnFemale.classList.add('active'); 
-            btnMale.classList.remove('active'); 
+    if (btnFemaleA) {
+        btnFemaleA.addEventListener('click', () => { 
+            userSettings.genderA = 'female'; 
+            btnFemaleA.classList.add('active'); 
+            btnMaleA.classList.remove('active'); 
+            updateAll(); 
+        });
+    }
+
+    // 家人乙
+    if (inputYearB) inputYearB.addEventListener('input', updateAll);
+    if (btnMaleB) {
+        btnMaleB.addEventListener('click', () => { 
+            userSettings.genderB = 'male'; 
+            btnMaleB.classList.add('active'); 
+            btnFemaleB.classList.remove('active'); 
+            updateAll(); 
+        });
+    }
+    if (btnFemaleB) {
+        btnFemaleB.addEventListener('click', () => { 
+            userSettings.genderB = 'female'; 
+            btnFemaleB.classList.add('active'); 
+            btnMaleB.classList.remove('active'); 
             updateAll(); 
         });
     }
@@ -1225,15 +1389,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     window.setDegree = function(deg) {
         window.removeEventListener('deviceorientation', handleOrientation);
-        setCompassMode(false);
-        updateUI(deg); 
-        renderRotation(deg);
+        if (typeof setCompassMode === 'function') setCompassMode(false);
+        if (typeof updateUI === 'function') updateUI(deg); 
+        if (typeof renderRotation === 'function') renderRotation(deg);
     }
 
     // --- 9. 最終執行繪製 ---
     updateAll();
-    updateUI(180);
-    renderRotation(180);
+    if (typeof updateUI === 'function') updateUI(180);
+    if (typeof renderRotation === 'function') renderRotation(180);
 }
     
     init();
