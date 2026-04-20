@@ -542,297 +542,286 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ★ 核心掃描：迴圈跑 8 宮位
     LUO_SHU_PATH.forEach(gua => {
-        const guaInfo = Object.values(GUA_DATA).find(g => g.name === gua);
-        
-        const bzName = zhaiGua.stars[gua];
-        const pZhai = getStarInGua(zhaiGua.number, gua);
-        const pPeriod = getStarInGua(periodStar, gua);
-        const pYear = getStarInGua(annualStar, gua);
-        const pMonth = getStarInGua(monthStar, gua);
-        
-        // 取得甲與乙的命星 (確保 mingGuaA 與 mingGuaB 在迴圈外已被定義)
-        const pMingA = mingGuaA ? getStarInGua(mingGuaA.number, gua) : null;
-        const pMingB = mingGuaB ? getStarInGua(mingGuaB.number, gua) : null;
-
-        let sharedScore = 0;
-        let sharedStars = []; 
-        let triggerEvents = [];
-
-        // 第一步：空間共用 - 宅卦八宅基礎分
-        sharedScore += getBzScore(bzName);
-        
-
-        // 第二步：收集空間活躍星與五氣分 (宅、運、年、月)
-        if (activeLayers.includes(1)) { 
-            const qiData = getFiveQi(zhaiGua.number, pZhai);
-            let finalQi = qiData.qi;
-            const currentHouseName = zhaiGua.name;
-            if (gua === OPPOSITE_GUA[currentHouseName]) { finalQi = '關'; }
-            sharedScore += getQiScore(finalQi); 
-            sharedStars.push(pZhai); 
-        }
-        if (activeLayers.includes(2)) { sharedScore += getQiScore(getFiveQi(periodStar, pPeriod).qi); sharedStars.push(pPeriod); }
-        if (activeLayers.includes(3)) { sharedScore += getQiScore(getFiveQi(annualStar, pYear).qi); sharedStars.push(pYear); }
-        if (activeLayers.includes(4)) { sharedScore += getQiScore(getFiveQi(monthStar, pMonth).qi); sharedStars.push(pMonth); }
-
-        // 第三步：化學反應（吉凶組合） (★ 加入趨吉佈局提示) -> 空間共用
-        COMBINATION_RULES.forEach(rule => {
-            if (rule.stars.length === 2) {
-                const [s1, s2] = rule.stars; 
-                const c1 = sharedStars.filter(s => s === s1).length; 
-                const c2 = sharedStars.filter(s => s === s2).length;
-                let hits = (s1 !== s2) ? c1 * c2 : (c1 * (c1 - 1)) / 2;
-                
-                if (hits > 0) { 
-                    if (rule.type === 'good') { 
-                        sharedScore += 15; 
-                        drawLuckyGlow(bzLayer, gua, rule.name.includes('四一') ? '四一' : '財位');
-                        triggerEvents.push(`
-                            <div style="color:#2e7d32; margin-bottom:6px;">
-                                <b>[吉] ${rule.name}</b> - ${rule.desc}
-                                ${rule.boost ? `
-                                <div style="font-size:12px; color:#1b5e20; background:#e8f5e9; padding:5px 10px; border-radius:4px; margin-top:4px; border-left:3px solid #2e7d32; line-height:1.4;">
-                                    🚀 <b>趨吉佈局：</b>${rule.boost}
-                                </div>` : ''}
-                            </div>
-                        `); 
-                    } 
-                    if (rule.type === 'bad') { 
-                        sharedScore -= 20; 
-                        triggerEvents.push(`
-                            <div style="color:#e91700; margin-bottom:4px;">
-                                <b>[凶] ${rule.name}</b> - ${rule.desc}
-                            </div>
-                        `); 
-                    } 
-                }
-            }
-        });
-
-        // =========================================================
-        // ★ 進階大腦：精準【受剋判定】與【通關化解】邏輯 (空間共用)
-        // =========================================================
-        const starWuxingMap = { 1:'水', 2:'土', 3:'木', 4:'木', 5:'土', 6:'金', 7:'金', 8:'土', 9:'火' };
-        const guaWuxingMap = { '坎':'水', '坤':'土', '震':'木', '巽':'木', '乾':'金', '兌':'金', '艮':'土', '離':'火' };
-        const destroyMap = { '火':'金', '金':'木', '木':'土', '土':'水', '水':'火' };
-        const bridgeMap = { '火_金':'土', '金_木':'水', '木_土':'火', '土_水':'金', '水_火':'木' };
-        const drainMap = { '金':'水', '水':'木', '木':'火', '火':'土', '土':'金' };
-        
-        const REMEDY_MAP = {
-            '土': '放置陶瓷擺件、黃色地墊或天然礦石，以土元素化解。複數數量以5、10為主。',
-            '水': '放置水種植物、魚缸或黑色地墊，以水元素化解。複數數量以1、6為主。',
-            '火': '開盞長明燈、紅色掛畫或紅色地墊，以火元素化解。複數數量以2、7為主。',
-            '金': '放置金屬擺件、銅製飾品或白色地毯，以金元素化解。複數數量以4、9為主。',
-            '木': '放置綠色植物或木質傢俱，以木元素化解。複數數量以3、8為主。'
-        };
-
-        const currentGuaWuxing = guaWuxingMap[gua];
-        let presentWuxings = new Set();
-        sharedStars.forEach(s => presentWuxings.add(starWuxingMap[s]));
-
-        let injuryNote = "";
-        let isHealed = false;
-        let healerStar = null;
-        let destroyCount = 0; 
-        let drainCount = 0;   
-
-        sharedStars.forEach(s => {
-            const sWuxing = starWuxingMap[s];
-            if (destroyMap[sWuxing] === currentGuaWuxing) {
-                destroyCount++;
-                const needBridge = bridgeMap[`${sWuxing}_${currentGuaWuxing}`];
-                if (presentWuxings.has(needBridge)) {
-                    isHealed = true;
-                    healerStar = sharedStars.find(star => starWuxingMap[star] === needBridge);
-                } else {
-                    const remedyText = REMEDY_MAP[needBridge] || '請尋求專業老師指導。';
-                    injuryNote = `
-                        <div style="background:#fff0f0; border-left:4px solid #b30000; padding:8px 10px; margin:5px 0; color:#b30000; font-size:12.5px;">
-                            💥 <b>【受剋預警】</b>：<br>
-                            ${STAR_NAMES_SHORT[s]}屬<b>${sWuxing}</b>，剋入本宮(<b>${currentGuaWuxing}</b>)，<br>
-                            <b>${guaInfo.member}</b> 受傷！需嚴防：<b>${guaInfo.body}</b>。<br>
-                            <div style="margin-top:6px; color:#444; font-size:12px; background:#fff; padding:6px; border-radius:4px; border:1px dashed #b30000; line-height:1.5;">
-                                🛠️ <b>佈局建議：</b>${remedyText}
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-            if (drainMap[currentGuaWuxing] === sWuxing) {
-                drainCount++;
-            }
-        });
-
-        if (destroyCount > 0 && drainCount > 0 && !isHealed) {
-            sharedScore -= 30; 
-            const BOOST_REMEDY = {
-                '金': '建議擇吉日吉時，大量補充金元素：放置 4 或 9 件銅製錢幣、白色地毯，並保持此方乾淨明亮。',
-                '木': '建議擇吉日吉時，大量補充木元素：放置 3 或 8 盆長青植物、綠色裝飾，維持生機，並保持此方乾淨明亮。',
-                '水': '建議擇吉日吉時，大量補充水元素：放置 1 或 6 件動水擺件、黑色裝飾，活化能量，並保持此方乾淨明亮。',
-                '火': '建議擇吉日吉時，大量補充火元素：點亮 2 或 7 盞暖色長明燈、紅色掛畫，支撐氣場，並保持此方乾淨明亮。',
-                '土': '建議擇吉日吉時，大量補充土元素：放置陶藝或是石雕擺件、聚寶盆，或5顆、10顆天然礦石，並保持此方乾淨明亮。'
-            };
-            const currentBoost = BOOST_REMEDY[currentGuaWuxing] || '請尋求專業老師指導。';
-            triggerEvents.push(`
-                <div style="background:#4a0000; border-left:5px solid #ff0000; padding:10px; margin:5px 0; color:#fff; font-size:13px; border-radius:4px; line-height:1.6;">
-                    🚨 <b>【特級預警：剋洩交加】</b><br>
-                    此方位能量耗損過度！請注意此方位內部能量(<b>${currentGuaWuxing}</b>)正遭受大量剋洩耗損。<br>
-                    這對 <b>${guaInfo.member}</b> 的影響較為明顯，若在此方位施工動土，極易引發意外或突發健康問題！<br>
-                    <div style="margin-top:8px; color:#ffeb3b; font-size:12.5px; background:rgba(255,255,255,0.1); padding:8px; border-radius:4px; border:1px dashed #ffeb3b;">
-                        🛠️ <b>緊急佈局方案：</b><br>${currentBoost}
-                    </div>
-                </div>
-            `);
-        } else if (isHealed && !injuryNote) {
-            sharedScore += 20; 
-            triggerEvents.push(`
-                <div style="background:#f0fff4; border-left:4px solid #2e7d32; padding:8px 10px; margin:5px 0; color:#2e7d32; font-size:12.5px;">
-                    🌿 <b>【通關化解】</b>：<br>
-                    本有剋戰凶象，幸得同宮 <b>${STAR_NAMES_SHORT[healerStar]}</b> 轉化氣場，化凶為吉！
-                </div>
-            `);
-        } else if (injuryNote) {
-            sharedScore -= 20;
-            triggerEvents.push(injuryNote);
-        }
-
-        const annualQi = getFiveQi(annualStar, pYear).qi;
-        if (annualQi === '殺' && [2, 5, 3].includes(pMonth) && activeLayers.includes(4)) {
-            triggerEvents.push(`<div style="background:#fff9f0; border-left:4px solid #da7800; padding:4px 8px; margin:4px 0; color:#da7800; font-size:12px;">⚠️ 氣場引動：流月凶星進入流年殺位，易有突發意外。</div>`);
-        }
-
-        // =========================================================
-        // ★ 核心升級：雙人專屬分數結算 (繼承 sharedScore 後各自加總)
-        // =========================================================
-        let scoreA = sharedScore;
-        let scoreB = mingGuaB ? sharedScore : null;
-        let pA_HTML = '';
-        let pB_HTML = '';
-
-        // 動態判斷性別頭像
-        const avatarA = (genderA === 'female') ? '👩' : '👨';
-        const avatarB = (genderB === 'female') ? '👩' : '👨';
-
-        // 命主(甲) 結算
-        if (mingGuaA) {
-            const bzA = mingGuaA.stars[gua];
-            scoreA += getBzScore(bzA);
-            let qiText = '';
-            if (activeLayers.includes(5)) {
-                const qA = getFiveQi(mingGuaA.number, pMingA).qi;
-                scoreA += getQiScore(qA);
-                qiText = ` / 命氣:${qA}`;
-            }
-            pA_HTML = `<div style="color:#d35400; font-size:13.5px; margin-bottom:5px;">${avatarA} <b>命主(甲)：</b>命盤八宅[${bzA}]${qiText} ➔ 總評: <b>${scoreA}</b>分</div>`;
-        }
-
-        // 家人(乙) 結算
-        if (mingGuaB) {
-            const bzB = mingGuaB.stars[gua];
-            scoreB += getBzScore(bzB);
-            let qiText = '';
-            if (activeLayers.includes(5)) {
-                const qB = getFiveQi(mingGuaB.number, pMingB).qi;
-                scoreB += getQiScore(qB);
-                qiText = ` / 命氣:${qB}`;
-            }
-            pB_HTML = `<div style="color:#2980b9; font-size:13.5px; margin-bottom:10px;">${avatarB} <b>家人(乙)：</b>命盤八宅[${bzB}]${qiText} ➔ 總評: <b>${scoreB}</b>分</div>`;
-        }
-
+    const guaInfo = Object.values(GUA_DATA).find(g => g.name === gua);
     
+    const bzName = zhaiGua.stars[gua];
+    const pZhai = getStarInGua(zhaiGua.number, gua);
+    const pPeriod = getStarInGua(periodStar, gua);
+    const pYear = getStarInGua(annualStar, gua);
+    const pMonth = getStarInGua(monthStar, gua);
+    
+    // 取得甲與乙的命星
+    const pMingA = mingGuaA ? getStarInGua(mingGuaA.number, gua) : null;
+    const pMingB = mingGuaB ? getStarInGua(mingGuaB.number, gua) : null;
 
-        // =========================================================
-        // ★ 核心升級：繪製左甲右乙的扇形底色與星等
-        // =========================================================
-        function getStateAndColor(sc) {
-            if (sc >= 40) return { state: '極其祥和', color: 'rgba(255, 236, 27, 0.55)' };
-            if (sc >= 20) return { state: '氣場趨吉', color: 'rgba(255, 184, 62, 0.45)' };
-            if (sc <= -40) return { state: '能量受阻', color: 'rgba(255, 89, 89, 0.55)' };
-            if (sc <= -20) return { state: '氣場波動', color: 'rgba(255, 131, 97, 0.45)' };
-            return { state: '氣場中和', color: 'rgba(135, 206, 235, 0.4)' };
+    let sharedScore = 0;
+    let extraScoreA = 0; // 儲存甲與其他星產生的組合分
+    let extraScoreB = 0; // 儲存乙與其他星產生的組合分
+    let triggerEvents = [];
+    let hasDrawnGlowInThisGua = false; // ★ 新增：確保每個宮位特效只畫一次
+
+    // 第一步：空間共用 - 宅卦八宅基礎分 (目前 getBzScore 回傳 0)
+    sharedScore += getBzScore(bzName);
+
+    // 第二步：收集環境五氣分 (宅、運、年、月)
+    if (activeLayers.includes(1)) { 
+        const qiData = getFiveQi(zhaiGua.number, pZhai);
+        let finalQi = qiData.qi;
+        if (gua === OPPOSITE_GUA[zhaiGua.name]) { finalQi = '關'; }
+        sharedScore += getQiScore(finalQi); 
+    }
+    if (activeLayers.includes(2)) sharedScore += getQiScore(getFiveQi(periodStar, pPeriod).qi);
+    if (activeLayers.includes(3)) sharedScore += getQiScore(getFiveQi(annualStar, pYear).qi);
+    if (activeLayers.includes(4)) sharedScore += getQiScore(getFiveQi(monthStar, pMonth).qi);
+
+    // =========================================================
+    // ★ 第三步：全方位矩陣組合掃描器 (修正原本只比對流月的 BUG)
+    // =========================================================
+    
+    // 1. 蒐集當前宮位所有「已啟動」的星，並貼上標籤
+    const activeStarsList = [];
+    if (activeLayers.includes(1)) activeStarsList.push({ name: '宅星', val: pZhai });
+    if (activeLayers.includes(2)) activeStarsList.push({ name: '元運', val: pPeriod });
+    if (activeLayers.includes(3)) activeStarsList.push({ name: '流年', val: pYear });
+    if (activeLayers.includes(4)) activeStarsList.push({ name: '流月', val: pMonth });
+    if (activeLayers.includes(5)) {
+        if (pMingA) activeStarsList.push({ name: '命主(甲)', val: pMingA });
+        if (pMingB) activeStarsList.push({ name: '家人(乙)', val: pMingB });
+    }
+
+    // 2. 進行兩兩交叉比對
+    const triggeredCombos = new Set(); 
+
+    for (let i = 0; i < activeStarsList.length; i++) {
+        for (let j = i + 1; j < activeStarsList.length; j++) {
+            const s1 = activeStarsList[i];
+            const s2 = activeStarsList[j];
+
+            COMBINATION_RULES.forEach(rule => {
+                if (rule.stars.length === 2) {
+                    const [v1, v2] = rule.stars;
+                    const isMatch = (s1.val === v1 && s2.val === v2) || (s1.val === v2 && s2.val === v1);
+
+                    if (isMatch) {
+                        const eventKey = `${s1.name}-${s2.name}-${rule.name}`;
+                        if (!triggeredCombos.has(eventKey)) {
+                            triggeredCombos.add(eventKey);
+                            
+                            const isGood = rule.type === 'good';
+                            const titleColor = isGood ? '#2e7d32' : '#e91700';
+                            const bgColor = isGood ? '#f4fbf4' : '#fff5f5';
+                            const borderCol = isGood ? '#2e7d32' : '#e91700';
+
+                            triggerEvents.push(`
+                                <div style="margin-bottom:8px; padding:8px; background:${bgColor}; border-left:4px solid ${borderCol}; border-radius:4px;">
+                                    <b style="color:${titleColor}; font-size:13.5px;">[${isGood ? '吉' : '凶'}] ${rule.name}</b>
+                                    <span style="font-size:12px; color:#666;"> (${s1.name}${s1.val} + ${s2.name}${s2.val})</span>
+                                    <div style="font-size:12px; color:#444; margin-top:2px; line-height:1.4;">${rule.desc}</div>
+                                    ${(isGood && rule.boost) ? `
+                                        <div style="font-size:11.5px; color:#1b5e20; background:#e8f5e9; padding:5px; border-radius:4px; margin-top:5px; border-left:3px solid #2e7d32;">
+                                            🚀 <b>趨吉佈局：</b>${rule.boost}
+                                        </div>` : ''}
+                                </div>
+                            `);
+
+                            // 分數結算邏輯
+                            const ruleScore = isGood ? 15 : -20;
+                            const isS1Person = s1.name.includes('('); // 判斷是否為甲或乙
+                            const isS2Person = s2.name.includes('(');
+
+                            if (!isS1Person && !isS2Person) {
+                                sharedScore += ruleScore; // 純環境組合
+                            } else {
+                                if (s1.name === '命主(甲)' || s2.name === '命主(甲)') extraScoreA += ruleScore;
+                                if (s1.name === '家人(乙)' || s2.name === '家人(乙)') extraScoreB += ruleScore;
+                            }
+
+                            // --- 修改後的繪製發光特效邏輯 ---
+                            if (isGood && (!isS1Person || s1.name === '命主(甲)' || s2.name === '命主(甲)')) {
+                                // ★ 檢查是否已經畫過發光特效，若沒畫過才執行
+                                if (!hasDrawnGlowInThisGua) {
+                                    drawLuckyGlow(bzLayer, gua, rule.name.includes('四一') ? '四一' : '財位');
+                                    hasDrawnGlowInThisGua = true; // 標記為已繪製
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
+    }
 
-        const resA = getStateAndColor(scoreA);
-        const resB = mingGuaB ? getStateAndColor(scoreB) : resA; // 若無乙，右半邊同甲顏色
+    // =========================================================
+    // ★ 進階受剋判定與通關化解 (空間環境比對)
+    // =========================================================
+    const starWuxingMap = { 1:'水', 2:'土', 3:'木', 4:'木', 5:'土', 6:'金', 7:'金', 8:'土', 9:'火' };
+    const guaWuxingMap = { '坎':'水', '坤':'土', '震':'木', '巽':'木', '乾':'金', '兌':'金', '艮':'土', '離':'火' };
+    const destroyMap = { '火':'金', '金':'木', '木':'土', '土':'水', '水':'火' };
+    const bridgeMap = { '火_金':'土', '金_木':'水', '木_土':'火', '土_水':'金', '水_火':'木' };
+    const drainMap = { '金':'水', '水':'木', '木':'火', '火':'土', '土':'金' };
+    
+    const REMEDY_MAP = {
+        '土': '放置陶瓷擺件、黃色地墊或天然礦石，以土元素化解。複數數量以5、10為主。',
+        '水': '放置水種植物、魚缸或黑色地墊，以水元素化解。複數數量以1、6為主。',
+        '火': '開盞長明燈、紅色掛畫或紅色地墊，以火元素化解。複數數量以2、7為主。',
+        '金': '放置金屬擺件、銅製飾品或白色地毯，以金元素化解。複數數量以4、9為主。',
+        '木': '放置綠色植物或木質傢俱，以木元素化解。複數數量以3、8為主。'
+    };
 
-        let centerAngle = getSvgAngle(gua);
-        
-        // 繪製左半邊 (甲的顏色： -22.5度 到 0度)
-        const guaSectorA = drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle - 22.5, centerAngle, resA.color);
-        // 繪製右半邊 (乙的顏色： 0度 到 +22.5度)
-        const guaSectorB = drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle, centerAngle + 22.5, resB.color);
+    const currentGuaWuxing = guaWuxingMap[gua];
+    let presentWuxings = new Set();
+    // 收集目前所有活躍星的五行
+    activeStarsList.forEach(s => presentWuxings.add(starWuxingMap[s.val]));
 
-        // 綁定點擊跳轉 (左右兩半都綁)
-        const clickHandler = () => {
-            const targetReport = document.getElementById(`report-${gua}`);
-            if (targetReport) {
-                targetReport.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                targetReport.style.transition = 'background-color 0.5s';
-                targetReport.style.backgroundColor = '#fff9c4'; 
-                setTimeout(() => targetReport.style.backgroundColor = '', 2000);
+    let injuryNote = "";
+    let isHealed = false;
+    let healerStar = null;
+    let destroyCount = 0; 
+    let drainCount = 0;   
+
+    // 僅針對「環境星」進行受剋檢查
+    const envStars = activeStarsList.filter(s => !s.name.includes('(')).map(s => s.val);
+    envStars.forEach(s => {
+        const sWuxing = starWuxingMap[s];
+        if (destroyMap[sWuxing] === currentGuaWuxing) {
+            destroyCount++;
+            const needBridge = bridgeMap[`${sWuxing}_${currentGuaWuxing}`];
+            if (presentWuxings.has(needBridge)) {
+                isHealed = true;
+                healerStar = Array.from(activeStarsList).find(star => starWuxingMap[star.val] === needBridge)?.val;
+            } else {
+                const remedyText = REMEDY_MAP[needBridge] || '請尋求專業老師指導。';
+                injuryNote = `
+                    <div style="background:#fff0f0; border-left:4px solid #b30000; padding:8px 10px; margin:5px 0; color:#b30000; font-size:12.5px;">
+                        💥 <b>【受剋預警】</b>：<br>
+                        ${STAR_NAMES_SHORT[s]}屬<b>${sWuxing}</b>，剋入本宮(<b>${currentGuaWuxing}</b>)，<br>
+                        <b>${guaInfo.member}</b> 受傷！需嚴防：<b>${guaInfo.body}</b>。<br>
+                        <div style="margin-top:6px; color:#444; font-size:12px; background:#fff; padding:6px; border-radius:4px; border:1px dashed #b30000; line-height:1.5;">
+                            🛠️ <b>佈局建議：</b>${remedyText}
+                        </div>
+                    </div>
+                `;
             }
+        }
+        if (drainMap[currentGuaWuxing] === sWuxing) drainCount++;
+    });
+
+    if (destroyCount > 0 && drainCount > 0 && !isHealed) {
+        sharedScore -= 30; 
+        const BOOST_REMEDY = {
+            '金': '建議擇吉日吉時，大量補充金元素：放置 4 或 9 件銅製錢幣、白色地毯。',
+            '木': '建議擇吉日吉時，大量補充木元素：放置 3 或 8 盆長青植物、綠色裝飾。',
+            '水': '建議擇吉日吉時，大量補充水元素：放置 1 或 6 件動水擺件、黑色裝飾。',
+            '火': '建議擇吉日吉時，大量補充火元素：點亮 2 或 7 盞暖色長明燈、紅色掛畫。',
+            '土': '建議擇吉日吉時，大量補充土元素：放置陶藝或是石雕擺件、聚寶盆。'
         };
-        if (guaSectorA) { guaSectorA.style.cursor = 'pointer'; guaSectorA.setAttribute('id', `svg-gua-a-${gua}`); guaSectorA.onclick = clickHandler; }
-        if (guaSectorB) { guaSectorB.style.cursor = 'pointer'; guaSectorB.setAttribute('id', `svg-gua-b-${gua}`); guaSectorB.onclick = clickHandler; }
+        triggerEvents.push(`
+            <div style="background:#4a0000; border-left:5px solid #ff0000; padding:10px; margin:5px 0; color:#fff; font-size:13px; border-radius:4px; line-height:1.6;">
+                🚨 <b>【特級預警：剋洩交加】</b><br>
+                此方位能量耗損過度！請注意此方位內部能量(<b>${currentGuaWuxing}</b>)正遭受大量剋洩耗損。<br>
+                這對 <b>${guaInfo.member}</b> 的影響較為明顯。<br>
+                <div style="margin-top:8px; color:#ffeb3b; font-size:12.5px; background:rgba(255,255,255,0.1); padding:8px; border-radius:4px; border:1px dashed #ffeb3b;">
+                    🛠️ <b>緊急佈局方案：</b><br>${BOOST_REMEDY[currentGuaWuxing] || ''}
+                </div>
+            </div>
+        `);
+    } else if (isHealed && !injuryNote) {
+        sharedScore += 20; 
+        triggerEvents.push(`
+            <div style="background:#f0fff4; border-left:4px solid #2e7d32; padding:8px 10px; margin:5px 0; color:#2e7d32; font-size:12.5px;">
+                🌿 <b>【通關化解】</b>：<br>
+                本有剋戰凶象，幸得同宮轉化氣場，化凶為吉！
+            </div>
+        `);
+    } else if (injuryNote) {
+        sharedScore -= 20;
+        triggerEvents.push(injuryNote);
+    }
 
-        // 星等繪製 (取兩人平均分數畫星星)
-        const avgScore = mingGuaB ? Math.round((scoreA + scoreB) / 2) : scoreA;
-        const absScore = Math.abs(avgScore);
-        const fullStars = Math.floor(absScore / 10);
-        const hasHalfStar = (absScore % 10) >= 5;
-        const totalVisualStars = fullStars + (hasHalfStar ? 1 : 0);
-        const starType = avgScore > 0 ? 'good' : 'bad';
+    // 最終個人分數加總
+    let scoreA = sharedScore + extraScoreA;
+    let scoreB = mingGuaB ? (sharedScore + extraScoreB) : null;
+    let pA_HTML = '';
+    let pB_HTML = '';
 
-        if (totalVisualStars > 0) {
-            const STAR_SPACING = 6; const MAX_PER_ROW = 6; const ROW_GAP = 8;
-            let starsToDraw = Array(fullStars).fill(false);
-            if (hasHalfStar) starsToDraw.push(true);
-            const totalRows = Math.ceil(starsToDraw.length / MAX_PER_ROW);
-            const baseRadius = totalRows > 1 ? 104 : RADIAL_LAYOUT.combinationsRadius;
-            for (let row = 0; row < totalRows; row++) {
-                let rowStars = starsToDraw.slice(row * MAX_PER_ROW, (row + 1) * MAX_PER_ROW);
-                let currentRadius = baseRadius - (row * ROW_GAP);
-                let currentAngle = centerAngle - ((rowStars.length - 1) * STAR_SPACING) / 2;
-                rowStars.forEach(isHalf => {
-                    drawScoreStar(comboLayer, currentAngle, currentRadius, starType, isHalf);
-                    currentAngle += STAR_SPACING;
-                });
-            }
+    const avatarA = (genderA === 'female') ? '👩' : '👨';
+    const avatarB = (genderB === 'female') ? '👩' : '👨';
+
+    if (mingGuaA) {
+        const bzA = mingGuaA.stars[gua];
+        let qiText = '';
+        if (activeLayers.includes(5)) {
+            const qA = getFiveQi(mingGuaA.number, pMingA).qi;
+            scoreA += getQiScore(qA);
+            qiText = ` / 命氣:${qA}`;
         }
+        pA_HTML = `<div style="color:#d35400; font-size:13.5px; margin-bottom:5px;">${avatarA} <b>命主(甲)：</b>命盤八宅[${bzA}]${qiText} ➔ 總評: <b>${scoreA}</b>分</div>`;
+    }
 
-        // 繪製空間八宅文字與吉印
-        drawLabel(bzLayer, bzName, (['生氣', '延年'].includes(bzName) ? centerAngle - 6 : centerAngle), RADIAL_LAYOUT.starRadius, '#252525ff', 16);
-        if (['生氣', '延年'].includes(bzName)) {
-            const sealAngle = centerAngle + 12;
-            const sx = RADIAL_LAYOUT.center.x + RADIAL_LAYOUT.starRadius * Math.cos(sealAngle * Math.PI / 180);
-            const sy = RADIAL_LAYOUT.center.y + RADIAL_LAYOUT.starRadius * Math.sin(sealAngle * Math.PI / 180);
-            const sealGroup = document.createElementNS(SVG_NS, 'g');
-            const circle = document.createElementNS(SVG_NS, 'circle');
-            circle.setAttribute('r', RADIAL_LAYOUT.sealSize);
-            circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', '#c0392b'); circle.setAttribute('stroke-width', '1.5');
-            const sealText = document.createElementNS(SVG_NS, 'text');
-            sealText.setAttribute('text-anchor', 'middle'); sealText.setAttribute('dominant-baseline', 'central'); sealText.setAttribute('font-size', '13'); sealText.setAttribute('fill', '#c0392b'); sealText.setAttribute('font-family', 'serif'); sealText.textContent = '吉';
-            sealGroup.appendChild(circle); sealGroup.appendChild(sealText);
-            sealGroup.setAttribute('transform', `translate(${sx}, ${sy}) rotate(${sealAngle + 90})`);
-            bzLayer.appendChild(sealGroup);
+    if (mingGuaB) {
+        const bzB = mingGuaB.stars[gua];
+        let qiText = '';
+        if (activeLayers.includes(5)) {
+            const qB = getFiveQi(mingGuaB.number, pMingB).qi;
+            scoreB += getQiScore(qB);
+            qiText = ` / 命氣:${qB}`;
         }
+        pB_HTML = `<div style="color:#2980b9; font-size:13.5px; margin-bottom:10px;">${avatarB} <b>家人(乙)：</b>命盤八宅[${bzB}]${qiText} ➔ 總評: <b>${scoreB}</b>分</div>`;
+    }
 
-        // 產出下方的報告資料陣列 (支援雙人顯示)
-        const finalStateDisplay = mingGuaB ? `甲:${resA.state} / 乙:${resB.state}` : resA.state;
-        const finalScoreDisplay = mingGuaB ? `甲:${scoreA} / 乙:${scoreB}` : scoreA;
-        
-        // 產出下方的報告資料陣列 (新增 rawScoreA 存入原始數字)
-        reports.push({ 
-            gua: gua, 
-            score: finalScoreDisplay, 
-            rawScoreA: scoreA, // ★ 關鍵：把甲的原始分數存下來，後面才抓得到
-            state: finalStateDisplay, 
-            bz: bzName, 
-            events: triggerEvents, 
-            member: guaInfo.member, 
-            body: guaInfo.body,
-            memberScores: pA_HTML + pB_HTML  // ★ 新增這行：把甲乙個人分數獨立打包
+    // =========================================================
+    // ★ 繪製底色與星等 (後續邏輯維持不變)
+    // =========================================================
+    function getStateAndColor(sc) {
+        if (sc >= 40) return { state: '極其祥和', color: 'rgba(255, 236, 27, 0.55)' };
+        if (sc >= 20) return { state: '氣場趨吉', color: 'rgba(255, 184, 62, 0.45)' };
+        if (sc <= -40) return { state: '能量受阻', color: 'rgba(255, 89, 89, 0.55)' };
+        if (sc <= -20) return { state: '氣場波動', color: 'rgba(255, 131, 97, 0.45)' };
+        return { state: '氣場中和', color: 'rgba(135, 206, 235, 0.4)' };
+    }
+
+    const resA = getStateAndColor(scoreA);
+    const resB = mingGuaB ? getStateAndColor(scoreB) : resA;
+
+    let centerAngle = getSvgAngle(gua);
+    drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle - 22.5, centerAngle, resA.color);
+    drawAnnularSector(bzLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 110, 135, centerAngle, centerAngle + 22.5, resB.color);
+
+    // 星等繪製
+    const avgScore = mingGuaB ? Math.round((scoreA + scoreB) / 2) : scoreA;
+    const absScore = Math.abs(avgScore);
+    const fullStars = Math.floor(absScore / 10);
+    const hasHalfStar = (absScore % 10) >= 5;
+    const starType = avgScore > 0 ? 'good' : 'bad';
+
+    if (fullStars + (hasHalfStar ? 1 : 0) > 0) {
+        const STAR_SPACING = 6;
+        let starsToDraw = Array(fullStars).fill(false);
+        if (hasHalfStar) starsToDraw.push(true);
+        let currentAngle = centerAngle - ((starsToDraw.length - 1) * STAR_SPACING) / 2;
+        starsToDraw.forEach(isHalf => {
+            drawScoreStar(comboLayer, currentAngle, RADIAL_LAYOUT.combinationsRadius, starType, isHalf);
+            currentAngle += STAR_SPACING;
         });
+    }
+
+    drawLabel(bzLayer, bzName, centerAngle, RADIAL_LAYOUT.starRadius, '#252525ff', 16);
+
+    // 產出最後報告陣列
+    const finalStateDisplay = mingGuaB ? `甲:${resA.state} / 乙:${resB.state}` : resA.state;
+    const finalScoreDisplay = mingGuaB ? `甲:${scoreA} / 乙:${scoreB}` : scoreA;
+    
+    reports.push({ 
+        gua: gua, 
+        score: finalScoreDisplay, 
+        rawScoreA: scoreA,
+        state: finalStateDisplay, 
+        bz: bzName, 
+        events: triggerEvents, 
+        member: guaInfo.member, 
+        body: guaInfo.body,
+        memberScores: pA_HTML + pB_HTML
+    });
     });
 
     // 渲染外圈凶煞 (24山) 邏輯維持不變...
