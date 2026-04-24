@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const endAngle = angle + 22.5;
 
     // 根據吉格類型設定顏色 (例如文昌綠、財位金)
-    const color = (type === '四一') ? 'rgba(88, 206, 92, 0.4)' : 'rgba(255, 226, 62, 0.4)';
+    const color = (type === '四一') ? 'rgba(114, 235, 118, 0.4)' : 'rgba(250, 236, 135, 0.4)';
 
     // ★ 核心修改：呼叫原本的扇形繪製工具
     const glowPath = drawAnnularSector(
@@ -770,15 +770,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // ★ 繪製底色與星等 (後續邏輯維持不變)
-    // =========================================================
-    function getStateAndColor(sc) {
-        if (sc >= 40) return { state: '極其祥和', color: 'rgba(255, 236, 27, 0.55)' };
-        if (sc >= 20) return { state: '氣場趨吉', color: 'rgba(255, 184, 62, 0.45)' };
-        if (sc <= -40) return { state: '能量受阻', color: 'rgba(255, 89, 89, 0.55)' };
-        if (sc <= -20) return { state: '氣場波動', color: 'rgba(255, 131, 97, 0.45)' };
-        return { state: '氣場中和', color: 'rgba(135, 206, 235, 0.4)' };
+// ★ 核心顏色引擎：根據分數對應新的五色標
+// =========================================================
+function getStateAndColor(sc) {
+    // 🔴 大吉 (Score >= 40)
+    if (sc >= 40) {
+        return { state: '極其祥和', color: 'rgba(243, 29, 21, 0.55)' }; // #f31d15
     }
+    // 🟠 吉 (Score >= 20)
+    if (sc >= 20) {
+        return { state: '氣場趨吉', color: 'rgba(249, 139, 83, 0.45)' }; // #f98b53
+    }
+    // 🔘 大凶 (Score <= -40)
+    if (sc <= -40) {
+        return { state: '能量受阻', color: 'rgba(153, 158, 148, 0.55)' }; // #999e94
+    }
+    // 🟢 凶 (Score <= -20)
+    if (sc <= -20) {
+        return { state: '氣場波動', color: 'rgba(165, 203, 123, 0.45)' }; // #a5cb7b
+    }
+    // 🟡 平 (氣場中和)
+    return { state: '氣場中和', color: 'rgba(245, 192, 75, 0.4)' };     // #f5c04b
+}
 
     const resA = getStateAndColor(scoreA);
     const resB = mingGuaB ? getStateAndColor(scoreB) : resA;
@@ -833,15 +846,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const mIdx = i * 2;
         const shaIdx = (i - ybIdx + 12) % 12;
         const sName = TWELVE_SHAS_SEQUENCE[shaIdx];
-        labels24[mIdx].main = sName; labels24[mIdx].color = (sName === '太歲') ? '#e91700ff' : '#6421c3ff';
+        labels24[mIdx].main = sName; labels24[mIdx].color = (sName === '太歲') ? '#b42616ff' : '#6421c3ff';
     }
     const stemIdx = termData.fsYear % 10;
     const DU_TIAN_MAP = { 0: [4, 5, 6], 1: [20, 21, 22], 2: [16, 17, 18], 3: [12, 13, 14], 4: [8, 9, 10], 5: [4, 5, 6], 6: [20, 21, 22], 7: [16, 17, 18], 8: [12, 13, 14], 9: [8, 9, 10] };
     const dtIndices = DU_TIAN_MAP[stemIdx];
     for (let i = 0; i < 3; i++) {
         const idx = dtIndices[i]; const dn = ['戊己都天', '夾煞都天', '戊己都天'][i];
-        if (labels24[idx].main) { labels24[idx].sub = dn; labels24[idx].subColor = '#e91700ff'; }
-        else { labels24[idx].main = dn; labels24[idx].color = '#e91700ff'; }
+        if (labels24[idx].main) { labels24[idx].sub = dn; labels24[idx].subColor = '#b42616ff'; }
+        else { labels24[idx].main = dn; labels24[idx].color = '#b42616ff'; }
     }
     let ssIdx = [];
     if ([6, 10, 2].includes(ybIdx)) ssIdx = [23, 0, 1];
@@ -849,13 +862,13 @@ document.addEventListener('DOMContentLoaded', () => {
     else if ([3, 7, 11].includes(ybIdx)) ssIdx = [17, 18, 19];
     else if ([9, 1, 5].includes(ybIdx)) ssIdx = [5, 6, 7];
     ssIdx.forEach(idx => {
-        if (!labels24[idx].main) { labels24[idx].main = "三煞"; labels24[idx].color = "#e91700ff"; }
-        else if (!labels24[idx].sub) { labels24[idx].sub = "三煞"; labels24[idx].subColor = "#e91700ff"; }
+        if (!labels24[idx].main) { labels24[idx].main = "三煞"; labels24[idx].color = "#b42616ff"; }
+        else if (!labels24[idx].sub) { labels24[idx].sub = "三煞"; labels24[idx].subColor = "#b42616ff"; }
         else labels24[idx].sub += "·三煞";
     });
     for (let i = 0; i < 24; i++) {
-        if (labels24[i].color === '#e91700ff' || labels24[i].subColor === '#e91700ff') {
-            drawAnnularSector(shasLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 240, 267, 90 + (i * 15) - 7.5, 90 + (i * 15) + 7.5, 'rgba(252, 133, 115, 0.5)');
+        if (labels24[i].color === '#b42616ff' || labels24[i].subColor === '#b42616ff') {
+            drawAnnularSector(shasLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 240, 267, 90 + (i * 15) - 7.5, 90 + (i * 15) + 7.5, 'rgba(153, 158, 148, 0.55)');
         }
         if (labels24[i].main) {
             drawLabel(shasLayer, labels24[i].main, 90 + (i * 15), RADIAL_LAYOUT.twelveShasRadius, labels24[i].color, 12, !!labels24[i].sub, labels24[i].sub, labels24[i].subColor);
