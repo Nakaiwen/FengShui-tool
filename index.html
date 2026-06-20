@@ -9,6 +9,12 @@
 <body>
 
     <div id="app">
+
+        <div class="mode-toggle">
+            <button id="mode-zibai" class="mode-btn active" type="button">紫白飛星</button>
+            <button id="mode-xuankong" class="mode-btn" type="button">玄空陽宅</button>
+        </div>
+
         <div id="compass-container">
 
         <svg id="FengShui-plate" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 560 560">
@@ -400,16 +406,21 @@
         </svg>
 
 <div id="center-overlay">
-    <div id="center-bg"> 
+    <div id="center-bg">
         <div id="center-main-text"></div>
         <div id="center-sub-text"></div>
     </div>
+</div>
+
+<!-- 玄空陽宅飛星盤（方盤）：與紫白共用同一坐向，一鍵切換 -->
+<div id="xuankong-view" aria-hidden="true">
+    <div id="xk-plate"></div>
 </div>
             
 <div id="controls">
     <div class="control-panel">
       
-        <div class="profile-settings">
+        <div class="profile-settings zb-only">
             <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 5px; flex-wrap: wrap;">
                 <span style="color: #d35400; font-weight: bold; font-size: 15px; white-space: nowrap;">命主(甲)</span>
                 <label style="white-space: nowrap; margin-left: 5px;">出生年：</label>
@@ -435,7 +446,7 @@
             </div>
         </div>
 
-        <div class="control-group">
+        <div class="control-group zb-only">
             <label for="house-gua">屋宅坐向：</label>
             <select id="house-gua">
                 <option value="坎">坎宅 (坐北向南)</option>
@@ -449,7 +460,37 @@
             </select>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <div class="control-group xk-only">
+            <label for="xk-period">建宅元運：</label>
+            <select id="xk-period">
+                <option value="1">上元一運 (1864–1883)</option>
+                <option value="2">上元二運 (1884–1903)</option>
+                <option value="3">上元三運 (1904–1923)</option>
+                <option value="4">中元四運 (1924–1943)</option>
+                <option value="5">中元五運 (1944–1963)</option>
+                <option value="6">中元六運 (1964–1983)</option>
+                <option value="7">下元七運 (1984–2003)</option>
+                <option value="8">下元八運 (2004–2023)</option>
+                <option value="9" selected>下元九運 (2024–2043)</option>
+            </select>
+        </div>
+
+        <div class="control-group xk-only">
+            <label for="xk-current-period">當前元運：</label>
+            <select id="xk-current-period">
+                <option value="1">上元一運 (1864–1883)</option>
+                <option value="2">上元二運 (1884–1903)</option>
+                <option value="3">上元三運 (1904–1923)</option>
+                <option value="4">中元四運 (1924–1943)</option>
+                <option value="5">中元五運 (1944–1963)</option>
+                <option value="6">中元六運 (1964–1983)</option>
+                <option value="7">下元七運 (1984–2003)</option>
+                <option value="8">下元八運 (2004–2023)</option>
+                <option value="9" selected>下元九運 (2024–2043)</option>
+            </select>
+        </div>
+
+        <div class="zb-only" style="display: flex; gap: 10px; margin-bottom: 15px;">
             <button id="btn-qi-toggle" class="qi-toggle-btn" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; line-height: 1.4; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 42px;">
                 👁️ 開啟五氣資訊
             </button>
@@ -483,7 +524,140 @@
         </div>
 
     </div>
-</div> 
+</div>
+
+<!-- 玄空資訊（格局／法訣／入囚）：放在輸入框下方，文字增減不影響上方面板位置 -->
+<div id="xuankong-info" aria-hidden="true">
+    <div id="xk-info"></div>
+    <div id="xk-legend">
+        <span class="lg lg-shan">山星</span>
+        <span class="lg lg-xiang">向星</span>
+        <span class="lg lg-yun">運星</span>
+        <span class="lg lg-wang">當令旺星</span>
+        <span class="lg lg-rob">打劫三宮</span>
+        <span class="lg lg-gate">可用城門</span>
+        <span class="lg-ver" id="xk-version"></span>
+    </div>
+    <div id="xk-advanced"></div>
+</div>
 <script src="script.js"></script>
+<script src="xuankong.js"></script>
+<script>
+/* ── 玄空模式：頁面配線（與紫白共用坐向，獨立於 script.js） ───────────── */
+(function () {
+  const btnZi = document.getElementById('mode-zibai');
+  const btnXk = document.getElementById('mode-xuankong');
+  const plate = document.getElementById('xk-plate');
+  const info  = document.getElementById('xk-info');
+  const periodSel = document.getElementById('xk-period');
+  const adv   = document.getElementById('xk-advanced');
+  // 當前元運（依現今年份；下元九運 2024–2043＝9）
+  function xkCurrentPeriod() {
+    const y = new Date().getFullYear();
+    return ((Math.floor((y - 1864) / 20)) % 9) + 1;
+  }
+  const elSit = document.getElementById('current-mountain'); // 坐山（由 script.js 更新）
+  const elFac = document.getElementById('current-facing');   // 向山
+
+  function renderAdvanced(r) {
+    if (!r || !r.ok || !r.advanced) { adv.innerHTML = ''; return; }
+    const lines = [];
+    // 全盤伏吟／反吟（主大凶）——放最前面提醒
+    const ff = r.fanFu;
+    if (ff && ff.shan) lines.push('<div class="adv-line adv-danger">⚠ 全盤山星' + ff.shan + '（五黃入中）：主大凶，影響人丁、健康，宜避或大力化解。</div>');
+    if (ff && ff.xiang) lines.push('<div class="adv-line adv-danger">⚠ 全盤向星' + ff.xiang + '（五黃入中）：主大凶，影響財富、功名，宜避或大力化解。</div>');
+    const rob = r.advanced.robbery;
+    if (rob && rob.applicable) {
+      if (rob.success) {
+        lines.push('<div class="adv-line adv-rob">🌟 七星打劫・' + rob.subtype + '：' +
+          rob.palaces.join('、') + ' 三宮向星 ' + rob.stars.join('、') + ' 成三般卦</div>');
+        lines.push('<div class="adv-line adv-note">' + rob.warning + '</div>');
+      } else {
+        lines.push('<div class="adv-line adv-fail">七星打劫：不成立（' + rob.reason + '）</div>');
+      }
+    }
+    const gates = (r.advanced.castleGate || []).filter(c => c.valid);
+    if (gates.length) {
+      lines.push('<div class="adv-line adv-gate">🚪 城門訣可用：' +
+        gates.map(c => c.dir + c.palace + '（飛星 ' + c.arriving + '）').join('、') + '</div>');
+      lines.push('<div class="adv-line adv-note">' + gates[0].recommendation + '</div>');
+    } else if (r.advanced.castleGate && r.advanced.castleGate.length) {
+      lines.push('<div class="adv-line adv-fail">城門訣：左右相鄰宮目前皆非當令，無可用城門。</div>');
+    }
+    // 連珠格（大吉）／連茹格（大凶）：滿盤格局
+    const cb = r.combos;
+    if (cb && cb.pearl) {
+      lines.push('<div class="adv-line adv-gate">🔵 連珠格（大吉）：滿盤俱見河圖同道（一六、二七、三八、四九），主大吉。</div>');
+    }
+    if (cb && cb.ru) {
+      lines.push('<div class="adv-line adv-qiu">🔴 連茹格（大凶）：滿盤俱見連續八組（一二…八九），主大凶。</div>');
+    }
+    // 入囚（中宮山星/向星＝當前元運）
+    const im = r.imprisonment;
+    if (im) {
+      lines.push('<div class="adv-line ' + (im.shanQiu ? 'adv-qiu' : 'adv-note') + '">🔒 山星入囚於 ' + im.shanCenter + ' 運' + (im.shanQiu ? '（現運・已入囚）' : '') + '：影響人丁、健康</div>');
+      lines.push('<div class="adv-line ' + (im.xiangQiu ? 'adv-qiu' : 'adv-note') + '">🔒 向星入囚於 ' + im.xiangCenter + ' 運' + (im.xiangQiu ? '（現運・已入囚）' : '') + '：影響財富、功名升遷</div>');
+    }
+    // 逐宮山向組合斷語（放在入囚下方）
+    const pm = r.palaceMeanings;
+    if (pm && pm.length) {
+      lines.push('<div class="adv-sub">各宮山向組合（山星─向星）</div>');
+      pm.forEach(c => {
+        lines.push('<div class="adv-combo c-' + c.tone + '">' +
+          '<b class="cdir">' + c.dir + c.gua + '</b>' +
+          '<span class="cnum">' + c.shan + '–' + c.xiang + '</span>' +
+          '<span class="cname">' + (c.name || '—') + '</span>' +
+          '<span class="cdesc">' + (c.desc || '') + '</span></div>');
+      });
+    }
+    adv.innerHTML = lines.join('');
+  }
+
+  function recompute() {
+    if (!document.body.classList.contains('mode-xk')) return;
+    const sitting = (elSit && elSit.textContent || '').trim();
+    const facing  = (elFac && elFac.textContent || '').trim();
+    const period  = parseInt(periodSel.value, 10);
+    const curPeriod = curSel ? parseInt(curSel.value, 10) : xkCurrentPeriod();
+    const r = window.XuanKong.compute(period, facing, sitting, curPeriod);
+    window.XuanKong.renderSquare(plate, r);
+    if (r.ok) {
+      const tone = { good: 'good', mild: 'mild', bad: 'bad' }[r.pattern.tone] || 'mild';
+      info.innerHTML =
+        '<div class="xk-title">下元' + ['','一','二','三','四','五','六','七','八','九'][period] +
+        '運　坐' + r.sitting.mtn + '（' + r.sitting.dir + '）向' + r.facing.mtn + '（' + r.facing.dir + '）</div>' +
+        '<div class="xk-pattern xk-' + tone + '">【' + r.pattern.name + '】' + r.pattern.desc + '</div>';
+    } else {
+      info.innerHTML = '<div class="xk-pattern">' + (r.reason || '坐向尚未設定') + '</div>';
+    }
+    renderAdvanced(r);
+  }
+
+  function setMode(xk) {
+    document.body.classList.toggle('mode-xk', xk);
+    btnXk.classList.toggle('active', xk);
+    btnZi.classList.toggle('active', !xk);
+    document.getElementById('xuankong-view').setAttribute('aria-hidden', xk ? 'false' : 'true');
+    if (xk) recompute();
+  }
+
+  const verEl = document.getElementById('xk-version');
+  if (verEl && window.XuanKong) verEl.textContent = '玄空 ' + window.XuanKong.VERSION;
+
+  // 當前元運下拉：預設帶出現今實際元運（下元九運 2024–2043），可手動切換推演
+  const curSel = document.getElementById('xk-current-period');
+  if (curSel) curSel.value = String(xkCurrentPeriod());
+
+  btnZi.addEventListener('click', () => setMode(false));
+  btnXk.addEventListener('click', () => setMode(true));
+  periodSel.addEventListener('change', recompute);
+  if (curSel) curSel.addEventListener('change', recompute);
+
+  // 坐向變動（滑桿 / 羅盤 / 屋宅選單）都會更新 #current-facing/#current-mountain，
+  // 以 MutationObserver 監看，玄空盤即時重排。
+  const obs = new MutationObserver(recompute);
+  [elSit, elFac].forEach(n => { if (n) obs.observe(n, { childList: true, characterData: true, subtree: true }); });
+})();
+</script>
 </body>
 </html>

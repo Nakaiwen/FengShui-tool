@@ -216,6 +216,137 @@ body {
     }
 }
 
+/* ===================================================================
+ *  系統切換鍵（紫白飛星 ⇄ 玄空陽宅）
+ * =================================================================== */
+.mode-toggle {
+    display: flex;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+    margin-bottom: 14px;
+    z-index: 120;
+}
+.mode-btn {
+    border: none;
+    background: transparent;
+    padding: 8px 20px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #888;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.mode-btn.active {
+    background: #8B5A2B;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(139, 90, 43, 0.4);
+}
+
+/* ===================================================================
+ *  玄空陽宅飛星盤（配色取自 bazi-circle-chart：宣紙底、墨、褐、朱砂紅）
+ * =================================================================== */
+/* bazi 調色盤：定義在 compass-container，方盤與下方玄空資訊皆可取用（不影響紫白盤） */
+#compass-container {
+    --paper: #fbf7ee;
+    --ink:   #1a1a1a;
+    --line:  #2b2b2b;
+    --yang:  #8B5A2B;   /* 山星：褐 */
+    --hl:    #c0392b;   /* 向星 / 當令旺星：朱砂紅 */
+    --muted: #8a7d63;
+    --sit-bg: #ecdcb6;  /* 坐山宮位：淺土黃 */
+    --fac-bg: #f6dad3;  /* 向宮位：淺朱紅 */
+    --rob:   #b8860b;   /* 七星打劫三宮：金 */
+    --gate:  #1e7d34;   /* 可用城門：綠 */
+}
+
+/* 玄空方盤（位於輸入框上方，固定尺寸） */
+#xuankong-view {
+    z-index: 60;
+    display: none;              /* 預設隱藏，mode-xk 時顯示 */
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 4px;
+}
+body.mode-xk #xuankong-view { display: flex; }
+
+/* 玄空資訊（格局／法訣／入囚）：位於輸入框下方，可隨內容增減而不影響上方 */
+#xuankong-info {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 92%;
+    max-width: 420px;
+    margin: 12px auto 0;
+    font-family: "Noto Serif TC", "Songti TC", "STKaiti", "KaiTi", "SimSun", serif;
+    color: var(--ink);
+}
+body.mode-xk #xuankong-info { display: flex; }
+
+/* 玄空模式：隱藏紫白盤面與圓心字，並讓容器改為自然高度（坐向輸入仍共用） */
+body.mode-xk #FengShui-plate,
+body.mode-xk #center-overlay { display: none; }
+body.mode-xk #compass-container { height: auto; max-height: none; margin-bottom: 15px; }
+
+#xk-info { text-align: center; line-height: 1.5; padding: 0 8px; }
+#xk-info .xk-title { font-size: clamp(14px, 2.4vmin, 19px); font-weight: 700; letter-spacing: 1px; }
+#xk-info .xk-pattern { font-size: clamp(11px, 1.8vmin, 14px); margin-top: 2px; max-width: 52vh; }
+#xk-info .xk-good { color: #1e7d34; }
+#xk-info .xk-bad  { color: var(--hl); }
+#xk-info .xk-mild { color: var(--muted); }
+
+/* 固定方盤尺寸：不隨上下文字多寡伸縮，各角度大小一致 */
+#xk-plate { flex: none; width: min(88vw, 440px); aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; }
+#xk-plate svg { width: 100%; height: 100%; display: block; }
+#xk-plate .xk-empty { color: var(--muted); font-size: 14px; text-align: center; max-width: 40vh; line-height: 1.8; }
+
+#xk-legend { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; font-size: 12px; }
+#xk-legend .lg { position: relative; padding-left: 16px; color: var(--ink); }
+#xk-legend .lg::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; border-radius: 50%; }
+#xk-legend .lg-shan::before  { background: var(--yang); }
+#xk-legend .lg-xiang::before { background: var(--hl); }
+#xk-legend .lg-yun::before   { background: var(--ink); }
+#xk-legend .lg-wang::before  { background: var(--hl); border: 2px solid #fff; box-shadow: 0 0 0 1px var(--hl); }
+#xk-legend .lg-rob::before   { background: transparent; border: 1.5px dashed var(--rob); border-radius: 2px; }
+#xk-legend .lg-gate::before  { background: var(--gate); }
+#xk-legend .lg-ver { color: var(--muted); opacity: 0.7; font-size: 11px; letter-spacing: 0.5px; }
+
+/* 進階法訣資訊（七星打劫 / 城門訣） */
+#xk-advanced { display: flex; flex-direction: column; gap: 3px; align-items: center; max-width: 56vh; padding: 0 8px; }
+#xk-advanced .adv-line { font-size: clamp(11px, 1.7vmin, 13px); line-height: 1.45; }
+#xk-advanced .adv-rob  { color: var(--rob); font-weight: 700; }
+#xk-advanced .adv-gate { color: var(--gate); font-weight: 700; }
+#xk-advanced .adv-note { color: var(--muted); font-size: clamp(10px, 1.5vmin, 12px); }
+#xk-advanced .adv-fail { color: var(--muted); }
+#xk-advanced .adv-qiu  { color: var(--hl); font-weight: 700; }
+#xk-advanced .adv-danger { color: #fff; background: var(--hl); font-weight: 700; border-radius: 6px; padding: 3px 8px; }
+
+/* 逐宮山向組合斷語 */
+#xk-advanced .adv-sub { width: 100%; text-align: center; font-weight: 700; color: var(--ink); margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 6px; }
+#xk-advanced .adv-combo { width: 100%; text-align: left; font-size: clamp(11px, 1.6vmin, 12.5px); line-height: 1.55; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+#xk-advanced .adv-combo .cdir  { min-width: 4.2em; color: var(--ink); }
+#xk-advanced .adv-combo .cnum  { color: var(--muted); font-variant-numeric: tabular-nums; }
+#xk-advanced .adv-combo .cname { font-weight: 700; }
+#xk-advanced .adv-combo .cdesc { color: var(--muted); flex: 1 1 100%; padding-left: 4.2em; }
+#xk-advanced .adv-combo.c-good .cname { color: #1e7d34; }
+#xk-advanced .adv-combo.c-bad  .cname { color: var(--hl); }
+#xk-advanced .adv-combo.c-mixed .cname { color: var(--yang); }
+
+/* 建宅元運：僅玄空模式顯示 */
+.xk-only { display: none; }
+body.mode-xk .xk-only { display: block; }
+
+/* 玄空模式下隱藏紫白專用的「動態吉凶預測」解析面板（坐向輸入面板仍共用） */
+body.mode-xk #ai-diagnostic-panel { display: none; }
+
+/* 玄空模式下隱藏紫白專用輸入：命主/家人/觀測日期、屋宅坐向、五氣/解鎖（不影響紫白盤） */
+body.mode-xk .zb-only { display: none !important; }
+
 /* 鎖定按鈕樣式 */
 .lock-btn {
     margin-top: 4px;
