@@ -414,7 +414,29 @@
 
 <!-- 玄空陽宅飛星盤（方盤）：與紫白共用同一坐向，一鍵切換 -->
 <div id="xuankong-view" aria-hidden="true">
+    <div class="xk-sub-toggle">
+        <button id="xk-sub-plate" class="xk-sub-btn active" type="button">九宮方盤</button>
+        <button id="xk-sub-overlay" class="xk-sub-btn" type="button">平面疊圖</button>
+    </div>
     <div id="xk-plate"></div>
+    <div id="xk-overlay" style="display:none;">
+        <div class="ov-bar">
+            <label class="ov-btn">📁 上傳平面圖<input type="file" id="ov-file" accept="image/*" hidden></label>
+            <button class="ov-btn" id="ov-zin" type="button">＋</button>
+            <button class="ov-btn" id="ov-zout" type="button">－</button>
+            <button class="ov-btn" id="ov-reset" type="button">重置</button>
+            <button class="ov-btn" id="ov-png" type="button">⬇ 下載 PNG</button>
+            <label class="ov-op">透明<input type="range" id="ov-op" min="20" max="100" value="80"></label>
+        </div>
+        <div id="ov-stage">
+            <img id="ov-img" alt="">
+            <div id="ov-grid"></div>
+            <div id="ov-labels"></div>
+            <div id="ov-knob" title="拖曳旋轉">↻</div>
+            <div id="ov-empty">請上傳平面圖，再拖曳／旋轉／縮放九宮對齊房屋外牆與中宮</div>
+        </div>
+        <div class="ov-tip">拖曳九宮＝移動　·　拖 ↻ 鈕＝旋轉　·　滾輪＝縮放</div>
+    </div>
 </div>
             
 <div id="controls">
@@ -542,6 +564,7 @@
 </div>
 <script src="script.js"></script>
 <script src="xuankong.js"></script>
+<script src="xk-overlay.js"></script>
 <script>
 /* ── 玄空模式：頁面配線（與紫白共用坐向，獨立於 script.js） ───────────── */
 (function () {
@@ -572,6 +595,7 @@
         lines.push('<div class="adv-line adv-rob">🌟 七星打劫・' + rob.subtype + '：' +
           rob.palaces.join('、') + ' 三宮向星 ' + rob.stars.join('、') + ' 成三般卦</div>');
         lines.push('<div class="adv-line adv-note">' + rob.warning + '</div>');
+        (rob.tips || []).forEach((t, i) => lines.push('<div class="adv-line adv-tip">' + (i + 1) + '. ' + t + '</div>'));
       } else {
         lines.push('<div class="adv-line adv-fail">七星打劫：不成立（' + rob.reason + '）</div>');
       }
@@ -621,6 +645,7 @@
     const curPeriod = curSel ? parseInt(curSel.value, 10) : xkCurrentPeriod();
     const r = window.XuanKong.compute(period, facing, sitting, curPeriod);
     window.XuanKong.renderSquare(plate, r);
+    if (window.XKOverlay) window.XKOverlay.render(r);
     if (r.ok) {
       const tone = { good: 'good', mild: 'mild', bad: 'bad' }[r.pattern.tone] || 'mild';
       info.innerHTML =
@@ -652,6 +677,19 @@
   btnXk.addEventListener('click', () => setMode(true));
   periodSel.addEventListener('change', recompute);
   if (curSel) curSel.addEventListener('change', recompute);
+
+  // 玄空子模式：九宮方盤 / 平面疊圖
+  const btnSubPlate = document.getElementById('xk-sub-plate');
+  const btnSubOverlay = document.getElementById('xk-sub-overlay');
+  function setSub(overlay) {
+    btnSubOverlay.classList.toggle('active', overlay);
+    btnSubPlate.classList.toggle('active', !overlay);
+    document.getElementById('xk-plate').style.display = overlay ? 'none' : 'flex';
+    document.getElementById('xk-overlay').style.display = overlay ? 'block' : 'none';
+    recompute();
+  }
+  btnSubPlate.addEventListener('click', () => setSub(false));
+  btnSubOverlay.addEventListener('click', () => setSub(true));
 
   // 坐向變動（滑桿 / 羅盤 / 屋宅選單）都會更新 #current-facing/#current-mountain，
   // 以 MutationObserver 監看，玄空盤即時重排。

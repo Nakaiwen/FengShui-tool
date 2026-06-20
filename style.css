@@ -293,6 +293,32 @@ body.mode-xk #FengShui-plate,
 body.mode-xk #center-overlay { display: none; }
 body.mode-xk #compass-container { height: auto; max-height: none; margin-bottom: 15px; }
 
+/* 玄空子切換：九宮方盤 / 平面疊圖 */
+.xk-sub-toggle { display: flex; gap: 4px; background: rgba(139,90,43,.10); padding: 3px; border-radius: 9px; margin-bottom: 4px; }
+.xk-sub-btn { border: none; background: transparent; padding: 5px 14px; font-size: 13px; font-weight: 600; color: var(--muted); border-radius: 7px; cursor: pointer; font-family: inherit; transition: all .2s; }
+.xk-sub-btn.active { background: var(--yang); color: #fff; }
+
+/* 平面疊圖 */
+#xk-overlay { width: min(94vw, 560px); }
+#xk-overlay .ov-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin-bottom: 6px; font-size: 13px; }
+#xk-overlay .ov-btn { border: 1px solid var(--yang); background: #fff; color: var(--yang); border-radius: 7px; padding: 5px 10px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+#xk-overlay .ov-op { display: flex; align-items: center; gap: 4px; color: var(--muted); }
+#ov-stage { position: relative; width: 100%; height: 62vh; overflow: hidden; border: 1px solid var(--line); border-radius: 10px;
+  background: #efe9dc repeating-linear-gradient(0deg,transparent,transparent 22px,#0000000a 22px,#0000000a 23px); touch-action: none; }
+#ov-img { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); max-width: 100%; max-height: 100%; pointer-events: none; user-select: none; }
+#ov-grid { position: absolute; left: 0; top: 0; width: 360px; height: 360px; transform-origin: center; cursor: move; touch-action: none; }
+#ov-grid svg { display: block; overflow: visible; }
+#ov-labels { position: absolute; inset: 0; pointer-events: none; }
+#ov-labels .ovlbl { position: absolute; text-align: center; line-height: 1.15; white-space: nowrap;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }
+#ov-labels .ovlbl .d { font-size: 12px; font-weight: 700; }
+#ov-labels .ovlbl .n { font-size: 18px; font-weight: 800; }
+#ov-labels .ovlbl .y { font-size: 11px; color: #1a1a1a; }
+#ov-knob { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: var(--hl); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: grab; touch-action: none; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+#ov-empty { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: var(--muted); font-size: 13px; text-align: center; width: 80%; }
+#xk-overlay .ov-tip { text-align: center; color: var(--muted); font-size: 12px; margin-top: 6px; }
+
 #xk-info { text-align: center; line-height: 1.5; padding: 0 8px; }
 #xk-info .xk-title { font-size: clamp(14px, 2.4vmin, 19px); font-weight: 700; letter-spacing: 1px; }
 #xk-info .xk-pattern { font-size: clamp(11px, 1.8vmin, 14px); margin-top: 2px; max-width: 52vh; }
@@ -324,6 +350,7 @@ body.mode-xk #compass-container { height: auto; max-height: none; margin-bottom:
 #xk-advanced .adv-note { color: var(--muted); font-size: clamp(10px, 1.5vmin, 12px); }
 #xk-advanced .adv-fail { color: var(--muted); }
 #xk-advanced .adv-qiu  { color: var(--hl); font-weight: 700; }
+#xk-advanced .adv-tip  { color: var(--ink); font-size: clamp(11px, 1.6vmin, 12.5px); text-align: left; width: 100%; padding-left: 14px; line-height: 1.55; }
 #xk-advanced .adv-danger { color: #fff; background: var(--hl); font-weight: 700; border-radius: 6px; padding: 3px 8px; }
 
 /* 逐宮山向組合斷語 */
