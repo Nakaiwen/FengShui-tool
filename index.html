@@ -446,7 +446,9 @@
             <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 5px; flex-wrap: wrap;">
                 <span style="color: #d35400; font-weight: bold; font-size: 15px; white-space: nowrap;">命主(甲)</span>
                 <label style="white-space: nowrap; margin-left: 5px;">出生年：</label>
-                <input type="number" id="input-year-a" value="1990" min="1900" max="2099" style="width: 75px;">
+                <input type="number" id="input-year-a" value="1990" min="1900" max="2099" style="width: 70px;">
+                <input type="number" id="input-month-a" min="1" max="12" placeholder="月" title="選填：立春前出生請填月日校正命卦" style="width: 42px;">
+                <input type="number" id="input-day-a" min="1" max="31" placeholder="日" title="選填：立春前出生請填月日校正命卦" style="width: 42px;">
                 <div class="gender-toggle" style="margin-left: 2px;">
                     <button id="btn-male-a" class="gender-btn active">男</button>
                     <button id="btn-female-a" class="gender-btn">女</button>
@@ -456,7 +458,9 @@
             <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px; flex-wrap: wrap;">
                 <span style="color: #2980b9; font-weight: bold; font-size: 15px; white-space: nowrap;">家人(乙)</span>
                 <label style="white-space: nowrap; margin-left: 5px;">出生年：</label>
-                <input type="number" id="input-year-b" min="1900" max="2099" placeholder="選填" style="width: 75px;">
+                <input type="number" id="input-year-b" min="1900" max="2099" placeholder="選填" style="width: 70px;">
+                <input type="number" id="input-month-b" min="1" max="12" placeholder="月" title="選填：立春前出生請填月日校正命卦" style="width: 42px;">
+                <input type="number" id="input-day-b" min="1" max="31" placeholder="日" title="選填：立春前出生請填月日校正命卦" style="width: 42px;">
                 <div class="gender-toggle" style="margin-left: 2px;">
                     <button id="btn-male-b" class="gender-btn active">男</button>
                     <button id="btn-female-b" class="gender-btn">女</button>
@@ -562,6 +566,7 @@
     </div>
     <div id="xk-advanced"></div>
 </div>
+<script src="zibai.js"></script>
 <script src="script.js"></script>
 <script src="xuankong.js"></script>
 <script src="xk-overlay.js"></script>

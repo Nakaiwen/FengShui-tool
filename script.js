@@ -19,58 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
         defaultRotation: 0 
     };
 
-    const TWENTY_FOUR_MOUNTAINS = [
-        '子', '癸', '丑', '艮', '寅', '甲', '卯', '乙', '辰', '巽', '巳', '丙', 
-        '午', '丁', '未', '坤', '申', '庚', '酉', '辛', '戌', '乾', '亥', '壬'
-    ];
-
-    // ★ 專屬五行直覺配色
-    const FLYING_STARS_INFO = {
-        1: { name: '一白貪狼', meaning: '桃花星', color: '#004ad2ff' }, 
-        2: { name: '二黑巨門', meaning: '病符星', color: '#000000' }, 
-        3: { name: '三碧蚩尤', meaning: '強盜星', color: '#2e7d32' }, 
-        4: { name: '四綠文曲', meaning: '破財星', color: '#388e3c' }, 
-        5: { name: '五黃廉貞', meaning: '毒癌星', color: '#a76400ff' }, 
-        6: { name: '六白武曲', meaning: '偏財星', color: '#555555' }, 
-        7: { name: '七赤破軍', meaning: '賊盜星', color: '#555555' }, 
-        8: { name: '八白左輔', meaning: '財帛星', color: '#a76400ff' }, 
-        9: { name: '九紫右弼', meaning: '喜慶星', color: '#af1010ff' }  
-    };
-
-    const STAR_NAMES_SHORT = { 1: '一白', 2: '二黑', 3: '三碧', 4: '四綠', 5: '五黃', 6: '六白', 7: '七赤', 8: '八白', 9: '九紫' };
-    const LUO_SHU_PATH = ['乾', '兌', '艮', '離', '坎', '坤', '震', '巽'];
-
-    const TWELVE_SHAS_SEQUENCE = ['太歲', '太陽', '喪門', '太陰', '官符', '死符', '歲破', '龍德', '白虎', '福德', '吊客', '病符'];
-
-    // ★ 預測庫：加入具體描述
-    const COMBINATION_RULES = [
-        { type: 'good', stars: [4, 1], name: '四一同宮', desc: '利文昌、考試、升遷與桃花。', boost: '建議佈局：放置四支水種萬年青或掛上四隻毛筆，引動文昌氣場。' },
-        { type: 'good', stars: [6, 8], name: '六八同宮', desc: '大利武職、偏財、事業爆發。', boost: '建議佈局：放置金屬聚寶盆或銅製飾品，並鋪設黃色地墊催財。' },
-        { type: 'good', stars: [8, 9], name: '八九同宮', desc: '大吉慶、婚喜、財運亨通。', boost: '建議佈局：放置紅色中國結或點亮紅燈，引動喜慶財氣。' },
-        { type: 'bad',  stars: [7, 9], name: '九七穿途', desc: '注意火災、心血管疾病或官非。' },
-        { type: 'bad',  stars: [2, 5], name: '二五交加', desc: '注意重病、血光意外。' },
-        { type: 'bad',  stars: [3, 7], name: '三七疊臨', desc: '注意遭竊盜、金屬所傷或劫財破財。' }
-    ];
-
-    // ★ 核心數據升級：新增乾坤生六子人物與身體部位
-    const GUA_DATA = {
-        1: { name: '坎', number: 1, member: '中男(二子)', body: '耳、腎、血液、泌尿系統', stars: { '坎':'伏位', '巽':'生氣/吉', '震':'天醫', '離':'延年/吉', '乾':'六煞', '兌':'禍害', '艮':'五鬼', '坤':'絕命' } },
-        2: { name: '坤', number: 2, member: '老母(女主人)', body: '腹、脾胃、肉、皮膚', stars: { '坤':'伏位', '艮':'生氣/吉', '兌':'天醫', '乾':'延年/吉', '離':'六煞', '震':'禍害', '巽':'五鬼', '坎':'絕命' } },
-        3: { name: '震', number: 3, member: '長男(大子)', body: '足、肝臟、神經系統', stars: { '震':'伏位', '離':'生氣/吉', '坎':'天醫', '巽':'延年/吉', '艮':'六煞', '坤':'禍害', '乾':'五鬼', '兌':'絕命' } },
-        4: { name: '巽', number: 4, member: '長女(大女)', body: '股(腿)、膽、呼吸系統', stars: { '巽':'伏位', '坎':'生氣/吉', '離':'天醫', '震':'延年/吉', '兌':'六煞', '乾':'禍害', '坤':'五鬼', '艮':'絕命' } },
-        6: { name: '乾', number: 6, member: '老父(男主人)', body: '頭、面、骨骼、大腸', stars: { '乾':'伏位', '兌':'生氣/吉', '艮':'天醫', '坤':'延年/吉', '坎':'六煞', '巽':'禍害', '震':'五鬼', '離':'絕命' } },
-        7: { name: '兌', number: 7, member: '少女(三女)', body: '口、舌、肺、呼吸道', stars: { '兌':'伏位', '乾':'生氣/吉', '坤':'天醫', '艮':'延年/吉', '巽':'六煞', '坎':'禍害', '離':'五鬼', '震':'絕命' } },
-        8: { name: '艮', number: 8, member: '少男(三子)', body: '手、背、鼻、脾胃', stars: { '艮':'伏位', '坤':'生氣/吉', '乾':'天醫', '兌':'延年/吉', '震':'六煞', '離':'禍害', '坎':'五鬼', '巽':'絕命' } },
-        9: { name: '離', number: 9, member: '中女(二女)', body: '目(眼)、心、血液循環', stars: { '離':'伏位', '震':'生氣/吉', '巽':'天醫', '坎':'延年/吉', '坤':'六煞', '艮':'禍害', '兌':'五鬼', '乾':'絕命' } }
-    };
-
-    // 八宮對沖定義（用於判定「關」方）
-    const OPPOSITE_GUA = {
-        '坎': '離', '離': '坎',
-        '震': '兌', '兌': '震',
-        '巽': '乾', '乾': '巽',
-        '艮': '坤', '坤': '艮'
-    };
+    // ★ 資料與算法已抽至純引擎 zibai.js（單一真相來源，node 可測）。
+    //    以下從 window.ZiBai 取別名，行為與舊版完全一致；斷語已由 6 條擴充為 20 條。
+    const ZB = window.ZiBai;
+    const {
+        TWENTY_FOUR_MOUNTAINS, FLYING_STARS_INFO, STAR_NAMES_SHORT, LUO_SHU_PATH,
+        TWELVE_SHAS_SEQUENCE, COMBINATION_RULES, GUA_DATA, OPPOSITE_GUA
+    } = ZB;
 
     
     // 將原本的 userSettings 替換為支援雙人的版本
@@ -82,88 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let isQiMode = false; // ★ 五氣視角模式開關
 
     // =================================================================
-    //  SECTION 2: 節氣、流年、飛星邏輯與推算引擎
+    //  SECTION 2: 節氣、流年、飛星邏輯與推算引擎（已抽至 zibai.js）
     // =================================================================
-    function getSolarTermMonth(targetDate = new Date()) {
-        const y = targetDate.getFullYear();
-        const m = targetDate.getMonth() + 1;
-        const d = targetDate.getDate();
-        const md = m * 100 + d;
-        
-        const terms = [
-            { name: '小寒', md: 105, month: 12, yearOffset: -1 },
-            { name: '立春', md: 204, month: 1,  yearOffset: 0 },
-            { name: '驚蟄', md: 305, month: 2,  yearOffset: 0 },
-            { name: '清明', md: 405, month: 3,  yearOffset: 0 },
-            { name: '立夏', md: 505, month: 4,  yearOffset: 0 },
-            { name: '芒種', md: 605, month: 5,  yearOffset: 0 },
-            { name: '小暑', md: 707, month: 6,  yearOffset: 0 },
-            { name: '立秋', md: 807, month: 7,  yearOffset: 0 },
-            { name: '白露', md: 907, month: 8,  yearOffset: 0 },
-            { name: '寒露', md: 1008, month: 9,  yearOffset: 0 },
-            { name: '立冬', md: 1107, month: 10, yearOffset: 0 },
-            { name: '大雪', md: 1207, month: 11, yearOffset: 0 }
-        ];
-        
-        let currentTerm = terms[0];
-        for (let i = terms.length - 1; i >= 0; i--) {
-            if (md >= terms[i].md) { currentTerm = terms[i]; break; }
-        }
-        
-        let fsYear = y + currentTerm.yearOffset;
-        if (md < 204) fsYear = y - 1; 
-        return { fsYear, fsMonth: currentTerm.month, termName: currentTerm.name };
-    }
-
-    function calculateMonthStar(fsYear, fsMonth) {
-        const yearBranchIndex = (fsYear - 4) % 12; 
-        let startStar;
-        if ([0, 3, 6, 9].includes(yearBranchIndex)) { startStar = 8; } 
-        else if ([1, 4, 7, 10].includes(yearBranchIndex)) { startStar = 5; } 
-        else { startStar = 2; }
-        
-        let star = startStar - (fsMonth - 1);
-        while (star <= 0) star += 9;
-        return star;
-    }
-
-    function calculatePeriodStar(fsYear) {
-        let period = ((Math.floor((fsYear - 1864) / 20) + 1) % 9);
-        return period === 0 ? 9 : period; 
-    }
-
-    function getGanzhiYear(fsYear) {
-        const stems = ['庚', '辛', '壬', '癸', '甲', '乙', '丙', '丁', '戊', '己'];
-        const branches = ['申', '酉', '戌', '亥', '子', '丑', '寅', '卯', '辰', '巳', '午', '未'];
-        return stems[fsYear % 10] + branches[fsYear % 12];
-    }
-
-    function getStarInGua(centerNum, targetGua) {
-        const index = LUO_SHU_PATH.indexOf(targetGua);
-        let num = (centerNum + index + 1) % 9;
-        return num === 0 ? 9 : num;
-    }
-
-    function getWuXing(starNum) {
-        const elements = { 1:'Water', 2:'Earth', 3:'Wood', 4:'Wood', 5:'Earth', 6:'Metal', 7:'Metal', 8:'Earth', 9:'Fire' };
-        return elements[starNum];
-    }
-
-    function getFiveQi(centerStar, palaceStar) {
-        const cElem = getWuXing(centerStar); // 中宮(主)
-        const pElem = getWuXing(palaceStar); // 宮位(客)
-
-        if (cElem === pElem) return { qi: '旺', color: '#e91700ff' }; // 紅色
-
-        const generate = { 'Wood':'Fire', 'Fire':'Earth', 'Earth':'Metal', 'Metal':'Water', 'Water':'Wood' };
-        const destroy = { 'Wood':'Earth', 'Earth':'Water', 'Water':'Fire', 'Fire':'Metal', 'Metal':'Wood' };
-
-        if (generate[pElem] === cElem) return { qi: '生', color: '#e91700ff' }; // 客生主 -> 生 (紅)
-        if (generate[cElem] === pElem) return { qi: '退', color: '#004ad2ff' }; // 主生客 -> 退 (藍)
-        if (destroy[pElem] === cElem) return { qi: '殺', color: '#000000' };   // 客剋主 -> 殺 (黑)
-        if (destroy[cElem] === pElem) return { qi: '死', color: '#000000' };   // 主剋客 -> 死 (黑)
-        return { qi: '', color: '' };
-    }
+    const {
+        getSolarTermMonth, calculateMonthStar, calculatePeriodStar,
+        getGanzhiYear, getStarInGua, getWuXing, getFiveQi
+    } = ZB;
 
     // =================================================================
     //  SECTION 3: 動態預測大腦 (積分量化系統)
@@ -480,15 +359,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const genderA = (typeof userSettings !== 'undefined' && userSettings.genderA) ? userSettings.genderA : 'male';
     const genderB = (typeof userSettings !== 'undefined' && userSettings.genderB) ? userSettings.genderB : 'male';
 
-    // --- 計算命主 (甲) 命卦 ---
+    // 讀取選填的生日月/日（供命卦立春校正；留空則以「年」為三元年，行為與舊版一致）
+    const readNum = (id) => { const el = document.getElementById(id); const v = el ? parseInt(el.value) : NaN; return isNaN(v) ? null : v; };
+    const monthA = readNum('input-month-a'), dayA = readNum('input-day-a');
+    const monthB = readNum('input-month-b'), dayB = readNum('input-day-b');
+
+    // --- 計算命主 (甲) 命卦（引擎含立春校正） ---
     let mingGuaA = null;
     if (!isNaN(birthYearA)) {
-        let sumA = birthYearA.toString().split('').map(Number).reduce((a, b) => a + b, 0);
-        while (sumA > 9) sumA = sumA.toString().split('').map(Number).reduce((a, b) => a + b, 0);
-        let kuaA = (genderA === 'male') ? (11 - sumA) : (4 + sumA);
-        while (kuaA > 9) kuaA -= 9;
-        if (kuaA === 5) kuaA = (genderA === 'male') ? 2 : 8;
-        mingGuaA = GUA_DATA[kuaA];
+        mingGuaA = ZB.mingGua(birthYearA, genderA, monthA, dayA);
     } else {
         return; // 命主必填，否則停止渲染
     }
@@ -496,12 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 計算家人 (乙) 命卦 (若有填寫) ---
     let mingGuaB = null;
     if (!isNaN(birthYearB)) {
-        let sumB = birthYearB.toString().split('').map(Number).reduce((a, b) => a + b, 0);
-        while (sumB > 9) sumB = sumB.toString().split('').map(Number).reduce((a, b) => a + b, 0);
-        let kuaB = (genderB === 'male') ? (11 - sumB) : (4 + sumB);
-        while (kuaB > 9) kuaB -= 9;
-        if (kuaB === 5) kuaB = (genderB === 'male') ? 2 : 8;
-        mingGuaB = GUA_DATA[kuaB];
+        mingGuaB = ZB.mingGua(birthYearB, genderB, monthB, dayB);
     }
 
     const selectHouse = document.getElementById('house-gua');
@@ -521,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 取得流年流月資料
     const termData = getSolarTermMonth(selectedDate);
-    const annualStar = (11 - (termData.fsYear % 9)) % 9 || 9;
+    const annualStar = ZB.annualStar(termData.fsYear);
     const monthStar = calculateMonthStar(termData.fsYear, termData.fsMonth);
     const periodStar = calculatePeriodStar(termData.fsYear);
 
@@ -1351,6 +1225,10 @@ if (centerBg) {
     // --- 8. 其他輸入變更綁定 (雙人事件監聽) ---
     // 命主甲
     if (inputYearA) inputYearA.addEventListener('input', updateAll);
+    ['input-month-a','input-day-a','input-month-b','input-day-b'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateAll);
+    });
     if (btnMaleA) {
         btnMaleA.addEventListener('click', () => { 
             userSettings.genderA = 'male'; 
