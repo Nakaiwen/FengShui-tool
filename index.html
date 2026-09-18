@@ -5,18 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>陽宅風水線上排盤</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="xk-dashboard.css">
+    <link rel="stylesheet" href="zb-dashboard.css">
 </head>
 <body>
 
     <div id="app">
 
-        <div class="mode-toggle">
+        <header class="zb-masthead zb-only">
+            <div><span class="zb-eyebrow">小六太乙 · 陽宅風水</span><h1>紫白<span>飛星</span></h1></div>
+            <p>觀星氣，明宅運。<span>命卦、宅星與年月，一盤參看。</span></p>
+        </header>
+        <header class="xk-masthead xk-only">
+            <div><span class="xk-eyebrow">小六太乙 · 陽宅風水</span><h1>玄空<span>飛星</span></h1></div>
+            <p>觀方位，察九宮。<span>羅盤與宅盤，同步相應。</span></p>
+        </header>
+        <div class="mode-toggle" aria-label="排盤模式">
             <button id="mode-zibai" class="mode-btn active" type="button">紫白飛星</button>
             <button id="mode-xuankong" class="mode-btn" type="button">玄空陽宅</button>
         </div>
 
         <div id="compass-container">
 
+        <section id="zb-compass-panel" class="zb-only" aria-label="紫白飛星羅盤">
+            <div class="zb-panel-top"><div><span class="zb-eyebrow">五層星氣 · 二十四山</span><h2>紫白羅盤</h2></div><span class="zb-bearing">向方 <output id="zb-heading-value">180.0°</output></span></div>
+            <div class="zb-dial-stage">
         <svg id="FengShui-plate" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 560 560">
   <!-- Generator: Adobe Illustrator 30.3.0, SVG Export Plug-In . SVG Version: 2.1.3 Build 182)  -->
    <defs>
@@ -412,81 +425,27 @@
     </div>
 </div>
 
-<!-- 玄空陽宅飛星盤（方盤）：與紫白共用同一坐向，一鍵切換 -->
+            </div><!-- zb-dial-stage -->
+            <div class="zb-color-legend" aria-label="盤面色階">
+                <span class="zb-tone good">祥和</span><span class="zb-tone positive">趨吉</span><span class="zb-tone neutral">中和</span><span class="zb-tone mixed">波動</span><span class="zb-tone blocked">受阻</span>
+            </div>
+            <p class="zb-dial-note">盤面顯示宅、命、運、年、月五層星氣；下方可選擇參與解析的星氣層。</p>
+        </section>
+
+<!-- 玄空雙欄工作區；與紫白共用同一坐向及感測器。 -->
+<section id="xk-compass-panel" class="xk-only" aria-label="即時二十四山羅盤">
+    <div class="xk-section-top"><span class="xk-eyebrow">二十四山 · 即時方位</span><span id="xk-sensor-status" class="xk-status" role="status">手動模式</span></div>
+    <div class="xk-period-heading"><h2 id="xk-period-name">九運</h2><span id="xk-period-years">2024–2043 · 下元</span></div>
+    <div id="xk-compass-dial" aria-label="向方角度羅盤">
+        <svg id="xk-compass-svg" viewBox="0 0 400 400" role="img" aria-label="二十四山羅盤"></svg>
+        <div class="xk-compass-pointer" aria-hidden="true"></div>
+        <div class="xk-compass-center"><span>向方角度</span><strong id="xk-live-degree">180.0<small>°</small></strong><span id="xk-live-direction">南 · 午向</span></div>
+    </div>
+    <div class="xk-dial-caption"><span>以螢幕上緣指向向方</span><span>0° 北 · 180° 南</span></div>
+</section>
 <div id="xuankong-view" aria-hidden="true">
-    <div class="xk-sub-toggle">
-        <button id="xk-sub-plate" class="xk-sub-btn active" type="button">九宮方盤</button>
-        <button id="xk-sub-overlay" class="xk-sub-btn" type="button">平面疊圖</button>
-    </div>
-    <div id="xk-plate"></div>
-    <div id="xk-overlay" style="display:none;">
-        <div class="ov-bar">
-            <label class="ov-btn">📁 上傳平面圖<input type="file" id="ov-file" accept="image/*" hidden></label>
-            <button class="ov-btn" id="ov-zin" type="button">＋</button>
-            <button class="ov-btn" id="ov-zout" type="button">－</button>
-            <button class="ov-btn" id="ov-reset" type="button">重置</button>
-            <button class="ov-btn" id="ov-png" type="button">⬇ 下載 PNG</button>
-            <label class="ov-op">透明<input type="range" id="ov-op" min="20" max="100" value="80"></label>
-        </div>
-        <div id="ov-stage">
-            <img id="ov-img" alt="">
-            <div id="ov-grid"></div>
-            <div id="ov-labels"></div>
-            <div id="ov-knob" title="拖曳旋轉">↻</div>
-            <div id="ov-empty">請上傳平面圖，再拖曳／旋轉／縮放九宮對齊房屋外牆與中宮</div>
-        </div>
-        <div class="ov-tip">拖曳九宮＝移動　·　拖 ↻ 鈕＝旋轉　·　滾輪＝縮放</div>
-    </div>
-</div>
-            
-<div id="controls">
-    <div class="control-panel">
-      
-        <div class="profile-settings zb-only">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 5px; flex-wrap: wrap;">
-                <span style="color: #d35400; font-weight: bold; font-size: 15px; white-space: nowrap;">命主(甲)</span>
-                <label style="white-space: nowrap; margin-left: 5px;">出生年：</label>
-                <input type="number" id="input-year-a" value="1990" min="1900" max="2099" style="width: 70px;">
-                <input type="number" id="input-month-a" min="1" max="12" placeholder="月" title="選填：立春前出生請填月日校正命卦" style="width: 42px;">
-                <input type="number" id="input-day-a" min="1" max="31" placeholder="日" title="選填：立春前出生請填月日校正命卦" style="width: 42px;">
-                <div class="gender-toggle" style="margin-left: 2px;">
-                    <button id="btn-male-a" class="gender-btn active">男</button>
-                    <button id="btn-female-a" class="gender-btn">女</button>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px; flex-wrap: wrap;">
-                <span style="color: #2980b9; font-weight: bold; font-size: 15px; white-space: nowrap;">家人(乙)</span>
-                <label style="white-space: nowrap; margin-left: 5px;">出生年：</label>
-                <input type="number" id="input-year-b" min="1900" max="2099" placeholder="選填" style="width: 70px;">
-                <input type="number" id="input-month-b" min="1" max="12" placeholder="月" title="選填：立春前出生請填月日校正命卦" style="width: 42px;">
-                <input type="number" id="input-day-b" min="1" max="31" placeholder="日" title="選填：立春前出生請填月日校正命卦" style="width: 42px;">
-                <div class="gender-toggle" style="margin-left: 2px;">
-                    <button id="btn-male-b" class="gender-btn active">男</button>
-                    <button id="btn-female-b" class="gender-btn">女</button>
-                </div>
-            </div>
-            <div style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 5px; margin-top: 5px;">
-                <label for="target-date">觀測日期：</label>
-                <input type="date" id="target-date" style="padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit;">
-            </div>
-        </div>
-
-        <div class="control-group zb-only">
-            <label for="house-gua">屋宅坐向：</label>
-            <select id="house-gua">
-                <option value="坎">坎宅 (坐北向南)</option>
-                <option value="艮">艮宅 (坐東北向西南)</option>
-                <option value="震">震宅 (坐東向西)</option>
-                <option value="巽">巽宅 (坐東南向西北)</option>
-                <option value="離">離宅 (坐南向北)</option>
-                <option value="坤">坤宅 (坐西南向東北)</option>
-                <option value="兌">兌宅 (坐西向東)</option>
-                <option value="乾">乾宅 (坐西北向東南)</option>
-            </select>
-        </div>
-
-        <div class="control-group xk-only">
+    <div class="xk-section-top"><span class="xk-eyebrow">宅運與九宮</span><span class="xk-small-note">上南 · 下北 · 左東 · 右西</span></div>
+    <div class="xk-settings">        <div class="control-group xk-only">
             <label for="xk-period">建宅元運：</label>
             <select id="xk-period">
                 <option value="1">上元一運 (1864–1883)</option>
@@ -516,7 +475,94 @@
             </select>
         </div>
 
-        <div class="zb-only" style="display: flex; gap: 10px; margin-bottom: 15px;">
+    </div>
+    <div class="xk-board-toolbar">
+    <div class="xk-sub-toggle">
+        <button id="xk-sub-plate" class="xk-sub-btn active" type="button">九宮方盤</button>
+        <button id="xk-sub-overlay" class="xk-sub-btn" type="button">平面疊圖</button>
+    </div>
+    <button id="xk-replay" class="xk-quiet-btn" type="button" aria-label="重播中宮飛星動畫">↗ 重播飛星</button>
+    </div>
+    <div class="xk-chart-caption"><h2 id="xk-chart-heading">九宮宅盤</h2><span id="xk-chart-status" role="status">坐向同步</span></div>
+    <div class="xk-number-legend"><span class="xk-shan-color">左上 山星</span><span>中央 運星</span><span class="xk-xiang-color">右上 向星</span></div>
+    <div id="xk-plate" role="group" aria-label="玄空九宮宅盤"></div>
+    <div id="xk-flight-summary" class="xk-flight-summary"></div>
+    <div id="xk-overlay" style="display:none;">
+        <div class="ov-bar">
+            <label class="ov-btn">📁 上傳平面圖<input type="file" id="ov-file" accept="image/*" hidden></label>
+            <button class="ov-btn" id="ov-zin" type="button">＋</button>
+            <button class="ov-btn" id="ov-zout" type="button">－</button>
+            <button class="ov-btn" id="ov-reset" type="button">重置</button>
+            <button class="ov-btn" id="ov-png" type="button">⬇ 下載 PNG</button>
+            <label class="ov-op">透明<input type="range" id="ov-op" min="20" max="100" value="80"></label>
+        </div>
+        <div id="ov-stage">
+            <img id="ov-img" alt="">
+            <div id="ov-grid"></div>
+            <div id="ov-labels"></div>
+            <div id="ov-knob" title="拖曳旋轉">↻</div>
+            <div id="ov-empty">請上傳平面圖，再拖曳／旋轉／縮放九宮對齊房屋外牆與中宮</div>
+        </div>
+        <div class="ov-tip">拖曳九宮＝移動　·　拖 ↻ 鈕＝旋轉　·　滾輪＝縮放</div>
+    </div>
+    <details id="xk-reading"><summary>格局與各宮詳解<span>展開閱讀</span></summary><!-- 玄空資訊（格局／法訣／入囚）：放在輸入框下方，文字增減不影響上方面板位置 -->
+<div id="xuankong-info" aria-hidden="true">
+    <div id="xk-info"></div>
+    <div id="xk-legend">
+        <span class="lg lg-shan">山星</span>
+        <span class="lg lg-xiang">向星</span>
+        <span class="lg lg-yun">運星</span>
+        <span class="lg lg-wang">當令旺星</span>
+        <span class="lg lg-rob">打劫三宮</span>
+        <span class="lg lg-gate">可用城門</span>
+        <span class="lg-ver" id="xk-version"></span>
+    </div>
+    <div id="xk-advanced"></div>
+</div>
+    </details>
+</div>
+            
+<div id="controls">
+    <div class="control-panel">
+      
+        <div class="zb-settings-heading zb-only"><span class="zb-eyebrow">命卦與坐向</span><h2>排盤設定</h2></div>
+        <div class="profile-settings zb-only">
+            <fieldset class="zb-profile">
+                <legend>命主 <span>甲</span></legend>
+                <div class="zb-profile-fields">
+                    <label for="input-year-a">出生年<input type="number" id="input-year-a" value="1990" min="1900" max="2099" inputmode="numeric"></label>
+                    <label for="input-month-a">月・選填<input type="number" id="input-month-a" min="1" max="12" placeholder="月" inputmode="numeric" title="立春前出生請填月日校正命卦"></label>
+                    <label for="input-day-a">日・選填<input type="number" id="input-day-a" min="1" max="31" placeholder="日" inputmode="numeric" title="立春前出生請填月日校正命卦"></label>
+                </div>
+                <div class="zb-gender-row"><span>性別</span><div class="gender-toggle" role="group" aria-label="命主性別"><button id="btn-male-a" class="gender-btn active" type="button">男</button><button id="btn-female-a" class="gender-btn" type="button">女</button></div></div>
+            </fieldset>
+            <fieldset class="zb-profile">
+                <legend>家人 <span>乙・選填</span></legend>
+                <div class="zb-profile-fields">
+                    <label for="input-year-b">出生年<input type="number" id="input-year-b" min="1900" max="2099" placeholder="選填" inputmode="numeric"></label>
+                    <label for="input-month-b">月・選填<input type="number" id="input-month-b" min="1" max="12" placeholder="月" inputmode="numeric" title="立春前出生請填月日校正命卦"></label>
+                    <label for="input-day-b">日・選填<input type="number" id="input-day-b" min="1" max="31" placeholder="日" inputmode="numeric" title="立春前出生請填月日校正命卦"></label>
+                </div>
+                <div class="zb-gender-row"><span>性別</span><div class="gender-toggle" role="group" aria-label="家人性別"><button id="btn-male-b" class="gender-btn active" type="button">男</button><button id="btn-female-b" class="gender-btn" type="button">女</button></div></div>
+            </fieldset>
+            <div class="zb-date-field"><label for="target-date">觀測日期</label><input type="date" id="target-date"></div>
+        </div>
+
+        <div class="control-group zb-only">
+            <label for="house-gua">屋宅坐向：</label>
+            <select id="house-gua">
+                <option value="坎">坎宅 (坐北向南)</option>
+                <option value="艮">艮宅 (坐東北向西南)</option>
+                <option value="震">震宅 (坐東向西)</option>
+                <option value="巽">巽宅 (坐東南向西北)</option>
+                <option value="離">離宅 (坐南向北)</option>
+                <option value="坤">坤宅 (坐西南向東北)</option>
+                <option value="兌">兌宅 (坐西向東)</option>
+                <option value="乾">乾宅 (坐西北向東南)</option>
+            </select>
+        </div>
+
+        <div class="zb-mode-actions zb-only" style="display: flex; gap: 10px; margin-bottom: 15px;">
             <button id="btn-qi-toggle" class="qi-toggle-btn" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; line-height: 1.4; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 42px;">
                 👁️ 開啟五氣資訊
             </button>
@@ -536,171 +582,31 @@
         </div>
 
         <div class="input-group">
-            <label for="degree-slider">旋轉角度 (座向): <span id="degree-display">0</span>°</label>
-            <input type="range" id="degree-slider" min="0" max="360" value="0">
+            <label for="degree-slider"><span class="xk-slider-label">向方角度</span> <span id="degree-display">0</span>°</label>
+            <input type="range" id="degree-slider" min="0" max="359.9" step="0.1" value="0">
         </div>
 
+        <div class="xk-manual-actions xk-only"><button id="xk-minus" type="button" aria-label="向方減少一度">− 1°</button><button id="xk-flip" type="button">坐向互換</button><button id="xk-plus" type="button" aria-label="向方增加一度">＋ 1°</button></div>
         <div class="action-row" style="display: flex; gap: 10px; margin-top: 15px;">
             <button id="start-compass-btn" class="btn-main" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 42px;">
                 📡 啟動電子羅盤
             </button>
             <button id="reset-btn" class="btn-sub" style="flex: 1; margin: 0; padding: 10px 5px; font-size: 13px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 42px;">
-                🔄 羅盤關閉歸零
+                回到南向 180°
             </button>
         </div>
-
+        <p class="xk-control-tip xk-only" id="xk-compass-help">拖曳滑桿調整坐向，或啟動電子羅盤。方位穩定後，飛星由中宮展開。</p>
     </div>
 </div>
 
-<!-- 玄空資訊（格局／法訣／入囚）：放在輸入框下方，文字增減不影響上方面板位置 -->
-<div id="xuankong-info" aria-hidden="true">
-    <div id="xk-info"></div>
-    <div id="xk-legend">
-        <span class="lg lg-shan">山星</span>
-        <span class="lg lg-xiang">向星</span>
-        <span class="lg lg-yun">運星</span>
-        <span class="lg lg-wang">當令旺星</span>
-        <span class="lg lg-rob">打劫三宮</span>
-        <span class="lg lg-gate">可用城門</span>
-        <span class="lg-ver" id="xk-version"></span>
-    </div>
-    <div id="xk-advanced"></div>
-</div>
+</div><!-- compass-container -->
+</div><!-- app -->
 <script src="zibai.js"></script>
 <script src="script.js"></script>
 <script src="xuankong.js"></script>
 <script src="xk-overlay.js"></script>
-<script>
-/* ── 玄空模式：頁面配線（與紫白共用坐向，獨立於 script.js） ───────────── */
-(function () {
-  const btnZi = document.getElementById('mode-zibai');
-  const btnXk = document.getElementById('mode-xuankong');
-  const plate = document.getElementById('xk-plate');
-  const info  = document.getElementById('xk-info');
-  const periodSel = document.getElementById('xk-period');
-  const adv   = document.getElementById('xk-advanced');
-  // 當前元運（依現今年份；下元九運 2024–2043＝9）
-  function xkCurrentPeriod() {
-    const y = new Date().getFullYear();
-    return ((Math.floor((y - 1864) / 20)) % 9) + 1;
-  }
-  const elSit = document.getElementById('current-mountain'); // 坐山（由 script.js 更新）
-  const elFac = document.getElementById('current-facing');   // 向山
-
-  function renderAdvanced(r) {
-    if (!r || !r.ok || !r.advanced) { adv.innerHTML = ''; return; }
-    const lines = [];
-    // 全盤伏吟／反吟（主大凶）——放最前面提醒
-    const ff = r.fanFu;
-    if (ff && ff.shan) lines.push('<div class="adv-line adv-danger">⚠ 全盤山星' + ff.shan + '（五黃入中）：主大凶，影響人丁、健康，宜避或大力化解。</div>');
-    if (ff && ff.xiang) lines.push('<div class="adv-line adv-danger">⚠ 全盤向星' + ff.xiang + '（五黃入中）：主大凶，影響財富、功名，宜避或大力化解。</div>');
-    const rob = r.advanced.robbery;
-    if (rob && rob.applicable) {
-      if (rob.success) {
-        lines.push('<div class="adv-line adv-rob">🌟 七星打劫・' + rob.subtype + '：' +
-          rob.palaces.join('、') + ' 三宮向星 ' + rob.stars.join('、') + ' 成三般卦</div>');
-        lines.push('<div class="adv-line adv-note">' + rob.warning + '</div>');
-        (rob.tips || []).forEach((t, i) => lines.push('<div class="adv-line adv-tip">' + (i + 1) + '. ' + t + '</div>'));
-      } else {
-        lines.push('<div class="adv-line adv-fail">七星打劫：不成立（' + rob.reason + '）</div>');
-      }
-    }
-    const gates = (r.advanced.castleGate || []).filter(c => c.valid);
-    if (gates.length) {
-      lines.push('<div class="adv-line adv-gate">🚪 城門訣可用：' +
-        gates.map(c => c.dir + c.palace + '（飛星 ' + c.arriving + '）').join('、') + '</div>');
-      lines.push('<div class="adv-line adv-note">' + gates[0].recommendation + '</div>');
-    } else if (r.advanced.castleGate && r.advanced.castleGate.length) {
-      lines.push('<div class="adv-line adv-fail">城門訣：左右相鄰宮目前皆非當令，無可用城門。</div>');
-    }
-    // 連珠格（大吉）／連茹格（大凶）：滿盤格局
-    const cb = r.combos;
-    if (cb && cb.pearl) {
-      lines.push('<div class="adv-line adv-gate">🔵 連珠格（大吉）：滿盤俱見河圖同道（一六、二七、三八、四九），主大吉。</div>');
-    }
-    if (cb && cb.ru) {
-      lines.push('<div class="adv-line adv-qiu">🔴 連茹格（大凶）：滿盤俱見連續八組（一二…八九），主大凶。</div>');
-    }
-    // 入囚（中宮山星/向星＝當前元運）
-    const im = r.imprisonment;
-    if (im) {
-      lines.push('<div class="adv-line ' + (im.shanQiu ? 'adv-qiu' : 'adv-note') + '">🔒 山星入囚於 ' + im.shanCenter + ' 運' + (im.shanQiu ? '（現運・已入囚）' : '') + '：影響人丁、健康</div>');
-      lines.push('<div class="adv-line ' + (im.xiangQiu ? 'adv-qiu' : 'adv-note') + '">🔒 向星入囚於 ' + im.xiangCenter + ' 運' + (im.xiangQiu ? '（現運・已入囚）' : '') + '：影響財富、功名升遷</div>');
-    }
-    // 逐宮山向組合斷語（放在入囚下方）
-    const pm = r.palaceMeanings;
-    if (pm && pm.length) {
-      lines.push('<div class="adv-sub">各宮山向組合（山星─向星）</div>');
-      pm.forEach(c => {
-        lines.push('<div class="adv-combo c-' + c.tone + '">' +
-          '<b class="cdir">' + c.dir + c.gua + '</b>' +
-          '<span class="cnum">' + c.shan + '–' + c.xiang + '</span>' +
-          '<span class="cname">' + (c.name || '—') + '</span>' +
-          '<span class="cdesc">' + (c.desc || '') + '</span></div>');
-      });
-    }
-    adv.innerHTML = lines.join('');
-  }
-
-  function recompute() {
-    if (!document.body.classList.contains('mode-xk')) return;
-    const sitting = (elSit && elSit.textContent || '').trim();
-    const facing  = (elFac && elFac.textContent || '').trim();
-    const period  = parseInt(periodSel.value, 10);
-    const curPeriod = curSel ? parseInt(curSel.value, 10) : xkCurrentPeriod();
-    const r = window.XuanKong.compute(period, facing, sitting, curPeriod);
-    window.XuanKong.renderSquare(plate, r);
-    if (window.XKOverlay) window.XKOverlay.render(r);
-    if (r.ok) {
-      const tone = { good: 'good', mild: 'mild', bad: 'bad' }[r.pattern.tone] || 'mild';
-      info.innerHTML =
-        '<div class="xk-title">下元' + ['','一','二','三','四','五','六','七','八','九'][period] +
-        '運　坐' + r.sitting.mtn + '（' + r.sitting.dir + '）向' + r.facing.mtn + '（' + r.facing.dir + '）</div>' +
-        '<div class="xk-pattern xk-' + tone + '">【' + r.pattern.name + '】' + r.pattern.desc + '</div>';
-    } else {
-      info.innerHTML = '<div class="xk-pattern">' + (r.reason || '坐向尚未設定') + '</div>';
-    }
-    renderAdvanced(r);
-  }
-
-  function setMode(xk) {
-    document.body.classList.toggle('mode-xk', xk);
-    btnXk.classList.toggle('active', xk);
-    btnZi.classList.toggle('active', !xk);
-    document.getElementById('xuankong-view').setAttribute('aria-hidden', xk ? 'false' : 'true');
-    if (xk) recompute();
-  }
-
-  const verEl = document.getElementById('xk-version');
-  if (verEl && window.XuanKong) verEl.textContent = '玄空 ' + window.XuanKong.VERSION;
-
-  // 當前元運下拉：預設帶出現今實際元運（下元九運 2024–2043），可手動切換推演
-  const curSel = document.getElementById('xk-current-period');
-  if (curSel) curSel.value = String(xkCurrentPeriod());
-
-  btnZi.addEventListener('click', () => setMode(false));
-  btnXk.addEventListener('click', () => setMode(true));
-  periodSel.addEventListener('change', recompute);
-  if (curSel) curSel.addEventListener('change', recompute);
-
-  // 玄空子模式：九宮方盤 / 平面疊圖
-  const btnSubPlate = document.getElementById('xk-sub-plate');
-  const btnSubOverlay = document.getElementById('xk-sub-overlay');
-  function setSub(overlay) {
-    btnSubOverlay.classList.toggle('active', overlay);
-    btnSubPlate.classList.toggle('active', !overlay);
-    document.getElementById('xk-plate').style.display = overlay ? 'none' : 'flex';
-    document.getElementById('xk-overlay').style.display = overlay ? 'block' : 'none';
-    recompute();
-  }
-  btnSubPlate.addEventListener('click', () => setSub(false));
-  btnSubOverlay.addEventListener('click', () => setSub(true));
-
-  // 坐向變動（滑桿 / 羅盤 / 屋宅選單）都會更新 #current-facing/#current-mountain，
-  // 以 MutationObserver 監看，玄空盤即時重排。
-  const obs = new MutationObserver(recompute);
-  [elSit, elFac].forEach(n => { if (n) obs.observe(n, { childList: true, characterData: true, subtree: true }); });
-})();
-</script>
+<script src="xk-dashboard.js"></script>
+<script src="xk-page.js"></script>
+<script src="zb-dashboard.js"></script>
 </body>
 </html>

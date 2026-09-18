@@ -88,10 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
             panel.style.cssText = 'margin-top: 15px; text-align: left; width: 100%; box-sizing: border-box; z-index: 100; position: relative;';
             
             panel.innerHTML = `
-                <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 16px; color: #da7800; display: flex; align-items: center; justify-content: center;">
-                    🔮 動態吉凶預測
+                <h3 class="zb-analysis-title" style="margin-top: 0; margin-bottom: 10px; font-size: 16px; color: #da7800; display: flex; align-items: center; justify-content: center;">
+                    八宮吉凶解析
                 </h3>
-                <div style="font-size: 13px; margin-bottom: 10px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
+                <div class="zb-layer-options" style="font-size: 13px; margin-bottom: 10px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
                     <strong style="display:block; margin-bottom:6px;">選擇星氣疊加層 (打勾自動結算)：</strong>
                     <div style="display:flex; flex-wrap:wrap; gap:8px;">
                         <label><input type="checkbox" id="chk-layer-1" class="layer-chk" value="1" checked> 1.宅星</label>
@@ -105,9 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 <div id="diagnostic-footer" style="padding-top: 4px; text-align: center;"></div>
             `;
-            const controls = document.getElementById('controls');
-            if(controls) { 
-                controls.appendChild(panel); 
+            const workspace = document.getElementById('compass-container');
+            if(workspace) {
+                workspace.appendChild(panel);
             } else { 
                 document.body.appendChild(panel); 
             }
@@ -649,22 +649,22 @@ document.addEventListener('DOMContentLoaded', () => {
 function getStateAndColor(sc) {
     // 🔴 大吉 (Score >= 40)
     if (sc >= 40) {
-        return { state: '極其祥和', color: 'rgba(243, 29, 21, 0.55)' }; // #f31d15
+        return { state: '極其祥和', color: 'rgba(179, 64, 47, 0.32)' }; // #f31d15
     }
     // 🟠 吉 (Score >= 20)
     if (sc >= 20) {
-        return { state: '氣場趨吉', color: 'rgba(249, 139, 83, 0.45)' }; // #f98b53
+        return { state: '氣場趨吉', color: 'rgba(194, 134, 76, 0.32)' }; // #f98b53
     }
     // 🔘 大凶 (Score <= -40)
     if (sc <= -40) {
-        return { state: '能量受阻', color: 'rgba(153, 158, 148, 0.55)' }; // #999e94
+        return { state: '能量受阻', color: 'rgba(118, 119, 110, 0.30)' }; // #999e94
     }
     // 🟢 凶 (Score <= -20)
     if (sc <= -20) {
-        return { state: '氣場波動', color: 'rgba(165, 203, 123, 0.45)' }; // #a5cb7b
+        return { state: '氣場波動', color: 'rgba(124, 145, 96, 0.28)' }; // #a5cb7b
     }
     // 🟡 平 (氣場中和)
-    return { state: '氣場中和', color: 'rgba(245, 192, 75, 0.4)' };     // #f5c04b
+    return { state: '氣場中和', color: 'rgba(185, 155, 98, 0.24)' };     // #f5c04b
 }
 
     const resA = getStateAndColor(scoreA);
@@ -742,7 +742,7 @@ function getStateAndColor(sc) {
     });
     for (let i = 0; i < 24; i++) {
         if (labels24[i].color === '#b42616ff' || labels24[i].subColor === '#b42616ff') {
-            drawAnnularSector(shasLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 240, 267, 90 + (i * 15) - 7.5, 90 + (i * 15) + 7.5, 'rgba(153, 158, 148, 0.55)');
+            drawAnnularSector(shasLayer, RADIAL_LAYOUT.center.x, RADIAL_LAYOUT.center.y, 240, 267, 90 + (i * 15) - 7.5, 90 + (i * 15) + 7.5, 'rgba(118, 119, 110, 0.30)');
         }
         if (labels24[i].main) {
             drawLabel(shasLayer, labels24[i].main, 90 + (i * 15), RADIAL_LAYOUT.twelveShasRadius, labels24[i].color, 12, !!labels24[i].sub, labels24[i].sub, labels24[i].subColor);
@@ -830,6 +830,7 @@ if (centerBg) {
     // ★ 報告輸出 HTML 模板 (含方位顯示與代表家人)
     const outPanel = document.getElementById('diagnostic-output');
     if (outPanel) {
+        const openPalaces = new Set([...outPanel.querySelectorAll('details[open]')].map(node => node.id));
         const GUA_ORDER = ['乾', '坎', '艮', '震', '巽', '離', '坤', '兌'];
         reports.sort((a, b) => GUA_ORDER.indexOf(a.gua) - GUA_ORDER.indexOf(b.gua));
         let html = '';
@@ -899,11 +900,12 @@ if (centerBg) {
             
             // --- ★ 修正2：使用 \${eventContent} 取代寫死的 \${r.events.join('')} ---
             html += `
-        <div id="report-${r.gua}" style="border-bottom: 1px solid #eee; padding: 12px 0;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong style="color:${titleColor}; font-size:15px;">${icon} ${r.gua}宮/${direction} (${r.state})</strong>
-            <span style="font-size: 11px; color: #aaa; background:#f0f0f0; padding:2px 6px; border-radius:10px;">Score: ${r.score}</span>
-        </div>
+        <details id="report-${r.gua}" class="zb-report">
+        <summary>
+            <span class="zb-report-heading"><strong>${r.gua}宮 · ${direction}</strong><span class="zb-report-state" style="color:${titleColor};">${icon} ${r.state}</span></span>
+            <span class="zb-report-score${mingGuaB ? ' is-pair' : ''}">${mingGuaB ? r.score.split(' / ').map(value => `<span>${value}</span>`).join('') : r.score}<small>分</small></span>
+        </summary>
+        <div class="zb-report-body">
         
         <div style="font-size: 12.5px; margin-top:5px; margin-bottom:10px;">
             <span style="color:#666;">代表家人：</span><span style="${memberStyle}">${r.member}</span>
@@ -918,13 +920,15 @@ if (centerBg) {
         ${professionalInterpretation}
 
         ${eventContent}
-    </div>
+        </div>
+    </details>
     `;
         });
         
 
         // 1. 將診斷內容渲染到捲動區域
         outPanel.innerHTML = html;
+        outPanel.querySelectorAll('details').forEach(node => { node.open = openPalaces.has(node.id); });
     }
 
     // 2. 將「吉時表」按鈕單獨渲染到固定的頁腳區域 (不在捲動區內)
@@ -981,6 +985,7 @@ if (centerBg) {
     let targetHeading = 0;
     let isCompassMode = false;
     let animationFrameId = null;
+    let compassRequest = 0, sensorTimeout = null, lastSensorHeading = null;
 
     function getMountain(degree) {
         let deg = (degree % 360 + 360) % 360;
@@ -996,23 +1001,20 @@ if (centerBg) {
     }
 
     function updateUI(degree) {
-        const deg = Math.round(degree);
-        
-        if (degreeSlider && document.activeElement !== degreeSlider) {
-            degreeSlider.value = deg;
-        }
-        if (degreeDisplay) {
-            degreeDisplay.textContent = deg;
-        }
-
+        if (!Number.isFinite(degree)) return;
+        const deg = ((degree % 360) + 360) % 360;
+        const shown = Number(deg.toFixed(1)) % 360;
+        targetHeading = deg;
+        if (degreeSlider && (isCompassMode || document.activeElement !== degreeSlider)) degreeSlider.value = shown;
         const facingName = getMountain(deg);
         const sittingDegree = (deg + 180) % 360;
         const sittingName = getMountain(sittingDegree);
-
-        if (elSittingName) elSittingName.textContent = sittingName;
-        if (elFacingName) elFacingName.textContent = facingName;
-        if (elSittingDeg) elSittingDeg.textContent = Math.round(sittingDegree);
-        if (elFacingDeg) elFacingDeg.textContent = deg;
+        // Only mutate changed text nodes. Other modules share these values.
+        [[degreeDisplay, shown], [elSittingName, sittingName], [elFacingName, facingName],
+         [elSittingDeg, Number(sittingDegree.toFixed(1)) % 360], [elFacingDeg, shown]].forEach(([el,value]) => {
+            if (el && el.textContent !== String(value)) el.textContent = value;
+        });
+        window.dispatchEvent(new CustomEvent('fengshui:heading', {detail:{heading:deg, source:isCompassMode?'sensor':'manual'}}));
     }
 
     function animationLoop() {
@@ -1021,48 +1023,96 @@ if (centerBg) {
         animationFrameId = requestAnimationFrame(animationLoop);
     }
 
+    function compassStatus(text, state, help) {
+        const status = document.getElementById('xk-sensor-status');
+        if (status) { status.textContent = text; status.dataset.state = state; }
+        if (help) document.getElementById('xk-compass-help').textContent = help;
+    }
+
     function setCompassMode(active) {
         isCompassMode = active;
+        const button = document.getElementById('start-compass-btn');
+        button.setAttribute('aria-pressed', String(active));
+        button.textContent = active ? '固定目前角度' : '啟動電子羅盤';
         if (active) {
             svgPlate.style.transition = 'none';
             if (!animationFrameId) animationLoop();
         } else {
+            compassRequest++;
+            clearTimeout(sensorTimeout);
             cancelAnimationFrame(animationFrameId);
             animationFrameId = null;
+            window.removeEventListener('deviceorientation', handleOrientation, true);
+            window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
+            lastSensorHeading = null;
             svgPlate.style.transition = 'transform 0.5s ease-out';
+            compassStatus('手動模式', 'manual', '拖曳滑桿調整坐向，或啟動電子羅盤。方位穩定後，飛星由中宮展開。');
         }
     }
 
+    function screenAngle() {
+        return typeof window.screen.orientation?.angle === 'number' ? window.screen.orientation.angle : (window.orientation || 0);
+    }
     function handleOrientation(event) {
-        let compassHeading;
-        if (event.webkitCompassHeading) {
-            compassHeading = event.webkitCompassHeading;
-        } else if (event.alpha) {
-            compassHeading = 360 - event.alpha;
+        if (!isCompassMode) return;
+        let heading;
+        // Zero is a valid north reading; relative alpha is not a compass bearing.
+        if (typeof event.webkitCompassHeading === 'number' && Number.isFinite(event.webkitCompassHeading)) {
+            if (typeof event.webkitCompassAccuracy === 'number' && event.webkitCompassAccuracy < 0) return;
+            heading = event.webkitCompassHeading;
+        } else if ((event.absolute === true || event.type === 'deviceorientationabsolute') && typeof event.alpha === 'number' && Number.isFinite(event.alpha)) {
+            heading = 360 - event.alpha;
         }
-
-        if (compassHeading !== undefined && compassHeading !== null) {
-            targetHeading = compassHeading;
-            updateUI(compassHeading); 
-        }
+        if (!Number.isFinite(heading)) return;
+        clearTimeout(sensorTimeout);
+        lastSensorHeading = heading;
+        // Follow the top edge of the visible screen in portrait AND landscape.
+        updateUI(heading + screenAngle());
+        compassStatus('感應中', 'active', '讓 iPad 保持平放，以螢幕上緣指向向方；按「固定目前角度」可停住宅盤。');
     }
+    function refreshScreenHeading() {
+        if (isCompassMode && lastSensorHeading !== null) updateUI(lastSensorHeading + screenAngle());
+    }
+    window.addEventListener('orientationchange', refreshScreenHeading);
+    if (window.screen.orientation) window.screen.orientation.addEventListener('change', refreshScreenHeading);
 
-    function startCompass() {
+    async function startCompass() {
+        if (isCompassMode) { setCompassMode(false); return; }
+        if (!window.isSecureContext) {
+            compassStatus('需安全連線', 'error', '請在 Safari 開啟 HTTPS 網址使用電子羅盤；目前仍可用滑桿設定坐向。');
+            return;
+        }
+        if (typeof DeviceOrientationEvent === 'undefined') {
+            compassStatus('無方位感測器', 'error', '此裝置無法提供方位感測，請使用滑桿設定坐向。');
+            return;
+        }
         setCompassMode(true);
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission()
-                .then(response => {
-                    if (response === 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation, true);
-                    } else {
-                        alert("羅盤感測權限被拒絕，請檢查 Safari 的設定。");
-                        setCompassMode(false);
-                    }
-                })
-                .catch(console.error);
-        } else {
-            window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+        const request = ++compassRequest;
+        compassStatus('等待權限', 'pending');
+        try {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // This call stays inside the button's user activation.
+                const response = await DeviceOrientationEvent.requestPermission();
+                if (request !== compassRequest || !isCompassMode) return;
+                if (response !== 'granted') {
+                    setCompassMode(false);
+                    compassStatus('權限未開啟', 'error', '尚未允許動作與方向權限。可在 Safari 的網站設定確認，或使用滑桿。');
+                    return;
+                }
+            }
+            if (request !== compassRequest || !isCompassMode) return;
             window.addEventListener('deviceorientation', handleOrientation, true);
+            window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+            compassStatus('等待方位', 'pending');
+            sensorTimeout = setTimeout(() => {
+                if (!isCompassMode || lastSensorHeading !== null) return;
+                setCompassMode(false);
+                compassStatus('未收到方位', 'error', '未收到羅盤方位，請確認裝置支援感測，並在 Safari 允許動作與方向；也可用滑桿。');
+            }, 8000);
+        } catch (error) {
+            if (request !== compassRequest) return;
+            setCompassMode(false);
+            compassStatus('無法啟動', 'error', '無法取得方位權限，請在 Safari 開啟網站後重試，或使用滑桿。');
         }
     }
 
@@ -1268,7 +1318,8 @@ if (centerBg) {
     if (selectHouse) selectHouse.addEventListener('change', updateAll);
     
     window.setDegree = function(deg) {
-        window.removeEventListener('deviceorientation', handleOrientation);
+        window.removeEventListener('deviceorientation', handleOrientation, true);
+        window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
         if (typeof setCompassMode === 'function') setCompassMode(false);
         if (typeof updateUI === 'function') updateUI(deg); 
         if (typeof renderRotation === 'function') renderRotation(deg);
