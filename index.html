@@ -2,11 +2,20 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#283a2f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="小六風水">
+    <meta name="application-name" content="小六太乙・陽宅風水">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <title>陽宅風水線上排盤</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="xk-dashboard.css">
     <link rel="stylesheet" href="zb-dashboard.css">
+    <link rel="stylesheet" href="app-tools.css">
 </head>
 <body>
 
@@ -24,6 +33,19 @@
             <button id="mode-zibai" class="mode-btn active" type="button">紫白飛星</button>
             <button id="mode-xuankong" class="mode-btn" type="button">玄空陽宅</button>
         </div>
+
+        <section class="app-tools" aria-label="排盤檔案與安裝">
+            <label class="app-case-label" for="case-name">案件名稱<input id="case-name" type="text" maxlength="80" placeholder="例如：自宅客廳（選填）" autocomplete="off"></label>
+            <div class="app-tool-buttons">
+                <button id="save-file-btn" type="button">存檔</button>
+                <button id="load-file-btn" type="button">讀取</button>
+                <input id="load-file-input" type="file" accept=".json,application/json" hidden>
+                <button id="pwa-install-btn" type="button">加入主畫面</button>
+                <button id="pwa-update-btn" type="button" hidden>更新版本</button>
+            </div>
+            <p id="file-status" role="status" aria-live="polite">存檔會保存兩頁設定、目前角度與平面圖。</p>
+            <span id="pwa-status" role="status" aria-live="polite">準備離線功能…</span>
+        </section>
 
         <div id="compass-container">
 
@@ -504,6 +526,7 @@
             <div id="ov-empty">請上傳平面圖，再拖曳／旋轉／縮放九宮對齊房屋外牆與中宮</div>
         </div>
         <div class="ov-tip">拖曳九宮＝移動　·　拖 ↻ 鈕＝旋轉　·　滾輪＝縮放</div>
+        <p id="ov-file-status" class="ov-tip" role="status" aria-live="polite"></p>
     </div>
     <details id="xk-reading"><summary>格局與各宮詳解<span>展開閱讀</span></summary><!-- 玄空資訊（格局／法訣／入囚）：放在輸入框下方，文字增減不影響上方面板位置 -->
 <div id="xuankong-info" aria-hidden="true">
@@ -601,6 +624,13 @@
 
 </div><!-- compass-container -->
 </div><!-- app -->
+<dialog id="pwa-install-dialog" aria-labelledby="pwa-install-title">
+    <h2 id="pwa-install-title">加入主畫面</h2>
+    <p>iPhone／iPad：用 Safari 開啟網站，點「分享」→「加入主畫面」。若顯示「以網頁 App 開啟」，請保持開啟。</p>
+    <p>Android／電腦：在瀏覽器選單選擇「安裝應用程式」或「加入主畫面」。</p>
+    <p>首次連網開啟，等候「離線已就緒」後，即可離線使用排盤與存讀檔。</p>
+    <form method="dialog"><button type="submit">知道了</button></form>
+</dialog>
 <script src="zibai.js"></script>
 <script src="script.js"></script>
 <script src="xuankong.js"></script>
@@ -608,5 +638,7 @@
 <script src="xk-dashboard.js"></script>
 <script src="xk-page.js"></script>
 <script src="zb-dashboard.js"></script>
+<script src="app-storage.js"></script>
+<script src="pwa.js"></script>
 </body>
 </html>

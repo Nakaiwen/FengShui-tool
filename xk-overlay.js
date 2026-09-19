@@ -12,6 +12,8 @@
   let st = { cx: 0, cy: 0, scale: 1, rot: 0, op: 0.8 };
   let labels = [];      // {el, lx, ly}
   let lastR = null, inited = false;
+  let imageData = null, imageJob = Promise.resolve(), imageRequest = 0;
+  let frame = {width:0,height:0}, pendingLayout = null;
 
   function stage() { return $('ov-stage'); }
 
@@ -45,15 +47,80 @@
     $('ov-png').addEventListener('click', exportPNG);
     $('ov-op').addEventListener('input', e => { st.op = e.target.value / 100; apply(); });
     // 上傳圖
+    $('ov-file').accept = 'image/png,image/jpeg,image/webp,image/gif';
     $('ov-file').addEventListener('change', e => {
       const f = e.target.files[0]; if (!f) return;
-      const img = $('ov-img'); img.onload = () => { $('ov-empty').style.display = 'none'; }; img.src = URL.createObjectURL(f);
+      const request = ++imageRequest, note = $('ov-file-status');
+      note.dataset.state = ''; note.textContent = '正在載入平面圖…';
+      imageJob = (async () => {
+        if (!/^image\/(png|jpeg|webp|gif)$/.test(f.type) || f.size > 8 * 1024 * 1024) throw new Error('請選擇 8 MB 以下的 PNG、JPEG、WebP 或 GIF。');
+        const data = await new Promise((resolve,reject) => {
+          const reader = new FileReader(); reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('圖片讀取失敗。')); reader.readAsDataURL(f);
+        });
+        await decodeImage(data);
+        if (request !== imageRequest) return;
+        setImage(data); note.textContent = '平面圖已載入，會一併包含在存檔中。';
+      })().catch(error => {
+        if (request === imageRequest) { note.dataset.state = 'error'; note.textContent = error.message; }
+      }).finally(() => { e.target.value = ''; });
     });
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(sg);
   }
 
   function reset() {
     const sg = stage();
+    pendingLayout = null; frame = {width:sg.clientWidth,height:sg.clientHeight};
     st.scale = 1; st.rot = 0; st.cx = sg.clientWidth / 2; st.cy = sg.clientHeight / 2; apply();
+  }
+
+  function layoutState() {
+    if (pendingLayout) return {...pendingLayout};
+    return {x:frame.width ? st.cx/frame.width : .5, y:frame.height ? st.cy/frame.height : .5,
+      size:frame.width ? SZ*st.scale/frame.width : 1, rotation:st.rot, opacity:st.op};
+  }
+  function resize() {
+    const sg = stage();
+    if (!sg.clientWidth || !sg.clientHeight) return;
+    const saved = layoutState();
+    frame = {width:sg.clientWidth,height:sg.clientHeight}; pendingLayout = null;
+    st.cx = saved.x*frame.width; st.cy = saved.y*frame.height;
+    st.scale = saved.size*frame.width/SZ; st.rot = saved.rotation; st.op = saved.opacity;
+    apply();
+  }
+  function setImage(data) {
+    imageData = data;
+    if (data) $('ov-img').src = data; else $('ov-img').removeAttribute('src');
+    $('ov-empty').style.display = data ? 'none' : '';
+  }
+  function decodeImage(data) {
+    if (!data) return Promise.resolve();
+    return new Promise((resolve,reject) => {
+      const image = new Image();
+      const timer = setTimeout(() => reject(new Error('平面圖無法載入，請重新選擇圖片。')),10000);
+      image.onload = () => { clearTimeout(timer); image.naturalWidth && image.naturalHeight ? resolve() : reject(new Error('平面圖內容不正確。')); };
+      image.onerror = () => { clearTimeout(timer); reject(new Error('平面圖內容不正確。')); };
+      image.src = data;
+    });
+  }
+  function validateState(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('平面疊圖設定不正確。');
+    const limits = {x:[-100,100],y:[-100,100],size:[.01,100],rotation:[-36000,36000],opacity:[.2,1]}, result = {};
+    for (const [key,[min,max]] of Object.entries(limits)) {
+      if (typeof value[key] !== 'number' || !Number.isFinite(value[key]) || value[key] < min || value[key] > max) throw new Error('平面疊圖位置或大小不正確。');
+      result[key] = value[key];
+    }
+    if (value.image !== null && (typeof value.image !== 'string' || value.image.length > 12*1024*1024 || !/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/.test(value.image))) throw new Error('平面圖格式不正確。');
+    result.image = value.image;
+    return result;
+  }
+  function restore(value) {
+    ensureInit(); imageRequest++; imageJob = Promise.resolve();
+    pendingLayout = {...value}; setImage(value.image);
+    $('ov-op').value = String(Math.round(value.opacity*100));
+    $('ov-file-status').textContent = value.image ? '已從存檔還原平面圖。' : '';
+    $('ov-file-status').dataset.state = '';
+    resize();
   }
 
   function buildGrid(r) {
@@ -156,9 +223,10 @@
     lastR = r;
     if (!r || !r.ok) { $('ov-grid').innerHTML = ''; $('ov-labels').innerHTML = ''; labels = []; return; }
     buildGrid(r); buildLabels(r);
-    if (!st.cx && !st.cy) { const sg = stage(); st.cx = sg.clientWidth / 2; st.cy = sg.clientHeight / 2; }
-    apply();
+    resize(); apply();
   }
 
-  window.XKOverlay = { render, reset, exportPNG };
+  window.XKOverlay = { render, reset, exportPNG, validateState, restore,
+    snapshot: () => ({...layoutState(),image:imageData}),
+    whenImageReady: () => imageJob, prepareState: value => decodeImage(value.image) };
 })();

@@ -170,4 +170,12 @@
     setMode(location.hash === '#xuankong');
   });
   window.addEventListener('hashchange', () => setMode(location.hash === '#xuankong'));
+  window.XKPageState = {
+    snapshot: () => ({period:Number(periodSel.value), currentPeriod:Number(curSel.value), view:overlayActive?'overlay':'plate', detailsOpen:document.getElementById('xk-reading').open}),
+    restore(state, mode) {
+      periodSel.value = String(state.period); curSel.value = String(state.currentPeriod);
+      setMode(mode === 'xuankong'); setSub(state.view === 'overlay');
+      document.getElementById('xk-reading').open = state.detailsOpen;
+    }
+  };
 })();

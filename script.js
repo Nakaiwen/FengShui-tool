@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Private browsing or full storage must not prevent file save/load or chart startup.
+    const preferences = {
+        getItem(key) { try { return localStorage.getItem(key); } catch (_) { return null; } },
+        setItem(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+    };
 
     // =================================================================
     //  SECTION 1: 核心資料與設定 (★ 包含您的專屬記憶庫)
@@ -1121,13 +1126,13 @@ if (centerBg) {
     // =================================================================
     function init() {
     // --- 1. 抓取 LocalStorage 暫存狀態 (擴充雙人版) ---
-    const savedYearA = localStorage.getItem('fsSavedYearA');
-    const savedYearB = localStorage.getItem('fsSavedYearB');
-    const savedGenderA = localStorage.getItem('fsSavedGenderA');
-    const savedGenderB = localStorage.getItem('fsSavedGenderB');
-    const savedGua = localStorage.getItem('fsSavedGua');
-    const savedDate = localStorage.getItem('fsSavedDate'); 
-    const isLocked = localStorage.getItem('fsIsLocked') === 'true';
+    const savedYearA = preferences.getItem('fsSavedYearA');
+    const savedYearB = preferences.getItem('fsSavedYearB');
+    const savedGenderA = preferences.getItem('fsSavedGenderA');
+    const savedGenderB = preferences.getItem('fsSavedGenderB');
+    const savedGua = preferences.getItem('fsSavedGua');
+    const savedDate = preferences.getItem('fsSavedDate');
+    const isLocked = preferences.getItem('fsIsLocked') === 'true';
 
     // --- 2. 取得 DOM 元素 ---
     const inputYearA = document.getElementById('input-year-a');
@@ -1141,6 +1146,8 @@ if (centerBg) {
     const qiToggleBtn = document.getElementById('btn-qi-toggle');
     const lockBtn = document.getElementById('lock-btn');
     const degreeSlider = document.getElementById('degree-slider');
+    const birthdayParts = ['input-month-a','input-day-a','input-month-b','input-day-b'].map(id => document.getElementById(id));
+    birthdayParts.forEach(el => { const value = preferences.getItem('fs:' + el.id); if (value !== null) el.value = value; });
 
     // --- 3. 五氣切換 ---
     if (qiToggleBtn) {
@@ -1195,6 +1202,10 @@ if (centerBg) {
     // --- 6. 鎖定/解鎖功能 (雙人防護) ---
     function toggleLock(forceState = null) {
         const willLock = forceState !== null ? forceState : !(lockBtn.classList.contains('locked'));
+        birthdayParts.forEach(el => {
+            el.disabled = willLock;
+            if (willLock) preferences.setItem('fs:' + el.id, el.value);
+        });
         
         if (willLock) {
             if(inputYearA) inputYearA.disabled = true;
@@ -1211,13 +1222,13 @@ if (centerBg) {
                 lockBtn.textContent = '🔒 資訊已鎖定';
             }
 
-            if(inputYearA) localStorage.setItem('fsSavedYearA', inputYearA.value);
-            if(inputYearB) localStorage.setItem('fsSavedYearB', inputYearB.value);
-            localStorage.setItem('fsSavedGenderA', userSettings.genderA);
-            localStorage.setItem('fsSavedGenderB', userSettings.genderB);
-            if(selectHouse) localStorage.setItem('fsSavedGua', selectHouse.value);
-            if(dateInput) localStorage.setItem('fsSavedDate', dateInput.value); 
-            localStorage.setItem('fsIsLocked', 'true');
+            if(inputYearA) preferences.setItem('fsSavedYearA', inputYearA.value);
+            if(inputYearB) preferences.setItem('fsSavedYearB', inputYearB.value);
+            preferences.setItem('fsSavedGenderA', userSettings.genderA);
+            preferences.setItem('fsSavedGenderB', userSettings.genderB);
+            if(selectHouse) preferences.setItem('fsSavedGua', selectHouse.value);
+            if(dateInput) preferences.setItem('fsSavedDate', dateInput.value);
+            preferences.setItem('fsIsLocked', 'true');
 
         } else {
             if(inputYearA) inputYearA.disabled = false;
@@ -1233,7 +1244,7 @@ if (centerBg) {
                 lockBtn.classList.remove('locked');
                 lockBtn.textContent = '🔓 資訊已解鎖';
             }
-            localStorage.setItem('fsIsLocked', 'false');
+            preferences.setItem('fsIsLocked', 'false');
         }
     }
 
@@ -1324,6 +1335,39 @@ if (centerBg) {
         if (typeof updateUI === 'function') updateUI(deg); 
         if (typeof renderRotation === 'function') renderRotation(deg);
     }
+
+    // File adapter: imports use already-validated settings, then redraw only once.
+    window.ZiBaiPageState = {
+        snapshot() {
+            const person = key => ({
+                year: document.getElementById('input-year-' + key).value === '' ? null : Number(document.getElementById('input-year-' + key).value),
+                month: document.getElementById('input-month-' + key).value === '' ? null : Number(document.getElementById('input-month-' + key).value),
+                day: document.getElementById('input-day-' + key).value === '' ? null : Number(document.getElementById('input-day-' + key).value),
+                gender: userSettings[key === 'a' ? 'genderA' : 'genderB']
+            });
+            return {personA:person('a'), personB:person('b'), houseGua:selectHouse.value,
+                date:dateInput.value, qiMode:isQiMode, locked:lockBtn.classList.contains('locked'),
+                layers:[...document.querySelectorAll('.layer-chk:checked')].map(el => Number(el.value)),
+                openPalaces:[...document.querySelectorAll('.zb-report[open]')].map(el => el.id.slice(7))};
+        },
+        heading: () => targetHeading,
+        restore(state, heading) {
+            [['a', state.personA], ['b', state.personB]].forEach(([key, person]) => {
+                ['year','month','day'].forEach(part => { document.getElementById('input-' + part + '-' + key).value = person[part] ?? ''; });
+                userSettings[key === 'a' ? 'genderA' : 'genderB'] = person.gender;
+                ['male','female'].forEach(gender => document.getElementById('btn-' + gender + '-' + key).classList.toggle('active', gender === person.gender));
+            });
+            selectHouse.value = state.houseGua; dateInput.value = state.date;
+            isQiMode = state.qiMode;
+            qiToggleBtn.classList.toggle('active', isQiMode);
+            qiToggleBtn.textContent = isQiMode ? '👁️ 關閉五氣資訊' : '👁️ 開啟五氣資訊';
+            document.querySelectorAll('.layer-chk').forEach(el => { el.checked = state.layers.includes(Number(el.value)); });
+            toggleLock(state.locked);
+            window.setDegree(heading); // Cancel live and pending sensors before restoring an angle.
+            updateAll();
+            document.querySelectorAll('.zb-report').forEach(el => { el.open = state.openPalaces.includes(el.id.slice(7)); });
+        }
+    };
 
     // --- 9. 最終執行繪製 ---
     updateAll();
