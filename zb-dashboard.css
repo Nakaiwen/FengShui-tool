@@ -29,14 +29,18 @@ body:not(.mode-xk) #zb-compass-panel {
 .zb-panel-top h2, .zb-settings-heading h2 { font: 500 24px/1.2 "STKaiti", "KaiTi", "Songti TC", serif; letter-spacing: 3px; margin: 6px 0 0; }
 .zb-bearing { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; color: var(--zb-muted); font-size: 10px; }
 .zb-bearing output { font: 400 23px/1.2 Georgia, serif; color: var(--zb-gold-ink); font-variant-numeric: tabular-nums; }
-.zb-dial-stage { position: relative; width: 100%; max-width: 640px; aspect-ratio: 1; margin: 18px auto 12px; }
+.zb-dial-stage { position: relative; width: 100%; max-width: 640px; aspect-ratio: 1; container-type: inline-size; margin: 18px auto 12px; }
 body:not(.mode-xk) #FengShui-plate { display: block; width: 100%; height: 100%; filter: none; }
-body:not(.mode-xk) #center-overlay { width: 23%; height: 23%; }
-body:not(.mode-xk) #center-bg { width: 100%; height: 100%; gap: 3px; background: var(--zb-card); border-radius: 50%; }
-body:not(.mode-xk) #center-main-text { color: var(--zb-ink); font: 500 clamp(17px, 2vw, 24px)/1.15 "STKaiti", "KaiTi", serif; margin: 1px 0; }
-body:not(.mode-xk) #center-year-text { font-size: clamp(10px, 1.15vw, 13px); color: var(--zb-moss); }
-body:not(.mode-xk) #center-ming-text { color: var(--zb-gold-ink); font-size: clamp(9px, 1.05vw, 12px); }
-body:not(.mode-xk) #center-sub-text { color: var(--zb-muted); font-size: clamp(9px, 1.05vw, 12px); margin: 0; }
+/* The SVG's original center has radius 56 in a 560-unit viewBox (20% diameter).
+   Let that circle supply the paper fill; an extra opaque overlay hides the gua ring.
+   cqi sizes follow the dial, keeping all four text rows inside its center circle. */
+body:not(.mode-xk) #center-overlay { width: 18.5%; height: 18.5%; top: 50.0643%; left: 50.0643%; }
+body:not(.mode-xk) #center-bg { width: 100%; height: 100%; gap: .25cqi; background: transparent; border-radius: 50%; }
+body:not(.mode-xk) #center-bg > div { flex: none; white-space: nowrap; line-height: 1.1; }
+body:not(.mode-xk) #center-main-text { color: var(--zb-ink); font: 500 3.6cqi/1.1 "STKaiti", "KaiTi", serif; margin: 0; }
+body:not(.mode-xk) #center-year-text { font-size: 2.5cqi; color: var(--zb-moss); }
+body:not(.mode-xk) #center-ming-text { color: var(--zb-gold-ink); font-size: 2.15cqi; }
+body:not(.mode-xk) #center-sub-text { color: var(--zb-muted); font-size: 2.15cqi; margin: 0; }
 /* Static line art is ivory and gold; semantic star colors stay distinguishable. */
 body:not(.mode-xk) #FengShui-plate :is(.st11,.st19,.st2,.st5,.st12,.st7,.st9,.st10) { fill: var(--zb-card); }
 body:not(.mode-xk) #FengShui-plate :is(.st0,.st1,.st3,.st7,.st9,.st10,.st11,.st2,.st12) { stroke: var(--zb-gold); }
@@ -166,8 +170,6 @@ body:not(.mode-xk) .btn-main:hover, body:not(.mode-xk) #btn-view-lucky-time:hove
   .zb-profile { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: end; }
   .zb-gender-row { flex-direction: column; gap: 6px; margin: 0; }
   body:not(.mode-xk) #diagnostic-output { grid-template-columns: 1fr; }
-  body:not(.mode-xk) #center-bg { gap: 1px; }
-  body:not(.mode-xk) #center-main-text { font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) {
   body:not(.mode-xk) .lucky-pulse { animation: none; opacity: .5; }
