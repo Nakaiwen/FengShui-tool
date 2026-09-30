@@ -1,6 +1,12 @@
-# 小六太乙・陽宅風水 PWA（1.7.0）
+# 小六太乙・陽宅風水 PWA（1.8.0）
 
-包含紫白飛星、玄空宅盤、電子羅盤、飛星動畫，以及本次新增的「存檔」「讀取」「加入主畫面」。已保留九宮數字間距、紫白頁面捲動與中心底色修正。
+包含紫白飛星、玄空宅盤、電子羅盤、飛星動畫、「存檔」「讀取」「加入主畫面」，以及 1.8.0 新增的「室內 3D」分頁。已保留九宮數字間距、紫白頁面捲動與中心底色修正。
+
+## 1.8.0 更新
+
+- 新增「室內 3D」分頁（sim3d 0.2.0）：範例屋依向方角度擺放，地板分八宮著色（宅卦遊星／流年飛星／命主甲乙），家具可拖曳旋轉並即時說明所在宮位；飛星時間軸可逐月預覽九運 2024–2043，年星、月星沿洛書路徑在屋內飛動。飛星、遊星、五氣、格局與節氣換月全部取自 zibai.js，不另算。
+- 修正離線安裝：快取清單原本列了不存在的 `icons/icon.svg`，使離線快取整批失敗、一直顯示「離線準備未完成」。已移除該項，網頁小圖示改用 `icons/icon-192.png`。
+- 補上 `scripts/build-release.py`：重算離線版本號，並在缺檔時中止。
 
 ## 上傳 GitHub
 
@@ -49,6 +55,6 @@ Android／電腦可按頁面的「安裝工具」，或從瀏覽器選單安裝�
 
 已用模擬 DOM、感測事件及 service worker 執行環境，驗證雙頁存讀檔、無效檔案、平面圖還原、GitHub 子目錄離線快取與更新隔離；尚未完成真實 iPad／Safari 安裝及硬體驗收。
 
-若繼續修改程式，發布前執行 `python scripts/build-release.py --output /完整輸出路徑`，更新離線資源版本並產生新 ZIP。開發測試：`npm install` 後執行 `npm test`。這些開發步驟不需要由單純上傳本包的使用者執行。
+若繼續修改程式，發布前執行 `python3 scripts/build-release.py`（加 `--output /完整輸出路徑.zip` 可另外產生上傳用 ZIP），更新離線資源版本；FILES 清單有缺檔會直接中止。原本的 `npm test` 測試腳本不在此 repo 內。這些開發步驟不需要由單純上傳本包的使用者執行。
 
 PWA 安裝與離線機制參考：[MDN 安裝說明](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)、[Service Worker 說明](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers)。

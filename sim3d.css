@@ -1,0 +1,103 @@
+/* 室內 3D 方位模擬（sim3d.js）— 沿用紫白頁的 --zb-* 色票；只在 body.mode-3d 生效 */
+.s3-only { display: none !important; }
+body.mode-3d header.s3-only { display: flex !important; }
+body.mode-3d section.s3-only { display: block !important; }
+body.mode-3d .zb-masthead:not(.s3-only),
+body.mode-3d #zb-compass-panel,
+body.mode-3d #ai-diagnostic-panel,
+body.mode-3d .zb-mode-actions { display: none !important; }
+
+body.mode-3d #sim3d-view {
+  grid-column: 1; grid-row: 1; min-width: 0; padding: 24px 20px 18px;
+  border: 1px solid var(--zb-line); border-radius: 20px; background: var(--zb-card); box-shadow: 0 8px 28px #49381508;
+}
+body.mode-3d #controls { grid-row: 1; align-self: start; }
+@media (max-width: 959px) { body.mode-3d #controls { grid-row: auto; } }
+
+.s3-warn { margin: 12px 6px 0; padding: 10px 12px; border-radius: 10px; background: #fbeee6; border: 1px solid #e7c3b5; color: var(--zb-ink); font-size: 13px; line-height: 1.7; }
+.s3-warn .s3-btn { margin-left: 8px; }
+
+.s3-stage { position: relative; height: clamp(340px, 52vw, 600px); margin: 14px 0 12px; border-radius: 14px; overflow: hidden; background: var(--zb-wash); border: 1px solid var(--zb-line); }
+#s3-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+#s3-canvas.dragging { cursor: grabbing; }
+.s3-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.s3-lbl { position: absolute; left: 0; top: 0; will-change: transform; }
+.s3-sec { display: flex; flex-direction: column; font-size: 12px; line-height: 1.4; padding: 5px 9px; border-radius: 7px; white-space: nowrap;
+  background: color-mix(in srgb, var(--zb-card) 93%, transparent); border: 1px solid var(--zb-line); border-left: 4px solid var(--s3-sw, var(--zb-rule)); color: var(--zb-ink); box-shadow: 0 1px 3px #4938150f; }
+.s3-sec b { font: 500 14px/1.3 "STKaiti", "KaiTi", "Songti TC", serif; margin-right: 3px; }
+.s3-sec .l3 { color: var(--zb-muted); }
+.s3-sec.good { --s3-sw: var(--zb-moss); } .s3-sec.mid { --s3-sw: var(--zb-gold); } .s3-sec.care { --s3-sw: var(--zb-fire); }
+.s3-sec.compact .l2, .s3-sec.compact .l3 { display: none; }
+.s3-sec.sel { outline: 2px solid var(--zb-ink); outline-offset: 1px; }
+.s3-cmp { font: 500 13px "STKaiti", "KaiTi", "Songti TC", serif; color: var(--zb-muted); }
+.s3-cmp.n { color: var(--zb-fire); font-size: 15px; }
+.s3-door { font-size: 12px; color: var(--zb-fire); background: var(--zb-card); border: 1px solid var(--zb-fire); border-radius: 5px; padding: 1px 7px; }
+.s3-toolbar { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+.s3-toolbar button { pointer-events: auto; font: 500 12.5px/1 inherit; font-family: inherit; color: var(--zb-ink); background: var(--zb-card); border: 1px solid var(--zb-line); border-radius: 8px; padding: 8px 10px; cursor: pointer; min-height: 34px; }
+.s3-toolbar button[aria-pressed="true"] { background: var(--zb-ink); color: var(--zb-card); border-color: var(--zb-ink); }
+.s3-hint { position: absolute; left: 10px; bottom: 10px; font-size: 11px; color: var(--zb-muted); background: var(--zb-card); border: 1px solid var(--zb-line); border-radius: 6px; padding: 3px 8px; }
+.s3-hint-s { display: none; }
+.s3-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--zb-muted); font-size: 13px; padding: 20px; text-align: center; }
+.s3-loading[hidden] { display: none; }
+
+.s3-seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--zb-line); border-radius: 10px; overflow: hidden; background: var(--zb-card); }
+.s3-seg button { font: inherit; font-size: 13px; padding: 9px 4px; border: 0; background: transparent; color: var(--zb-moss); cursor: pointer; min-height: 40px; }
+.s3-seg button + button { border-left: 1px solid var(--zb-line); }
+.s3-seg button[aria-checked="true"] { background: var(--zb-ink); color: var(--zb-card); }
+.s3-seg button:disabled { color: var(--zb-rule); cursor: not-allowed; }
+.s3-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 4px 4px; font-size: 11px; color: var(--zb-muted); }
+.s3-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; border: 1px solid #0000001a; }
+
+.s3-card { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--zb-line); }
+.s3-card h3 { margin: 0 0 8px; font: 500 18px/1.3 "STKaiti", "KaiTi", "Songti TC", serif; letter-spacing: 2px; color: var(--zb-ink); }
+.s3-title { margin: 0; font: 500 20px/1.3 "STKaiti", "KaiTi", "Songti TC", serif; color: var(--zb-gold-ink); }
+.s3-sub { margin: 2px 0 10px; font-size: 12px; color: var(--zb-muted); }
+.s3-empty { margin: 8px 0 0; font-size: 12.5px; color: var(--zb-muted); line-height: 1.8; }
+.s3-detail-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; }
+.s3-layers { border-collapse: collapse; font-size: 12.5px; min-width: 150px; }
+.s3-layers th { font-weight: 500; color: var(--zb-muted); text-align: left; padding: 3px 10px 3px 0; border-bottom: 1px solid var(--zb-line); }
+.s3-layers td { padding: 4px 10px 4px 0; border-bottom: 1px solid var(--zb-wash); color: var(--zb-ink); font-variant-numeric: tabular-nums; }
+.s3-layers tr.off td { color: var(--zb-rule); }
+.s3-notes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.s3-notes li { font-size: 13px; line-height: 1.75; padding-left: 11px; border-left: 3px solid var(--zb-line); color: var(--zb-ink); }
+.s3-notes li.good { border-color: var(--zb-moss); } .s3-notes li.mid { border-color: var(--zb-gold); } .s3-notes li.care { border-color: var(--zb-fire); }
+.s3-btnrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.s3-btn { font: inherit; font-size: 12.5px; padding: 7px 12px; min-height: 36px; border-radius: 8px; border: 1px solid var(--zb-line); background: #fffaf0; color: var(--zb-ink); cursor: pointer; }
+.s3-btn:hover { border-color: var(--zb-gold); }
+#sim3d-view button:focus-visible { outline: 2px solid var(--zb-moss); outline-offset: 2px; }
+#s3-ver { color: var(--zb-rule); }
+
+/* 飛星時間軸 */
+.s3-timeline { margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--zb-line); border-radius: 14px; background: #fffaf0; }
+.s3-tl-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.s3-tl-head strong { display: block; margin-top: 3px; font: 500 17px/1.35 "STKaiti", "KaiTi", "Songti TC", serif; color: var(--zb-ink); letter-spacing: 1px; }
+.s3-tl-note { font-size: 12px; color: var(--zb-gold-ink); font-variant-numeric: tabular-nums; }
+.s3-tl-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+.s3-tl-row button { font: inherit; font-size: 13px; min-width: 40px; min-height: 36px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--zb-line); background: var(--zb-card); color: var(--zb-ink); cursor: pointer; }
+#s3-tl-play { min-width: 58px; background: var(--zb-ink); color: var(--zb-card); border-color: var(--zb-ink); }
+.s3-tl-track { flex: 1; min-width: 0; padding-top: 14px; }
+#s3-tl { display: block; width: 100%; margin: 0; accent-color: var(--zb-moss); }
+.s3-tl-ticks { display: flex; justify-content: space-between; margin-top: 2px; font-size: 10px; color: var(--zb-muted); font-variant-numeric: tabular-nums; }
+.s3-tl-opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+.s3-chip { font: inherit; font-size: 12px; min-height: 30px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--zb-line); background: var(--zb-card); color: var(--zb-muted); cursor: pointer; }
+.s3-chip[data-orb]::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 5px; vertical-align: 0; opacity: .45; }
+.s3-chip[aria-pressed="true"] { color: var(--zb-ink); border-color: var(--zb-ink); background: #fff; }
+.s3-chip[aria-pressed="true"]::before { opacity: 1; }
+.s3-tl-sep { width: 1px; height: 18px; background: var(--zb-line); margin: 0 2px; }
+.s3-tl-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.s3-tl-state { flex: 1; font-size: 11.5px; color: var(--zb-muted); }
+.s3-tl-actions .s3-btn:disabled { opacity: .45; cursor: default; }
+.s3-orb { font-size: 11px; line-height: 1; padding: 3px 7px; border-radius: 999px; background: var(--zb-card); color: var(--c); border: 1px solid var(--c); white-space: nowrap; font-weight: 600; }
+.s3-orb.y { background: var(--c); color: #fff; }
+
+@media (max-width: 540px) {
+  body.mode-3d #sim3d-view { padding: 18px 10px 14px; }
+  .s3-stage { height: 380px; }
+  .s3-sec { font-size: 11px; padding: 4px 7px; } .s3-sec b { font-size: 12.5px; } .s3-sec .l3 { display: none; }
+  .s3-hint-l { display: none; } .s3-hint-s { display: inline; }
+  .s3-detail-grid { grid-template-columns: 1fr; }
+  .s3-seg button { font-size: 12px; }
+  .s3-toolbar { gap: 4px; top: 8px; left: 8px; right: 8px; }
+  .s3-toolbar button { font-size: 11.5px; padding: 6px 7px; min-height: 30px; }
+  .s3-tl-head strong { font-size: 15px; }
+}

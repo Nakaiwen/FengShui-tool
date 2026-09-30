@@ -1,13 +1,14 @@
 /* Cache names include this app's scope, leaving sibling GitHub Pages apps alone.
    scripts/build-release.py updates RELEASE when any app-shell bytes change. */
-const RELEASE = '868143c3d016';
+const RELEASE = '71801a1bc655';
 const PREFIX = 'xiaoliu-fengshui:' + new URL(self.registration.scope).pathname + ':';
 const CACHE = PREFIX + RELEASE;
 const FILES = [
   'index.html','style.css','script.js','zibai.js','xuankong.js','xk-overlay.js',
   'xk-dashboard.css','xk-dashboard.js','xk-page.js','zb-dashboard.css','zb-dashboard.js',
   'app-tools.css','app-storage.js','pwa.js','manifest.webmanifest',
-  'icons/icon.svg','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png','icons/apple-touch-icon.png'
+  'sim3d.css','sim3d.js','vendor/three.min.js',
+  'icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png','icons/apple-touch-icon.png'
 ];
 const URLS = FILES.map(file => new URL(file,self.registration.scope).href);
 const INDEX = new URL('index.html',self.registration.scope).href;
